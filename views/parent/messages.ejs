@@ -1,0 +1,69 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+
+<main id="main-content">
+    <section class="section" style="padding-top:32px;">
+        <div class="container">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <h1 style="font-size:1.5rem;">Messages</h1>
+                <a href="/parent/dashboard" class="btn btn-outline btn-sm">&larr; Back to Dashboard</a>
+            </div>
+
+            <div class="messages-layout">
+                <div class="conversations-list">
+                    <div style="padding:16px;font-weight:700;color:var(--gray-700);border-bottom:1px solid var(--gray-200);">Conversations</div>
+                    <% if (conversations && conversations.length > 0) { %>
+                        <% conversations.forEach(c => { %>
+                        <a href="/parent/messages/<%= c.other_id %>" class="conversation-item <%= activeConversation && activeConversation.id == c.other_id ? 'active' : '' %>">
+                            <div class="conversation-avatar"><%= c.first_name?.charAt(0) %><%= c.last_name?.charAt(0) %></div>
+                            <div class="conversation-info">
+                                <h4><%= c.first_name %> <%= c.last_name %></h4>
+                                <p><%= c.role %></p>
+                            </div>
+                        </a>
+                        <% }); %>
+                    <% } else { %>
+                        <div style="padding:24px;text-align:center;color:var(--gray-400);">
+                            <p>No conversations yet.</p>
+                        </div>
+                    <% } %>
+                </div>
+
+                <div class="message-area">
+                    <% if (activeConversation) { %>
+                        <div class="message-area-header">
+                            <h3 style="font-size:1rem;"><%= activeConversation.first_name %> <%= activeConversation.last_name %> (<%= activeConversation.role %>)</h3>
+                        </div>
+                        <div class="message-list" id="message-list">
+                            <% messages.forEach(m => { %>
+                            <div class="message-bubble <%= m.sender_id == user.id ? 'sent' : 'received' %>">
+                                <p><%= m.body %></p>
+                                <div class="message-time"><%= new Date(m.created_at).toLocaleString() %></div>
+                            </div>
+                            <% }); %>
+                        </div>
+                        <form action="/parent/messages/<%= activeConversation.id %>" method="POST" class="message-input-area">
+                            <input type="text" name="body" class="form-control" placeholder="Type your message..." required autocomplete="off">
+                            <button type="submit" class="btn btn-primary btn-sm">Send</button>
+                        </form>
+                    <% } else { %>
+                        <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+                            <div style="text-align:center;color:var(--gray-400);">
+                                <p style="font-size:2rem;margin-bottom:12px;" aria-hidden="true">&#x1F4AC;</p>
+                                <p>Select a conversation to start messaging</p>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    // Auto-scroll to bottom of messages
+    const messageList = document.getElementById('message-list');
+    if (messageList) messageList.scrollTop = messageList.scrollHeight;
+</script>
+
+<%- include('../partials/footer') %>

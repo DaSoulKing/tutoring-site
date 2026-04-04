@@ -1,0 +1,55 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+
+<main id="main-content">
+    <section class="section" style="padding-top:32px;">
+        <div class="container" style="max-width:700px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <h1 style="font-size:1.5rem;">Session Sheet</h1>
+                    <% if (booking) { %>
+                    <p style="color:var(--gray-500);font-size:0.9rem;">
+                        Student: <%= booking.student_first %> <%= booking.student_last %> &middot;
+                        <%= new Date(booking.booking_date).toLocaleDateString() %> &middot;
+                        <%= booking.subject || 'General' %>
+                    </p>
+                    <% } %>
+                </div>
+                <a href="/admin/tutor" class="btn btn-outline btn-sm">&larr; Dashboard</a>
+            </div>
+
+            <div class="card" style="padding:32px;">
+                <form action="/admin/tutor/session-sheet/<%= booking ? booking.id : '' %>" method="POST">
+                    <div class="form-group">
+                        <label for="topics_covered">Topics Covered <span class="required">*</span></label>
+                        <textarea id="topics_covered" name="topics_covered" class="form-control" rows="3" required placeholder="What was covered in this session..."><%= sheet ? sheet.topics_covered : '' %></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="homework_assigned">Homework Assigned</label>
+                        <textarea id="homework_assigned" name="homework_assigned" class="form-control" rows="2" placeholder="Any homework or practice tasks..."><%= sheet ? sheet.homework_assigned : '' %></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="student_performance">Student Performance</label>
+                        <select id="student_performance" name="student_performance" class="form-control">
+                            <option value="excellent" <%= sheet && sheet.student_performance === 'excellent' ? 'selected' : '' %>>Excellent</option>
+                            <option value="good" <%= sheet && sheet.student_performance === 'good' ? 'selected' : '' %>>Good</option>
+                            <option value="satisfactory" <%= (!sheet || sheet.student_performance === 'satisfactory') ? 'selected' : '' %>>Satisfactory</option>
+                            <option value="needs_improvement" <%= sheet && sheet.student_performance === 'needs_improvement' ? 'selected' : '' %>>Needs Improvement</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Additional Notes</label>
+                        <textarea id="notes" name="notes" class="form-control" rows="3" placeholder="Any other observations or notes..."><%= sheet ? sheet.notes : '' %></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="next_session_plan">Plan for Next Session</label>
+                        <textarea id="next_session_plan" name="next_session_plan" class="form-control" rows="2" placeholder="What to cover next time..."><%= sheet ? sheet.next_session_plan : '' %></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Save Session Sheet</button>
+                </form>
+            </div>
+        </div>
+    </section>
+</main>
+
+<%- include('../partials/footer') %>

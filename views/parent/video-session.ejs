@@ -1,0 +1,88 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+
+<main id="main-content">
+    <section class="section" style="padding:16px 0;">
+        <div class="container">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <div>
+                    <h1 style="font-size:1.25rem;">Video Session</h1>
+                    <p style="color:var(--gray-500);font-size:0.9rem;">
+                        with <%= booking.tutor_first %> <%= booking.tutor_last %>
+                        &middot; <%= booking.subject || 'General' %>
+                        &middot; <%= new Date(booking.booking_date).toLocaleDateString() %>
+                    </p>
+                </div>
+                <a href="/parent/dashboard" class="btn btn-outline btn-sm">&larr; Dashboard</a>
+            </div>
+
+            <div class="video-session-container" id="jitsi-container">
+                <div style="display:flex;align-items:center;justify-content:center;height:100%;background:var(--gray-100);">
+                    <div style="text-align:center;">
+                        <div class="loading-spinner"></div>
+                        <p style="color:var(--gray-500);margin-top:16px;">Loading video session...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                <div class="alert alert-info" style="margin:0;flex:1;">
+                    <span aria-hidden="true">&#x1F4A1;</span> No downloads or signups needed. The video session runs right in your browser.
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script src="https://meet.jit.si/external_api.js" async></script>
+<script>
+    function initJitsi() {
+        if (typeof JitsiMeetExternalAPI === 'undefined') {
+            setTimeout(initJitsi, 500);
+            return;
+        }
+
+        const container = document.getElementById('jitsi-container');
+        container.innerHTML = '';
+
+        const api = new JitsiMeetExternalAPI('meet.jit.si', {
+            roomName: '<%= roomId %>',
+            parentNode: container,
+            width: '100%',
+            height: '100%',
+            userInfo: {
+                displayName: '<%= userName %>'
+            },
+            configOverwrite: {
+                startWithAudioMuted: true,
+                startWithVideoMuted: false,
+                prejoinPageEnabled: true,
+                disableDeepLinking: true,
+                toolbarButtons: [
+                    'camera', 'chat', 'closedcaptions', 'desktop',
+                    'fullscreen', 'hangup', 'microphone',
+                    'participants-pane', 'raisehand', 'select-background',
+                    'settings', 'tileview', 'toggle-camera'
+                ],
+            },
+            interfaceConfigOverwrite: {
+                SHOW_JITSI_WATERMARK: false,
+                SHOW_WATERMARK_FOR_GUESTS: false,
+                DEFAULT_BACKGROUND: '#1E3A5F',
+                TOOLBAR_ALWAYS_VISIBLE: true,
+            }
+        });
+
+        api.addEventListener('readyToClose', () => {
+            window.location.href = '/parent/dashboard';
+        });
+    }
+
+    if (document.readyState === 'complete') {
+        initJitsi();
+    } else {
+        window.addEventListener('load', initJitsi);
+    }
+</script>
+
+<%- include('../partials/footer') %>

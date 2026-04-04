@@ -1,0 +1,53 @@
+    <nav class="nav" role="navigation" aria-label="Main navigation">
+        <div class="nav-inner">
+            <a href="/" class="nav-logo" aria-label="BrightMinds Tutoring Home">
+                <div class="logo-icon" aria-hidden="true">&#x1F4DA;</div>
+                Bright<span class="highlight">Minds</span>
+            </a>
+
+            <ul class="nav-links" id="nav-links">
+                <li><a href="/" class="<%= currentPath === '/' ? 'active' : '' %>">Home</a></li>
+                <li><a href="/about" class="<%= currentPath === '/about' ? 'active' : '' %>">About Us</a></li>
+                <li><a href="/services" class="<%= currentPath === '/services' ? 'active' : '' %>">Services</a></li>
+                <li><a href="/tutors" class="<%= currentPath.startsWith('/tutors') ? 'active' : '' %>">Our Tutors</a></li>
+                <li><a href="/blog" class="<%= currentPath.startsWith('/blog') ? 'active' : '' %>">Blog</a></li>
+                <li><a href="/contact" class="<%= currentPath === '/contact' ? 'active' : '' %>">Contact</a></li>
+                <% if (user) { %>
+                    <% if (user.role === 'owner') { %>
+                        <li><a href="/admin/owner" class="<%= currentPath.startsWith('/admin/owner') ? 'active' : '' %>">Dashboard</a></li>
+                    <% } else if (user.role === 'tutor') { %>
+                        <li><a href="/admin/tutor" class="<%= currentPath.startsWith('/admin/tutor') ? 'active' : '' %>">Dashboard</a></li>
+                    <% } else { %>
+                        <li><a href="/parent/dashboard" class="<%= currentPath.startsWith('/parent') ? 'active' : '' %>">Dashboard</a></li>
+                    <% } %>
+                <% } %>
+            </ul>
+
+            <div class="nav-cta">
+                <% if (user) { %>
+                    <span style="font-weight:600;color:var(--gray-600);font-size:0.9rem;">Hi, <%= user.firstName %>!</span>
+                    <a href="/auth/logout" class="btn btn-outline btn-sm">Log Out</a>
+                <% } else { %>
+                    <a href="/auth/login" class="btn btn-outline btn-sm">Log In</a>
+                    <a href="/consultation" class="btn btn-secondary btn-sm">Free Consultation</a>
+                <% } %>
+            </div>
+
+            <button class="nav-hamburger" id="nav-hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-links">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <% if (typeof success !== 'undefined' && success) { %>
+    <div class="alert alert-success" role="alert" style="border-radius:0;margin:0;">
+        <span aria-hidden="true">&#x2705;</span> <%= success %>
+    </div>
+    <% } %>
+    <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-error" role="alert" style="border-radius:0;margin:0;">
+        <span aria-hidden="true">&#x26A0;&#xFE0F;</span> <%= error %>
+    </div>
+    <% } %>

@@ -1,0 +1,53 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+
+<main id="main-content">
+    <div class="dashboard-grid">
+        <aside class="dashboard-sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="/admin/owner">&#x1F3E0; Dashboard</a></li>
+                <li><a href="/admin/owner/calendar">&#x1F4C5; Calendar</a></li>
+                <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Manage Tutors</a></li>
+                <li><a href="/admin/owner/students" class="active">&#x1F393; Manage Students</a></li>
+            </ul>
+        </aside>
+
+        <div class="dashboard-main">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <h1 style="font-size:1.5rem;">Manage Students & Parents</h1>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Name</th><th>Email</th><th>Role</th><th>Grade</th><th>Subjects</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        <% if (students && students.length > 0) { %>
+                            <% students.forEach(s => { %>
+                            <tr>
+                                <td><strong><%= s.first_name %> <%= s.last_name %></strong></td>
+                                <td><%= s.email %></td>
+                                <td><span class="badge-status badge-active"><%= s.role %></span></td>
+                                <td><%= s.grade_level || 'N/A' %></td>
+                                <td>
+                                    <% (s.subjects_needed || []).forEach(sub => { %>
+                                    <span class="subject-tag"><%= sub %></span>
+                                    <% }); %>
+                                </td>
+                                <td>
+                                    <a href="/admin/owner/notes/<%= s.id %>" class="btn btn-outline btn-sm" style="font-size:0.8rem;">Notes</a>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr><td colspan="6" style="text-align:center;color:var(--gray-400);">No students or parents found.</td></tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>

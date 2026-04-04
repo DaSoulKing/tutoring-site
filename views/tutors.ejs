@@ -1,0 +1,76 @@
+<%- include('partials/header') %>
+<%- include('partials/nav') %>
+
+<main id="main-content">
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Find Your Tutor</span>
+                <h2>Our Expert Tutors</h2>
+                <p>Browse our team of qualified educators. Click on any tutor to see their full profile, availability, and hours.</p>
+            </div>
+
+            <!-- Filters -->
+            <div class="tutor-filters" role="toolbar" aria-label="Filter tutors by subject">
+                <button class="filter-btn <%= activeSubject === '' ? 'active' : '' %>" onclick="filterTutors('')">All Subjects</button>
+                <% subjects.forEach(subject => { %>
+                <button class="filter-btn <%= activeSubject === subject ? 'active' : '' %>" onclick="filterTutors('<%= subject %>')"><%= subject %></button>
+                <% }); %>
+
+                <div style="margin-left:auto;">
+                    <form action="/tutors" method="GET" style="display:flex;gap:8px;">
+                        <input type="text" name="search" class="form-control" placeholder="Search tutors..." value="<%= search %>" style="width:220px;padding:8px 14px;">
+                        <button type="submit" class="btn btn-primary btn-sm">Search</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tutor Grid -->
+            <div class="tutor-grid">
+                <% if (tutors && tutors.length > 0) { %>
+                    <% tutors.forEach(tutor => { %>
+                    <article class="tutor-card" data-tutor-id="<%= tutor.id %>" aria-label="Tutor: <%= tutor.first_name %> <%= tutor.last_name %>">
+                        <div class="tutor-card-front">
+                            <div class="tutor-avatar">
+                                <% if (tutor.profile_picture) { %>
+                                    <img src="<%= tutor.profile_picture %>" alt="" width="72" height="72" loading="lazy">
+                                <% } else { %>
+                                    <%= tutor.first_name.charAt(0) %><%= tutor.last_name.charAt(0) %>
+                                <% } %>
+                            </div>
+                            <div class="tutor-card-info">
+                                <h3><%= tutor.first_name %> <%= tutor.last_name %></h3>
+                                <p style="color:var(--gray-500);font-size:0.85rem;"><%= tutor.tagline || 'Expert Tutor' %></p>
+                                <div class="tutor-subjects">
+                                    <% (tutor.subjects || []).forEach(s => { %>
+                                    <span class="subject-tag"><%= s %></span>
+                                    <% }); %>
+                                </div>
+                            </div>
+                            <span class="expand-arrow" aria-hidden="true">&#x25BC;</span>
+                        </div>
+                        <div class="tutor-card-expand">
+                            <!-- Loaded via AJAX -->
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </article>
+                    <% }); %>
+                <% } else { %>
+                    <div style="grid-column:1/-1;text-align:center;padding:60px 20px;">
+                        <p style="font-size:3rem;margin-bottom:16px;" aria-hidden="true">&#x1F50D;</p>
+                        <h3>No tutors found</h3>
+                        <p style="color:var(--gray-500);margin-top:8px;">
+                            <% if (search || activeSubject) { %>
+                                Try adjusting your filters or <a href="/tutors">view all tutors</a>.
+                            <% } else { %>
+                                Our tutor profiles are being set up. <a href="/consultation">Book a consultation</a> to learn more!
+                            <% } %>
+                        </p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </section>
+</main>
+
+<%- include('partials/footer') %>

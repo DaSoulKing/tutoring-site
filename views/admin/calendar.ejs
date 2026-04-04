@@ -1,0 +1,39 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+
+<main id="main-content">
+    <section class="section" style="padding-top:32px;">
+        <div class="container">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <h1 style="font-size:1.5rem;"><%= role === 'owner' ? 'All Sessions Calendar' : 'My Calendar' %></h1>
+                <a href="/admin/<%= role %>" class="btn btn-outline btn-sm">&larr; Dashboard</a>
+            </div>
+
+            <div class="calendar-container" id="calendar">
+                <div class="calendar-header">
+                    <div class="calendar-nav">
+                        <button id="cal-prev" aria-label="Previous month">&larr;</button>
+                    </div>
+                    <h3 id="cal-title">Loading...</h3>
+                    <div class="calendar-nav">
+                        <button id="cal-next" aria-label="Next month">&rarr;</button>
+                    </div>
+                </div>
+                <div class="calendar-grid">
+                    <div class="loading-spinner" style="grid-column:1/-1;"></div>
+                </div>
+            </div>
+
+            <div style="margin-top:20px;display:flex;gap:16px;flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;border-radius:3px;background:var(--blue-100);"></div><span style="font-size:0.85rem;color:var(--gray-500);">Confirmed</span></div>
+                <div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;border-radius:3px;background:var(--yellow-100);"></div><span style="font-size:0.85rem;color:var(--gray-500);">Pending</span></div>
+                <div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;border-radius:3px;background:var(--gray-100);"></div><span style="font-size:0.85rem;color:var(--gray-500);">Cancelled</span></div>
+                <% if (typeof availability !== 'undefined' && availability) { %>
+                <div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;border-radius:3px;background:#D1FAE5;"></div><span style="font-size:0.85rem;color:var(--gray-500);">Available</span></div>
+                <% } %>
+            </div>
+        </div>
+    </section>
+</main>
+
+<%- include('../partials/footer') %>

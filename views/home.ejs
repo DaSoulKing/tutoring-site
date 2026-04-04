@@ -1,0 +1,187 @@
+<%- include('partials/header') %>
+<%- include('partials/nav') %>
+
+<main id="main-content">
+    <!-- HERO -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-inner">
+                <div class="hero-text">
+                    <h1>
+                        Where <span class="text-yellow">Bright</span> Futures<br>
+                        Begin with <span class="text-blue">Great</span> Tutors
+                    </h1>
+                    <p>Personalized learning that actually works. Our expert tutors help students build confidence, master subjects, and fall in love with learning. Plus, 3% of every payment supports children's education charities.</p>
+                    <div class="hero-buttons">
+                        <a href="/consultation" class="btn btn-primary btn-lg">Book a Free Consultation</a>
+                        <a href="/tutors" class="btn btn-outline btn-lg">Meet Our Tutors</a>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="hero-illustration" role="img" aria-label="Student learning illustration">
+                        <span class="emoji-big" aria-hidden="true">&#x1F393;</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS BAR -->
+    <section class="stats-bar" aria-label="Our impact in numbers">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3>97%</h3>
+                    <p>Student Satisfaction</p>
+                </div>
+                <div class="stat-item">
+                    <h3>500+</h3>
+                    <p>Students Helped</p>
+                </div>
+                <div class="stat-item">
+                    <h3>50+</h3>
+                    <p>Expert Tutors</p>
+                </div>
+                <div class="stat-item">
+                    <h3>92%</h3>
+                    <p>Grade Improvement</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SERVICES PREVIEW -->
+    <section class="section" aria-labelledby="services-heading">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">What We Offer</span>
+                <h2 id="services-heading">Learning Made Fun and Effective</h2>
+                <p>From one-on-one sessions to group learning, we have the right solution for every student.</p>
+            </div>
+            <div class="services-grid">
+                <div class="card service-card">
+                    <div class="card-icon blue" aria-hidden="true">&#x1F4D6;</div>
+                    <h3>One-on-One Tutoring</h3>
+                    <p>Personalized attention tailored to your child's unique learning style. Our tutors adapt their approach to help every student succeed at their own pace.</p>
+                </div>
+                <div class="card service-card">
+                    <div class="card-icon yellow" aria-hidden="true">&#x1F46B;</div>
+                    <h3>Group Sessions</h3>
+                    <p>Learn together with peers in small, interactive group sessions. Multiple students per tutor means collaborative learning and new friendships.</p>
+                </div>
+                <div class="card service-card">
+                    <div class="card-icon green" aria-hidden="true">&#x1F4BB;</div>
+                    <h3>Online Learning</h3>
+                    <p>Access expert tutoring from anywhere with our built-in video sessions. No extra software or signups needed. Just click and learn.</p>
+                </div>
+                <div class="card service-card">
+                    <div class="card-icon orange" aria-hidden="true">&#x1F4CB;</div>
+                    <h3>Progress Tracking</h3>
+                    <p>Stay informed with detailed report cards, session notes, and regular check-ins every 3 months. Parents always know how their child is doing.</p>
+                </div>
+            </div>
+            <div style="text-align:center;margin-top:40px;">
+                <a href="/services" class="btn btn-primary">Explore All Services</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- TUTOR CAROUSEL -->
+    <section class="carousel-section" aria-labelledby="carousel-heading">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Our Amazing Team</span>
+                <h2 id="carousel-heading">Meet Our Star Tutors</h2>
+                <p>Handpicked educators who are passionate about making a difference in every student's life.</p>
+            </div>
+        </div>
+        <div class="carousel-track-wrapper" aria-label="Tutor showcase carousel. Hover to pause.">
+            <div class="carousel-track">
+                <% if (tutors && tutors.length > 0) { %>
+                    <% tutors.forEach(tutor => { %>
+                    <div class="carousel-card" tabindex="0" role="article" aria-label="Tutor: <%= tutor.first_name %> <%= tutor.last_name %>">
+                        <div class="carousel-card-header">
+                            <div class="carousel-avatar">
+                                <% if (tutor.profile_picture) { %>
+                                    <img src="<%= tutor.profile_picture %>" alt="<%= tutor.first_name %> <%= tutor.last_name %>" loading="lazy" width="56" height="56">
+                                <% } else { %>
+                                    <%= tutor.first_name.charAt(0) %><%= tutor.last_name.charAt(0) %>
+                                <% } %>
+                            </div>
+                            <div>
+                                <h4><%= tutor.first_name %> <%= tutor.last_name %></h4>
+                                <span class="subjects"><%= (tutor.subjects || []).join(', ') %></span>
+                            </div>
+                        </div>
+                        <p><%= tutor.carousel_description || tutor.tagline || tutor.bio || 'Passionate about helping students succeed!' %></p>
+                    </div>
+                    <% }); %>
+                <% } else { %>
+                    <!-- Default carousel cards when no tutors in DB -->
+                    <div class="carousel-card"><div class="carousel-card-header"><div class="carousel-avatar">SM</div><div><h4>Sarah M.</h4><span class="subjects">Math, Algebra, Calculus</span></div></div><p>Making math click for students since 2018. I believe every student can master numbers with the right approach and a lot of patience!</p></div>
+                    <div class="carousel-card"><div class="carousel-card-header"><div class="carousel-avatar">JR</div><div><h4>James R.</h4><span class="subjects">English, Writing, Literature</span></div></div><p>Words are powerful. I help students find their voice through reading and writing, building skills that last a lifetime.</p></div>
+                    <div class="carousel-card"><div class="carousel-card-header"><div class="carousel-avatar">LP</div><div><h4>Lisa P.</h4><span class="subjects">Science, Biology, Chemistry</span></div></div><p>Science is all around us! I make experiments and concepts come alive so students never forget what they learn.</p></div>
+                    <div class="carousel-card"><div class="carousel-card-header"><div class="carousel-avatar">DK</div><div><h4>David K.</h4><span class="subjects">History, Social Studies</span></div></div><p>History is the story of us all. I bring the past to life with engaging discussions and connections to today's world.</p></div>
+                    <div class="carousel-card"><div class="carousel-card-header"><div class="carousel-avatar">AT</div><div><h4>Amy T.</h4><span class="subjects">Physics, Math</span></div></div><p>From falling apples to rocket science, I help students see the beauty and logic in how our universe works.</p></div>
+                    <div class="carousel-card"><div class="carousel-card-header"><div class="carousel-avatar">MC</div><div><h4>Michael C.</h4><span class="subjects">Computer Science, Coding</span></div></div><p>Teaching the next generation to code and think computationally. Every bug fixed is a lesson learned!</p></div>
+                    <div class="carousel-card"><div class="carousel-card-header"><div class="carousel-avatar">RN</div><div><h4>Rachel N.</h4><span class="subjects">French, Spanish</span></div></div><p>Learning a new language opens doors to new worlds. I make language learning fun and practical for everyday use.</p></div>
+                    <div class="carousel-card"><div class="carousel-card-header"><div class="carousel-avatar">TW</div><div><h4>Tom W.</h4><span class="subjects">SAT Prep, Test Strategy</span></div></div><p>Boosted over 200 students' SAT scores by an average of 150 points. Strategy plus practice equals results!</p></div>
+                <% } %>
+            </div>
+        </div>
+    </section>
+
+    <!-- WHY CHOOSE US -->
+    <section class="section" style="background:var(--blue-50);" aria-labelledby="why-heading">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Why BrightMinds?</span>
+                <h2 id="why-heading">What Makes Us Different</h2>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon yellow" aria-hidden="true">&#x2B50;</div>
+                        <h3 style="font-size:1.1rem;">Top Quality Tutors</h3>
+                    </div>
+                    <p style="color:var(--gray-500);">Every tutor goes through our rigorous vetting process. We only accept the best so your child gets the best. No reviews needed because we guarantee quality.</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon blue" aria-hidden="true">&#x1F4C5;</div>
+                        <h3 style="font-size:1.1rem;">Flexible Scheduling</h3>
+                    </div>
+                    <p style="color:var(--gray-500);">Our interactive calendar makes booking easy. See when tutors are available, book sessions that fit your schedule, and manage everything in one place.</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon green" aria-hidden="true">&#x1F49A;</div>
+                        <h3 style="font-size:1.1rem;">Giving Back</h3>
+                    </div>
+                    <p style="color:var(--gray-500);">3% of every payment goes directly to <%= charityName %>. When you invest in your child's education, you are also helping other children get access to learning resources.</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon orange" aria-hidden="true">&#x1F4AC;</div>
+                        <h3 style="font-size:1.1rem;">Direct Communication</h3>
+                    </div>
+                    <p style="color:var(--gray-500);">Message tutors directly on our platform. File complaints, ask questions, or just check in. We keep parents in the loop at every step.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section" style="background:linear-gradient(135deg,var(--blue-700),var(--blue-900));text-align:center;color:white;">
+        <div class="container">
+            <h2 style="color:white;font-size:2.5rem;margin-bottom:16px;">Ready to Help Your Child Shine?</h2>
+            <p style="color:var(--blue-200);font-size:1.2rem;max-width:600px;margin:0 auto 32px;">Book a free consultation call and discover how BrightMinds can transform your child's learning experience.</p>
+            <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+                <a href="/consultation" class="btn btn-secondary btn-lg">Book Free Consultation</a>
+                <a href="/auth/register" class="btn btn-lg" style="background:rgba(255,255,255,0.15);color:white;border:2px solid rgba(255,255,255,0.3);">Sign Up Today</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<%- include('partials/footer') %>
