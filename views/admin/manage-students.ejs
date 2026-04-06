@@ -52,7 +52,12 @@
                                 <td><span class="badge-status <%= s.email_verified ? 'badge-active' : 'badge-pending' %>"><%= s.email_verified ? 'Yes' : 'No' %></span></td>
                                 <td><%= s.grade_level || 'N/A' %></td>
                                 <td><% (s.subjects_needed || []).forEach(sub => { %><span class="subject-tag"><%= sub %></span> <% }); %></td>
-                                <td><a href="/admin/owner/notes/<%= s.id %>" class="btn btn-outline btn-sm" style="font-size:0.8rem;">Notes</a></td>
+                                <td style="display:flex;gap:6px;flex-wrap:wrap;">
+                                    <% if (!s.email_verified) { %>
+                                    <form action="/admin/owner/users/<%= s.id %>/verify" method="POST"><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;font-size:0.75rem;">Verify</button></form>
+                                    <% } %>
+                                    <a href="/admin/owner/notes/<%= s.id %>" class="btn btn-outline btn-sm" style="font-size:0.8rem;">Notes</a>
+                                </td>
                             </tr>
                             <% }); %>
                         <% } else { %><tr><td colspan="7" style="text-align:center;color:var(--gray-400);">No students or parents found.</td></tr><% } %>

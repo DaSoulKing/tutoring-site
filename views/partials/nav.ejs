@@ -1,7 +1,7 @@
     <nav class="nav" role="navigation" aria-label="Main navigation">
         <div class="nav-inner">
-            <a href="/" class="nav-logo" aria-label="BrightMinds Tutoring Home">
-                <div class="logo-icon" aria-hidden="true">&#x1F4DA;</div>
+            <a href="/" class="nav-logo" aria-label="<%= siteName %> Home">
+                <div class="logo-icon" aria-hidden="true">BM</div>
                 Bright<span class="highlight">Minds</span>
             </a>
 
@@ -21,17 +21,16 @@
                         <li><a href="/parent/dashboard" class="<%= currentPath.startsWith('/parent') ? 'active' : '' %>">Dashboard</a></li>
                     <% } %>
                 <% } %>
-                <!-- Mobile-only auth links -->
-                <li class="mobile-only-nav">
-                    <% if (user) { %>
-                        <a href="/auth/logout">Log Out</a>
-                    <% } else { %>
-                        <a href="/auth/login">Log In</a>
-                        <a href="/consultation" style="color:var(--yellow-600);">Free Consultation</a>
-                    <% } %>
-                </li>
+                <!-- These only show inside the mobile hamburger menu -->
+                <% if (user) { %>
+                    <li class="nav-mobile-auth"><a href="/auth/logout">Log Out (<%= user.firstName %>)</a></li>
+                <% } else { %>
+                    <li class="nav-mobile-auth"><a href="/auth/login">Log In</a></li>
+                    <li class="nav-mobile-auth"><a href="/consultation" style="color:var(--yellow-600);font-weight:700;">Book Free Consultation</a></li>
+                <% } %>
             </ul>
 
+            <!-- Desktop only buttons -->
             <div class="nav-cta">
                 <% if (user) { %>
                     <span style="font-weight:600;color:var(--gray-600);font-size:0.9rem;">Hi, <%= user.firstName %>!</span>
@@ -49,12 +48,8 @@
     </nav>
 
     <% if (typeof success !== 'undefined' && success) { %>
-    <div class="alert alert-success" role="alert" style="border-radius:0;margin:0;">
-        <span aria-hidden="true">&#x2705;</span> <%= success %>
-    </div>
+    <div class="alert alert-success" role="alert" style="border-radius:0;margin:0;"><span aria-hidden="true">&#x2705;</span> <%= success %></div>
     <% } %>
     <% if (typeof error !== 'undefined' && error) { %>
-    <div class="alert alert-error" role="alert" style="border-radius:0;margin:0;">
-        <span aria-hidden="true">&#x26A0;&#xFE0F;</span> <%= error %>
-    </div>
+    <div class="alert alert-error" role="alert" style="border-radius:0;margin:0;"><span aria-hidden="true">&#x26A0;&#xFE0F;</span> <%= error %></div>
     <% } %>

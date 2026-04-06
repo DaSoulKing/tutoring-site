@@ -3,45 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= typeof title !== 'undefined' ? title : 'BrightMinds Tutoring' %></title>
-    <meta name="description" content="<%= typeof meta !== 'undefined' && meta.description ? meta.description : 'BrightMinds Tutoring offers personalized learning experiences. Expert tutors, proven results, and 3% of every payment goes to charity.' %>">
+    <title><%= typeof title !== 'undefined' ? title : siteName %></title>
+    <meta name="description" content="<%= typeof meta !== 'undefined' && meta.description ? meta.description : siteName + ' offers personalized learning experiences. Expert tutors, proven results, and 3% of every payment goes to charity.' %>">
     <meta name="keywords" content="<%= typeof meta !== 'undefined' && meta.keywords ? meta.keywords : 'tutoring, education, online tutoring, kids learning' %>">
     <meta name="robots" content="index, follow">
-    <meta name="author" content="BrightMinds Tutoring">
-
-    <!-- Open Graph -->
-    <meta property="og:title" content="<%= typeof title !== 'undefined' ? title : 'BrightMinds Tutoring' %>">
+    <meta name="author" content="<%= siteName %>">
+    <meta property="og:title" content="<%= typeof title !== 'undefined' ? title : siteName %>">
     <meta property="og:description" content="<%= typeof meta !== 'undefined' && meta.description ? meta.description : 'Expert tutoring for every learner.' %>">
     <meta property="og:type" content="website">
     <meta property="og:url" content="<%= siteUrl %><%= currentPath %>">
-    <meta property="og:site_name" content="BrightMinds Tutoring">
-
-    <!-- Canonical -->
+    <meta property="og:site_name" content="<%= siteName %>">
     <link rel="canonical" href="<%= siteUrl %><%= currentPath %>">
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4DA;</text></svg>">
+    <!-- Favicon - clean SVG with initials -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232563EB'/><text x='16' y='22' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='16' fill='white'>BM</text></svg>">
 
-    <!-- Styles -->
     <link rel="stylesheet" href="/css/style.css">
 
-    <!-- reCAPTCHA -->
     <% if (recaptchaSiteKey) { %>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <% } %>
 
-    <!-- Structured Data -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "EducationalOrganization",
-        "name": "BrightMinds Tutoring",
+        "name": "<%= siteName %>",
         "description": "Personalized tutoring services for students of all ages",
         "url": "<%= siteUrl %>",
-        "contactPoint": {
-            "@type": "ContactPoint",
-            "contactType": "customer service"
-        }
+        "contactPoint": { "@type": "ContactPoint", "contactType": "customer service" }
     }
     </script>
 </head>

@@ -98,6 +98,31 @@ router.post('/owner/tutor-invite', isAuthenticated, isOwner, async (req, res) =>
     } catch (err) { console.error(err); req.session.error = 'Failed to create invite.'; res.redirect('/admin/owner/tutors'); }
 });
 
+// Manual verify user email (admin)
+router.post('/owner/users/:id/verify', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        await pool.query('UPDATE users SET email_verified = true, verify_token = NULL WHERE id = $1', [req.params.id]);
+        req.session.success = 'User verified.';
+        res.redirect('/admin/owner/students');
+    } catch (err) { console.error(err); res.redirect('/admin/owner/students'); }
+});
+
+// Admin reset user password
+router.post('/owner/users/:id/reset-password', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const { new_password } = req.body;
+        if (!new_password || new_password.length < 8) {
+            req.session.error = 'Password must be at least 8 characters.';
+            return res.redirect('/admin/owner/students');
+        }
+        const bcrypt = require('bcryptjs');
+        const hash = await bcrypt.hash(new_password, 12);
+        await pool.query('UPDATE users SET password_hash = $1, reset_token = NULL, reset_expires = NULL WHERE id = $2', [hash, req.params.id]);
+        req.session.success = 'Password reset for user.';
+        res.redirect('/admin/owner/students');
+    } catch (err) { console.error(err); res.redirect('/admin/owner/students'); }
+});
+
 // Generate referral code (owner-only, one-time use)
 router.post('/owner/referral-code', isAuthenticated, isOwner, async (req, res) => {
     try {

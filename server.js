@@ -11,14 +11,11 @@ const pool = require('./db/pool');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Trust proxy for Railway
 app.set('trust proxy', 1);
-
-// View engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Security
+// Security headers
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -31,53 +28,66 @@ app.use(helmet({
             connectSrc: ["'self'", "https://meet.jit.si"],
         },
     },
+    // Prevent clickjacking
+    frameguard: { action: 'deny' },
+    // Don't sniff MIME types
+    noSniff: true,
+    // XSS filter
+    xssFilter: true,
 }));
 
-// Compression
+// Additional security headers
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    next();
+});
+
 app.use(compression());
 
-// Rate limiting
-const limiter = rateLimit({
+// Global rate limiter
+app.use(rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 200,
+    max: 300,
     standardHeaders: true,
     legacyHeaders: false,
-});
-app.use(limiter);
+}));
 
-// Body parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Body parsing with size limits to prevent abuse
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// Static files with caching
+// Static files
 app.use(express.static(path.join(__dirname, 'public'), {
     maxAge: process.env.NODE_ENV === 'production' ? '1y' : 0,
     etag: true,
 }));
 
-// Sessions
+// Sessions with secure settings
 app.use(session({
     store: new PgSession({
         pool: pool,
         tableName: 'session',
         createTableIfMissing: true,
     }),
-    secret: process.env.SESSION_SECRET || 'brightminds-secret-change-me',
+    secret: process.env.SESSION_SECRET || 'change-this-secret-immediately',
+    name: 'bm.sid', // Custom name instead of default 'connect.sid'
     resave: false,
     saveUninitialized: false,
     cookie: {
         secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        sameSite: 'lax',
+        httpOnly: true, // Prevents JS access to cookie
+        maxAge: 8 * 60 * 60 * 1000, // 8 hours instead of 24
+        sameSite: 'lax', // CSRF protection
     },
 }));
 
-// Make user and helpers available to all views
+// Globals for views
 app.use((req, res, next) => {
     res.locals.user = req.session.user || null;
     res.locals.currentPath = req.path;
-    res.locals.siteName = 'BrightMinds Tutoring';
+    res.locals.siteName = process.env.SITE_NAME || 'BrightMinds Tutoring';
     res.locals.siteUrl = process.env.SITE_URL || `http://localhost:${PORT}`;
     res.locals.recaptchaSiteKey = process.env.RECAPTCHA_SITE_KEY || '';
     res.locals.charityName = process.env.CHARITY_NAME || 'Kids Education Fund';
@@ -98,77 +108,36 @@ app.use('/blog', require('./routes/blog'));
 
 // 404
 app.use((req, res) => {
-    res.status(404).render('error', {
-        title: '404 - Page Not Found',
-        message: 'Oops! The page you are looking for does not exist.',
-        code: 404
-    });
+    res.status(404).render('error', { title: '404', message: 'Page not found.', code: 404 });
 });
 
-// Error handler
+// Error handler - never leak stack traces in production
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).render('error', {
-        title: '500 - Server Error',
-        message: 'Something went wrong on our end. Please try again later.',
+        title: '500',
+        message: process.env.NODE_ENV === 'production' ? 'Something went wrong.' : err.message,
         code: 500
     });
 });
 
-// Scheduled tasks: check-in alerts and payment reminders
+// Scheduled tasks
 function startScheduledTasks() {
-    // Run every hour
     setInterval(async () => {
         try {
-            // Check for 3-month check-ins due
-            const checkinResult = await pool.query(`
-                SELECT c.*, u.first_name, u.last_name, p.email as parent_email
-                FROM checkins c
-                JOIN users u ON c.student_id = u.id
-                LEFT JOIN users p ON c.parent_id = p.id
-                WHERE c.due_date <= CURRENT_DATE
-                AND c.completed = false
-                AND c.alert_sent = false
-            `);
-
-            for (const checkin of checkinResult.rows) {
-                await pool.query(
-                    'UPDATE checkins SET alert_sent = true WHERE id = $1',
-                    [checkin.id]
-                );
-                console.log(`Check-in alert: ${checkin.first_name} ${checkin.last_name} is due for a 3-month check-in`);
-            }
-
-            // Check for payment reminders
-            const paymentResult = await pool.query(`
-                SELECT s.*, u.first_name, u.last_name, u.email, u.phone
-                FROM subscriptions s
-                JOIN users u ON s.parent_id = u.id
-                WHERE s.next_billing_date <= CURRENT_DATE + INTERVAL '3 days'
-                AND s.status = 'active'
-                AND NOT EXISTS (
-                    SELECT 1 FROM payment_reminders pr
-                    WHERE pr.subscription_id = s.id
-                    AND pr.reminder_date = CURRENT_DATE
-                    AND pr.sent = true
-                )
-            `);
-
-            for (const sub of paymentResult.rows) {
-                await pool.query(`
-                    INSERT INTO payment_reminders (subscription_id, parent_id, reminder_date, sent, sent_at, reminder_type)
-                    VALUES ($1, $2, CURRENT_DATE, true, NOW(), 'upcoming')
-                `, [sub.id, sub.parent_id]);
-                console.log(`Payment reminder: ${sub.first_name} ${sub.last_name} - billing on ${sub.next_billing_date}`);
-            }
-        } catch (err) {
-            console.error('Scheduled task error:', err);
-        }
-    }, 60 * 60 * 1000); // every hour
+            await pool.query(`UPDATE checkins SET alert_sent = true WHERE due_date <= CURRENT_DATE AND completed = false AND alert_sent = false`);
+            // Clean expired sessions
+            await pool.query(`DELETE FROM session WHERE expire < NOW()`);
+            // Clean expired reset tokens
+            await pool.query(`UPDATE users SET reset_token = NULL, reset_expires = NULL WHERE reset_expires < NOW() AND reset_token IS NOT NULL`);
+            // Clean expired verification tokens (older than 24h)
+            await pool.query(`UPDATE users SET verify_token = NULL WHERE verify_token IS NOT NULL AND created_at < NOW() - INTERVAL '24 hours' AND email_verified = false`);
+        } catch (err) { console.error('Scheduled task error:', err.message); }
+    }, 60 * 60 * 1000);
 }
 
 app.listen(PORT, () => {
-    console.log(`BrightMinds Tutoring running on port ${PORT}`);
+    console.log(`BrightMinds running on port ${PORT}`);
     startScheduledTasks();
 });
 
