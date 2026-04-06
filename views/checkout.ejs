@@ -5,63 +5,69 @@
     <section class="section">
         <div class="container">
             <div class="section-header">
-                <span class="section-badge">Choose Your Plan</span>
-                <h2>Checkout</h2>
-                <p>Select a plan that fits your needs. Remember, 3% of every payment goes to <%= charityName %>.</p>
+                <span class="section-badge">Our Plans</span>
+                <h2>Pricing</h2>
+                <p>We discuss pricing during your free consultation and tailor a plan to your needs. Here is an overview of our offerings.</p>
             </div>
 
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;max-width:1000px;margin:0 auto 48px;">
+            <div class="center-card-grid" style="max-width:1000px;margin:0 auto 48px;">
                 <div class="card" style="padding:32px;text-align:center;border:2px solid var(--gray-200);">
                     <h3 style="color:var(--blue-600);margin-bottom:8px;">Starter</h3>
-                    <p id="original-price-starter" data-price="99" style="font-size:2.5rem;font-family:var(--font-display);font-weight:800;color:var(--gray-800);margin:16px 0;">$99<span style="font-size:1rem;color:var(--gray-400);font-weight:400;">/month</span></p>
+                    <p style="font-size:2.5rem;font-family:var(--font-display);font-weight:800;color:var(--gray-800);margin:16px 0;">$99<span style="font-size:1rem;color:var(--gray-400);font-weight:400;">/month</span></p>
                     <p style="color:var(--gray-500);margin-bottom:24px;">4 sessions per month with one dedicated tutor.</p>
                     <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; 4 one-hour sessions</p>
                     <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; Progress reports</p>
                     <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; Direct messaging</p>
                     <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:24px;">&#x2705; Quarterly check-ins</p>
-                    <a href="/auth/register" class="btn btn-outline btn-block">Get Started</a>
+                    <a href="/consultation" class="btn btn-outline btn-block">Book Consultation</a>
                 </div>
 
                 <div class="card" style="padding:32px;text-align:center;border:3px solid var(--yellow-400);position:relative;">
                     <span style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--yellow-400);color:var(--gray-900);padding:4px 20px;border-radius:var(--radius-full);font-weight:700;font-size:0.85rem;">Most Popular</span>
                     <h3 style="color:var(--yellow-600);margin-bottom:8px;">Growth</h3>
-                    <p id="original-price" data-price="179" style="font-size:2.5rem;font-family:var(--font-display);font-weight:800;color:var(--gray-800);margin:16px 0;">
-                        <span id="final-price">$179</span><span style="font-size:1rem;color:var(--gray-400);font-weight:400;">/month</span>
-                    </p>
+                    <p style="font-size:2.5rem;font-family:var(--font-display);font-weight:800;color:var(--gray-800);margin:16px 0;">$179<span style="font-size:1rem;color:var(--gray-400);font-weight:400;">/month</span></p>
                     <p style="color:var(--gray-500);margin-bottom:24px;">8 sessions per month with flexible scheduling.</p>
                     <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; 8 one-hour sessions</p>
                     <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; Everything in Starter</p>
                     <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; Group session access</p>
                     <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:24px;">&#x2705; Priority scheduling</p>
-                    <a href="/auth/register" class="btn btn-secondary btn-block">Get Started</a>
+                    <a href="/consultation" class="btn btn-secondary btn-block">Book Consultation</a>
                 </div>
 
                 <div class="card" style="padding:32px;text-align:center;border:2px solid var(--gray-200);">
                     <h3 style="color:var(--blue-600);margin-bottom:8px;">Premium</h3>
-                    <p data-price="299" style="font-size:2.5rem;font-family:var(--font-display);font-weight:800;color:var(--gray-800);margin:16px 0;">$299<span style="font-size:1rem;color:var(--gray-400);font-weight:400;">/month</span></p>
+                    <p style="font-size:2.5rem;font-family:var(--font-display);font-weight:800;color:var(--gray-800);margin:16px 0;">$299<span style="font-size:1rem;color:var(--gray-400);font-weight:400;">/month</span></p>
                     <p style="color:var(--gray-500);margin-bottom:24px;">Unlimited sessions for maximum learning.</p>
                     <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; Unlimited sessions</p>
                     <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; Everything in Growth</p>
                     <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; Multiple subjects</p>
                     <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:24px;">&#x2705; Dedicated coordinator</p>
-                    <a href="/auth/register" class="btn btn-outline btn-block">Get Started</a>
+                    <a href="/consultation" class="btn btn-outline btn-block">Book Consultation</a>
+                </div>
+            </div>
+
+            <div style="max-width:600px;margin:0 auto;">
+                <div class="card" style="padding:32px;text-align:center;">
+                    <h3 style="font-size:1.2rem;margin-bottom:12px;">How Pricing Works</h3>
+                    <p style="color:var(--gray-600);line-height:1.8;margin-bottom:20px;">After your free consultation, we will put together a personalized plan for your child. Once you agree, we set up recurring payments so everything is seamless. You can cancel anytime from your dashboard.</p>
+                    <a href="/consultation" class="btn btn-primary btn-lg">Start with a Free Consultation</a>
                 </div>
             </div>
 
             <!-- Referral Code -->
-            <div style="max-width:500px;margin:0 auto;">
-                <div class="card" style="padding:32px;">
+            <div style="max-width:500px;margin:32px auto 0;">
+                <div class="card" style="padding:28px;">
                     <h3 style="font-size:1.1rem;margin-bottom:16px;text-align:center;">&#x1F381; Have a Referral Code?</h3>
                     <form id="referral-form" style="display:flex;gap:12px;">
                         <input type="text" id="referral-code" class="form-control" placeholder="Enter referral code" style="text-transform:uppercase;">
-                        <button type="submit" class="btn btn-primary">Apply</button>
+                        <button type="submit" class="btn btn-primary">Check</button>
                     </form>
                     <div id="referral-result" style="display:none;margin-top:12px;"></div>
-                    <p style="text-align:center;margin-top:12px;font-size:0.85rem;color:var(--gray-400);">Everyone gets a unique referral code when they sign up. Share yours to give friends 10% off!</p>
+                    <p style="text-align:center;margin-top:12px;font-size:0.85rem;color:var(--gray-400);">Referral codes are provided by BrightMinds. Mention it during your consultation to receive your discount!</p>
                 </div>
             </div>
 
-            <div style="text-align:center;margin-top:32px;">
+            <div style="text-align:center;margin-top:24px;">
                 <p style="color:var(--gray-400);font-size:0.9rem;">&#x1F49A; 3% of every payment supports <%= charityName %>. <a href="/charity">Learn more</a>.</p>
             </div>
         </div>

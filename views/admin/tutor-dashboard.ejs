@@ -1,6 +1,5 @@
 <%- include('../partials/header') %>
 <%- include('../partials/nav') %>
-
 <main id="main-content">
     <div class="dashboard-grid">
         <aside class="dashboard-sidebar">
@@ -10,56 +9,38 @@
                 <li><a href="/parent/messages">&#x1F4AC; Messages <% if (unreadCount > 0) { %><span class="badge message-badge"><%= unreadCount %></span><% } %></a></li>
             </ul>
         </aside>
-
         <div class="dashboard-main">
-            <div class="dashboard-welcome">
-                <h1>Tutor Dashboard</h1>
-                <p>Welcome, <%= user.firstName %>! Manage your sessions, students, and profile.</p>
-            </div>
+            <div class="dashboard-welcome"><h1>Tutor Dashboard</h1><p>Welcome, <%= user.firstName %>!</p></div>
 
-            <!-- Profile Quick Edit -->
+            <% if (!profile.approved) { %>
+            <div class="alert alert-warning">Your account is pending approval. You can set up your profile and availability while you wait.</div>
+            <% } %>
+
+            <!-- Profile -->
             <div class="card" style="margin-bottom:24px;padding:24px;">
                 <h2 style="font-size:1.15rem;margin-bottom:16px;">My Profile</h2>
                 <form action="/admin/tutor/profile" method="POST" enctype="multipart/form-data">
                     <div class="form-row">
-                        <div class="form-group">
-                            <label for="tagline">Tagline</label>
-                            <input type="text" id="tagline" name="tagline" class="form-control" value="<%= profile.tagline || '' %>" placeholder="e.g., Making math fun since 2020">
-                        </div>
-                        <div class="form-group">
-                            <label for="subjects">Subjects (comma separated)</label>
-                            <input type="text" id="subjects" name="subjects" class="form-control" value="<%= (profile.subjects || []).join(', ') %>">
-                        </div>
+                        <div class="form-group"><label for="tagline">Tagline</label><input type="text" id="tagline" name="tagline" class="form-control" value="<%= profile.tagline || '' %>" placeholder="e.g., Making math fun since 2020"></div>
+                        <div class="form-group"><label for="subjects">Subjects (comma separated)</label><input type="text" id="subjects" name="subjects" class="form-control" value="<%= (profile.subjects || []).join(', ') %>"></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label for="education">Education</label>
-                            <input type="text" id="education" name="education" class="form-control" value="<%= profile.education || '' %>">
-                        </div>
-                        <div class="form-group">
-                            <label for="experience_years">Years of Experience</label>
-                            <input type="number" id="experience_years" name="experience_years" class="form-control" value="<%= profile.experience_years || 0 %>">
-                        </div>
+                        <div class="form-group"><label for="education">Education</label><input type="text" id="education" name="education" class="form-control" value="<%= profile.education || '' %>"></div>
+                        <div class="form-group"><label for="experience_years">Years of Experience</label><input type="number" id="experience_years" name="experience_years" class="form-control" value="<%= profile.experience_years || 0 %>"></div>
                     </div>
-                    <div class="form-group">
-                        <label for="bio">Bio</label>
-                        <textarea id="bio" name="bio" class="form-control" rows="3"><%= profile.bio || '' %></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="profile_picture">Profile Picture</label>
-                        <input type="file" id="profile_picture" name="profile_picture" class="form-control" accept="image/*">
-                    </div>
+                    <div class="form-group"><label for="bio">Bio</label><textarea id="bio" name="bio" class="form-control" rows="3"><%= profile.bio || '' %></textarea></div>
+                    <div class="form-group"><label for="profile_picture">Profile Picture</label><input type="file" id="profile_picture" name="profile_picture" class="form-control" accept="image/*"></div>
                     <button type="submit" class="btn btn-primary btn-sm">Update Profile</button>
                 </form>
             </div>
 
-            <!-- Availability Editor -->
+            <!-- Availability -->
             <div class="card" style="margin-bottom:24px;padding:24px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                     <h2 style="font-size:1.15rem;">My Availability</h2>
                     <button onclick="saveAvailability()" class="btn btn-primary btn-sm">Save Availability</button>
                 </div>
-                <div id="availability-editor" data-existing='[]'></div>
+                <div id="availability-editor" data-existing='<%= JSON.stringify(availability.map(a => ({day_of_week: a.day_of_week, start_time: a.start_time.substring(0,5), end_time: a.end_time.substring(0,5)}))) %>'></div>
             </div>
 
             <!-- Upcoming Sessions -->
@@ -68,30 +49,21 @@
                 <% sessions.forEach(s => { %>
                 <div class="card" style="margin-bottom:12px;padding:20px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-                        <div>
-                            <h4 style="font-size:1rem;"><%= s.student_first %> <%= s.student_last %></h4>
-                            <p style="color:var(--gray-500);font-size:0.85rem;"><%= s.subject || 'General' %> &middot; <%= new Date(s.booking_date).toLocaleDateString() %> &middot; <%= s.start_time?.substring(0,5) %> - <%= s.end_time?.substring(0,5) %></p>
-                        </div>
+                        <div><h4><%= s.student_first %> <%= s.student_last %></h4><p style="color:var(--gray-500);font-size:0.85rem;"><%= s.subject || 'General' %> &middot; <%= new Date(s.booking_date).toLocaleDateString() %> &middot; <%= s.start_time?.substring(0,5) %> - <%= s.end_time?.substring(0,5) %></p></div>
                         <div style="display:flex;gap:8px;align-items:center;">
                             <span class="badge-status badge-<%= s.status %>"><%= s.status %></span>
-                            <% if (s.status === 'pending') { %>
-                                <button onclick="confirmBooking(<%= s.id %>)" class="btn btn-sm" style="background:var(--green-500);color:white;">Confirm</button>
-                            <% } %>
-                            <% if (s.status === 'confirmed') { %>
-                                <a href="/parent/session/<%= s.id %>" class="btn btn-primary btn-sm">Join</a>
-                            <% } %>
-                            <a href="/admin/tutor/session-sheet/<%= s.id %>" class="btn btn-outline btn-sm">Session Sheet</a>
+                            <% if (s.status === 'pending') { %><button onclick="confirmBooking(<%= s.id %>)" class="btn btn-sm" style="background:var(--green-500);color:white;">Confirm</button><% } %>
+                            <% if (s.status === 'confirmed') { %><a href="/parent/session/<%= s.id %>" class="btn btn-primary btn-sm">Join</a><% } %>
+                            <a href="/admin/tutor/session-sheet/<%= s.id %>" class="btn btn-outline btn-sm">Sheet</a>
                         </div>
                     </div>
                 </div>
                 <% }); %>
             <% } else { %>
-                <div class="card" style="padding:32px;text-align:center;">
-                    <p style="color:var(--gray-400);">No upcoming sessions scheduled.</p>
-                </div>
+                <div class="card" style="padding:32px;text-align:center;"><p style="color:var(--gray-400);">No upcoming sessions.</p></div>
             <% } %>
 
-            <!-- My Students -->
+            <!-- Students -->
             <h2 style="font-size:1.25rem;margin:32px 0 16px;">My Students</h2>
             <% if (students && students.length > 0) { %>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;">
@@ -99,10 +71,7 @@
                 <div class="card" style="padding:20px;">
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
                         <div style="width:40px;height:40px;border-radius:50%;background:var(--yellow-100);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;color:var(--yellow-700);"><%= st.first_name?.charAt(0) %><%= st.last_name?.charAt(0) %></div>
-                        <div>
-                            <h4 style="font-size:0.95rem;"><%= st.first_name %> <%= st.last_name %></h4>
-                            <p style="color:var(--gray-400);font-size:0.8rem;">Grade: <%= st.grade_level || 'N/A' %></p>
-                        </div>
+                        <div><h4 style="font-size:0.95rem;"><%= st.first_name %> <%= st.last_name %></h4><p style="color:var(--gray-400);font-size:0.8rem;">Grade: <%= st.grade_level || 'N/A' %></p></div>
                     </div>
                     <div style="display:flex;gap:8px;">
                         <a href="/admin/tutor/report-card/<%= st.id %>" class="btn btn-outline btn-sm" style="font-size:0.8rem;">Report Card</a>
@@ -112,12 +81,9 @@
                 <% }); %>
             </div>
             <% } else { %>
-                <div class="card" style="padding:32px;text-align:center;">
-                    <p style="color:var(--gray-400);">No students assigned yet.</p>
-                </div>
+                <div class="card" style="padding:32px;text-align:center;"><p style="color:var(--gray-400);">No students assigned yet.</p></div>
             <% } %>
         </div>
     </div>
 </main>
-
 <%- include('../partials/footer') %>

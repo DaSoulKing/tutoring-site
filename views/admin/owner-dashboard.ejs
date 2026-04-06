@@ -1,55 +1,66 @@
 <%- include('../partials/header') %>
 <%- include('../partials/nav') %>
-
 <main id="main-content">
     <div class="dashboard-grid">
         <aside class="dashboard-sidebar">
             <ul class="sidebar-menu">
                 <li><a href="/admin/owner" class="active">&#x1F3E0; Dashboard</a></li>
                 <li><a href="/admin/owner/calendar">&#x1F4C5; Calendar</a></li>
-                <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Manage Tutors</a></li>
-                <li><a href="/admin/owner/students">&#x1F393; Manage Students</a></li>
+                <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Tutors</a></li>
+                <li><a href="/admin/owner/students">&#x1F393; Students</a></li>
+                <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
+                <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
             </ul>
         </aside>
-
         <div class="dashboard-main">
-            <div class="dashboard-welcome">
-                <h1>Owner Dashboard</h1>
-                <p>Welcome back, <%= user.firstName %>. Here is your overview.</p>
+            <div class="dashboard-welcome"><h1>Owner Dashboard</h1><p>Welcome back, <%= user.firstName %>.</p></div>
+
+            <div class="stat-cards">
+                <div class="stat-card"><h3><%= stats.tutors %></h3><p>Active Tutors</p></div>
+                <div class="stat-card yellow"><h3><%= stats.students %></h3><p>Students/Parents</p></div>
+                <div class="stat-card green"><h3><%= stats.activeSubscriptions %></h3><p>Subscriptions</p></div>
+                <div class="stat-card red"><h3><%= stats.openInquiries %></h3><p>Open Inquiries</p></div>
             </div>
 
-            <!-- Stats -->
-            <div class="stat-cards">
-                <div class="stat-card">
-                    <h3><%= stats.tutors %></h3>
-                    <p>Active Tutors</p>
-                </div>
-                <div class="stat-card yellow">
-                    <h3><%= stats.students %></h3>
-                    <p>Students/Parents</p>
-                </div>
-                <div class="stat-card green">
-                    <h3><%= stats.activeSubscriptions %></h3>
-                    <p>Active Subscriptions</p>
-                </div>
-                <div class="stat-card red">
-                    <h3><%= stats.pendingApplications %></h3>
-                    <p>Pending Applications</p>
+            <!-- Quick Actions -->
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:32px;">
+                <a href="/admin/owner/tutors" class="btn btn-primary btn-sm">Manage Tutors</a>
+                <a href="/admin/owner/students" class="btn btn-outline btn-sm">Manage Students</a>
+                <a href="/admin/owner/blog/new" class="btn btn-outline btn-sm">Write Blog Post</a>
+                <form action="/admin/owner/referral-code" method="POST" style="display:flex;gap:8px;align-items:center;">
+                    <input type="number" name="discount_percent" value="10" class="form-control" style="width:60px;padding:6px;" min="1" max="100">
+                    <input type="text" name="note" placeholder="Note (optional)" class="form-control" style="width:150px;padding:6px;">
+                    <button type="submit" class="btn btn-secondary btn-sm">Generate Referral Code</button>
+                </form>
+            </div>
+
+            <!-- Pending Tutor Approvals -->
+            <% if (pendingTutors && pendingTutors.length > 0) { %>
+            <h2 style="font-size:1.25rem;margin-bottom:16px;">&#x23F3; Tutors Pending Approval</h2>
+            <% pendingTutors.forEach(t => { %>
+            <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--yellow-500);">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <h4><%= t.first_name %> <%= t.last_name %></h4>
+                        <p style="color:var(--gray-500);font-size:0.85rem;"><%= t.email %> &middot; Subjects: <%= (t.subjects || []).join(', ') || 'None yet' %></p>
+                    </div>
+                    <form action="/admin/owner/tutors/<%= t.id %>/approve" method="POST">
+                        <button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;">Approve</button>
+                    </form>
                 </div>
             </div>
+            <% }); %>
+            <% } %>
 
             <!-- Check-in Alerts -->
             <% if (checkins && checkins.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin-bottom:16px;">&#x1F514; 3-Month Check-ins Due</h2>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F514; 3-Month Check-ins Due</h2>
             <% checkins.forEach(c => { %>
             <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--orange-500);">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-                    <div>
-                        <h4 style="font-size:1rem;"><%= c.first_name %> <%= c.last_name %></h4>
-                        <p style="color:var(--gray-500);font-size:0.85rem;">Due: <%= new Date(c.due_date).toLocaleDateString() %> &middot; <%= c.email %></p>
-                    </div>
-                    <form action="/admin/owner/checkins/<%= c.id %>/complete" method="POST" style="display:flex;gap:8px;align-items:center;">
-                        <input type="text" name="notes" class="form-control" placeholder="Check-in notes..." style="width:200px;padding:6px 12px;font-size:0.85rem;">
+                    <div><h4><%= c.first_name %> <%= c.last_name %></h4><p style="color:var(--gray-500);font-size:0.85rem;">Due: <%= new Date(c.due_date).toLocaleDateString() %> &middot; <%= c.email %></p></div>
+                    <form action="/admin/owner/checkins/<%= c.id %>/complete" method="POST" style="display:flex;gap:8px;">
+                        <input type="text" name="notes" class="form-control" placeholder="Notes..." style="width:200px;padding:6px 12px;font-size:0.85rem;">
                         <button type="submit" class="btn btn-primary btn-sm">Complete</button>
                     </form>
                 </div>
@@ -59,78 +70,65 @@
 
             <!-- Payment Reminders -->
             <% if (payments && payments.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:32px 0 16px;">&#x1F4B0; Upcoming Payment Reminders</h2>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr><th>Client</th><th>Email</th><th>Phone</th><th>Plan</th><th>Billing Date</th><th>Amount</th></tr>
-                    </thead>
-                    <tbody>
-                        <% payments.forEach(p => { %>
-                        <tr>
-                            <td><strong><%= p.first_name %> <%= p.last_name %></strong></td>
-                            <td><%= p.email %></td>
-                            <td><%= p.phone || 'N/A' %></td>
-                            <td><%= p.plan_name %></td>
-                            <td><%= new Date(p.next_billing_date).toLocaleDateString() %></td>
-                            <td>$<%= parseFloat(p.price).toFixed(2) %></td>
-                        </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
-            </div>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F4B0; Payment Reminders</h2>
+            <div class="table-wrapper"><table><thead><tr><th>Client</th><th>Email</th><th>Phone</th><th>Plan</th><th>Billing Date</th><th>Amount</th></tr></thead><tbody>
+                <% payments.forEach(p => { %>
+                <tr><td><strong><%= p.first_name %> <%= p.last_name %></strong></td><td><%= p.email %></td><td><%= p.phone || 'N/A' %></td><td><%= p.plan_name %></td><td><%= new Date(p.next_billing_date).toLocaleDateString() %></td><td>$<%= parseFloat(p.price).toFixed(2) %></td></tr>
+                <% }); %>
+            </tbody></table></div>
             <% } %>
 
-            <!-- Pending Applications -->
+            <!-- Applications - expandable -->
             <% if (applications && applications.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:32px 0 16px;">&#x1F4CB; Pending Applications</h2>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F4CB; Pending Applications (<%= stats.pendingApplications %>)</h2>
             <% applications.forEach(app => { %>
-            <div class="card" style="margin-bottom:12px;padding:20px;">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+            <details class="card" style="margin-bottom:12px;padding:20px;cursor:pointer;">
+                <summary style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
                     <div>
-                        <h4 style="font-size:1rem;"><%= app.first_name %> <%= app.last_name %> <span class="badge-status badge-pending"><%= app.applicant_type %></span></h4>
-                        <p style="color:var(--gray-500);font-size:0.85rem;"><%= app.email %> &middot; Subjects: <%= (app.subjects || []).join(', ') %></p>
-                        <% if (app.why_join) { %><p style="color:var(--gray-600);font-size:0.9rem;margin-top:8px;"><%= app.why_join.substring(0, 200) %><%= app.why_join.length > 200 ? '...' : '' %></p><% } %>
+                        <h4><%= app.first_name %> <%= app.last_name %> <span class="badge-status badge-pending"><%= app.applicant_type %></span></h4>
+                        <p style="color:var(--gray-500);font-size:0.85rem;"><%= app.email %> &middot; <%= app.phone || 'No phone' %> &middot; Subjects: <%= (app.subjects || []).join(', ') %></p>
                     </div>
+                    <a href="/admin/owner/applications/<%= app.id %>" class="btn btn-outline btn-sm" onclick="event.stopPropagation();">Full Details</a>
+                </summary>
+                <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--gray-100);">
+                    <% if (app.education) { %><p style="margin-bottom:8px;"><strong>Education:</strong> <%= app.education %></p><% } %>
+                    <% if (app.experience) { %><p style="margin-bottom:8px;"><strong>Experience:</strong> <%= app.experience %></p><% } %>
+                    <% if (app.availability) { %><p style="margin-bottom:8px;"><strong>Availability:</strong> <%= app.availability %></p><% } %>
+                    <% if (app.why_join) { %><p style="margin-bottom:8px;"><strong>Why join:</strong> <%= app.why_join %></p><% } %>
+                    <% if (app.cover_letter) { %><p style="margin-bottom:8px;"><strong>Cover letter:</strong> <%= app.cover_letter %></p><% } %>
+                    <% if (app.resume_path) { %><p style="margin-bottom:16px;"><a href="<%= app.resume_path %>" target="_blank">View Resume</a></p><% } %>
                     <div style="display:flex;gap:8px;">
-                        <form action="/admin/owner/applications/<%= app.id %>/status" method="POST" style="display:inline;">
-                            <input type="hidden" name="status" value="accepted">
-                            <input type="hidden" name="reviewer_notes" value="">
-                            <button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;">Accept</button>
-                        </form>
-                        <form action="/admin/owner/applications/<%= app.id %>/status" method="POST" style="display:inline;">
-                            <input type="hidden" name="status" value="rejected">
-                            <input type="hidden" name="reviewer_notes" value="">
-                            <button type="submit" class="btn btn-sm" style="background:var(--red-500);color:white;">Reject</button>
-                        </form>
+                        <form action="/admin/owner/applications/<%= app.id %>/status" method="POST"><input type="hidden" name="status" value="accepted"><input type="hidden" name="reviewer_notes" value=""><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;">Accept</button></form>
+                        <form action="/admin/owner/applications/<%= app.id %>/status" method="POST"><input type="hidden" name="status" value="rejected"><input type="hidden" name="reviewer_notes" value=""><button type="submit" class="btn btn-sm" style="background:var(--red-500);color:white;">Reject</button></form>
                     </div>
                 </div>
-            </div>
+            </details>
             <% }); %>
             <% } %>
 
-            <!-- Open Inquiries -->
+            <!-- Inquiries - expandable -->
             <% if (inquiries && inquiries.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:32px 0 16px;">&#x1F4E8; Open Inquiries</h2>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F4E8; Open Inquiries/Consultations (<%= stats.openInquiries %>)</h2>
             <% inquiries.forEach(inq => { %>
-            <div class="card" style="margin-bottom:12px;padding:20px;">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+            <details class="card" style="margin-bottom:12px;padding:20px;cursor:pointer;">
+                <summary style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
                     <div>
-                        <h4 style="font-size:1rem;"><%= inq.name %> <span class="badge-status badge-pending"><%= inq.inquiry_type %></span></h4>
+                        <h4><%= inq.name %> <span class="badge-status badge-pending"><%= inq.inquiry_type %></span></h4>
                         <p style="color:var(--blue-500);font-size:0.85rem;font-weight:600;"><%= inq.subject %></p>
-                        <p style="color:var(--gray-600);font-size:0.9rem;margin-top:4px;"><%= inq.message.substring(0, 200) %></p>
-                        <p style="color:var(--gray-400);font-size:0.8rem;margin-top:4px;"><%= inq.email %> &middot; <%= new Date(inq.created_at).toLocaleDateString() %></p>
+                        <p style="color:var(--gray-400);font-size:0.8rem;"><%= inq.email %> &middot; <%= inq.phone || 'No phone' %> &middot; <%= new Date(inq.created_at).toLocaleDateString() %></p>
                     </div>
-                    <form action="/admin/owner/inquiries/<%= inq.id %>/status" method="POST">
+                    <form action="/admin/owner/inquiries/<%= inq.id %>/status" method="POST" onclick="event.stopPropagation();">
                         <input type="hidden" name="status" value="resolved">
-                        <button type="submit" class="btn btn-sm btn-outline">Mark Resolved</button>
+                        <button type="submit" class="btn btn-sm btn-outline">Resolve</button>
                     </form>
+                </summary>
+                <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--gray-100);">
+                    <p style="color:var(--gray-700);line-height:1.8;white-space:pre-wrap;"><%= inq.message %></p>
                 </div>
-            </div>
+            </details>
             <% }); %>
             <% } %>
         </div>
     </div>
 </main>
-
 <%- include('../partials/footer') %>

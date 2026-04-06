@@ -1,6 +1,5 @@
 <%- include('partials/header') %>
 <%- include('partials/nav') %>
-
 <main id="main-content">
     <section class="section" style="background:linear-gradient(135deg, var(--blue-50), var(--white));">
         <div class="container">
@@ -9,38 +8,13 @@
                 <h2>Our Services</h2>
                 <p>Comprehensive tutoring solutions designed to help every student succeed.</p>
             </div>
-
-            <div class="services-grid">
-                <div class="card service-card">
-                    <div class="card-icon blue" aria-hidden="true" style="width:72px;height:72px;font-size:2rem;">&#x1F393;</div>
-                    <h3>One-on-One Tutoring</h3>
-                    <p>Fully personalized sessions where your child gets undivided attention from an expert tutor. We tailor every lesson to match your child's pace, learning style, and goals.</p>
-                </div>
-                <div class="card service-card">
-                    <div class="card-icon yellow" aria-hidden="true" style="width:72px;height:72px;font-size:2rem;">&#x1F46B;</div>
-                    <h3>Group Sessions</h3>
-                    <p>Small group learning with multiple students per tutor. Students benefit from peer interaction, collaborative problem-solving, and a fun, social learning environment.</p>
-                </div>
-                <div class="card service-card">
-                    <div class="card-icon green" aria-hidden="true" style="width:72px;height:72px;font-size:2rem;">&#x1F4BB;</div>
-                    <h3>Online Video Sessions</h3>
-                    <p>Learn from anywhere with our built-in video conferencing. No need to download extra apps or create accounts. Just click the session link and start learning.</p>
-                </div>
-                <div class="card service-card">
-                    <div class="card-icon orange" aria-hidden="true" style="width:72px;height:72px;font-size:2rem;">&#x1F4CA;</div>
-                    <h3>Progress Reports</h3>
-                    <p>Detailed report cards from tutors with grades, scores, and feedback. Parents stay informed with written evaluations and quarterly check-ins.</p>
-                </div>
-                <div class="card service-card">
-                    <div class="card-icon blue" aria-hidden="true" style="width:72px;height:72px;font-size:2rem;">&#x1F4D6;</div>
-                    <h3>Subject Coverage</h3>
-                    <p>From Math and Science to English, History, Languages, Test Prep, and Computer Science. We cover all major subjects across grade levels.</p>
-                </div>
-                <div class="card service-card">
-                    <div class="card-icon yellow" aria-hidden="true" style="width:72px;height:72px;font-size:2rem;">&#x1F4AC;</div>
-                    <h3>Parent Communication</h3>
-                    <p>Direct messaging with tutors, a dedicated complaint and inquiry system, and email notifications. Parents are always part of the conversation.</p>
-                </div>
+            <div class="center-card-grid">
+                <div class="card service-card"><div class="card-icon blue" aria-hidden="true" style="width:72px;height:72px;font-size:2rem;">&#x1F393;</div><h3>One-on-One Tutoring</h3><p>Fully personalized sessions where your child gets undivided attention from an expert tutor. We tailor every lesson to match your child's pace, learning style, and goals.</p></div>
+                <div class="card service-card"><div class="card-icon yellow" aria-hidden="true" style="width:72px;height:72px;font-size:2rem;">&#x1F46B;</div><h3>Group Sessions</h3><p>Small group learning with multiple students per tutor. Students benefit from peer interaction, collaborative problem-solving, and a fun, social learning environment.</p></div>
+                <div class="card service-card"><div class="card-icon green" aria-hidden="true" style="width:72px;height:72px;font-size:2rem;">&#x1F4BB;</div><h3>Online Video Sessions</h3><p>Learn from anywhere with our built-in video conferencing. No need to download extra apps or create accounts. Just click the session link and start learning.</p></div>
+                <div class="card service-card"><div class="card-icon orange" aria-hidden="true" style="width:72px;height:72px;font-size:2rem;">&#x1F4CA;</div><h3>Progress Reports</h3><p>Detailed report cards from tutors with grades, scores, and feedback. Parents stay informed with written evaluations and quarterly check-ins.</p></div>
+                <div class="card service-card"><div class="card-icon blue" aria-hidden="true" style="width:72px;height:72px;font-size:2rem;">&#x1F4D6;</div><h3>Subject Coverage</h3><p>From Math and Science to English, History, Languages, Test Prep, and Computer Science. We cover all major subjects across grade levels.</p></div>
+                <div class="card service-card"><div class="card-icon yellow" aria-hidden="true" style="width:72px;height:72px;font-size:2rem;">&#x1F4AC;</div><h3>Parent Communication</h3><p>Direct messaging with tutors, a dedicated complaint and inquiry system, and email notifications. Parents are always part of the conversation.</p></div>
             </div>
         </div>
     </section>
@@ -51,7 +25,7 @@
                 <span class="section-badge">How It Works</span>
                 <h2>Getting Started is Easy</h2>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:32px;max-width:900px;margin:0 auto;">
+            <div class="center-card-grid" style="max-width:900px;margin:0 auto;">
                 <div style="text-align:center;">
                     <div style="width:64px;height:64px;border-radius:50%;background:var(--blue-500);color:white;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.5rem;font-weight:800;margin:0 auto 16px;">1</div>
                     <h3 style="font-size:1.1rem;margin-bottom:8px;">Book a Free Call</h3>
@@ -74,5 +48,4 @@
         </div>
     </section>
 </main>
-
 <%- include('partials/footer') %>

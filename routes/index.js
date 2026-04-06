@@ -3,8 +3,8 @@ const pool = require('../db/pool');
 const { verifyRecaptcha } = require('../middleware/recaptcha');
 const multer = require('multer');
 const path = require('path');
+const crypto = require('crypto');
 
-// File upload config for applications
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'public', 'uploads')),
     filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.]/g, '_'))
@@ -17,23 +17,17 @@ const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilt
 // Home page
 router.get('/', async (req, res) => {
     try {
-        // Get featured tutors for carousel
         const tutorsResult = await pool.query(`
             SELECT u.id, u.first_name, u.last_name, u.profile_picture,
                    tp.bio, tp.tagline, tp.subjects, tp.carousel_description
-            FROM users u
-            JOIN tutor_profiles tp ON u.id = tp.user_id
+            FROM users u JOIN tutor_profiles tp ON u.id = tp.user_id
             WHERE u.is_active = true AND tp.approved = true AND tp.is_featured = true
             ORDER BY RANDOM() LIMIT 10
         `);
-
         res.render('home', {
             title: 'BrightMinds Tutoring - Where Learning Comes Alive',
             tutors: tutorsResult.rows,
-            meta: {
-                description: 'BrightMinds Tutoring offers personalized, engaging tutoring for students of all ages. Our expert tutors help kids reach their full potential. 3% of every payment goes to charity.',
-                keywords: 'tutoring, education, kids tutoring, online tutoring, math tutor, science tutor'
-            }
+            meta: { description: 'BrightMinds Tutoring offers personalized, engaging tutoring for students of all ages. 3% of every payment goes to charity.', keywords: 'tutoring, education, kids tutoring, online tutoring' }
         });
     } catch (err) {
         console.error(err);
@@ -41,28 +35,16 @@ router.get('/', async (req, res) => {
     }
 });
 
-// About us
+// About
 router.get('/about', async (req, res) => {
     try {
-        const owners = await pool.query(`
-            SELECT u.first_name, u.last_name, u.profile_picture
-            FROM users u WHERE u.role = 'owner' AND u.is_active = true
-        `);
+        const owners = await pool.query(`SELECT u.first_name, u.last_name, u.profile_picture FROM users u WHERE u.role = 'owner' AND u.is_active = true`);
         const tutors = await pool.query(`
-            SELECT u.id, u.first_name, u.last_name, u.profile_picture,
-                   tp.bio, tp.tagline, tp.subjects, tp.experience_years
-            FROM users u
-            JOIN tutor_profiles tp ON u.id = tp.user_id
-            WHERE u.is_active = true AND tp.approved = true
-            ORDER BY tp.is_featured DESC, u.first_name
+            SELECT u.id, u.first_name, u.last_name, u.profile_picture, tp.bio, tp.tagline, tp.subjects, tp.experience_years
+            FROM users u JOIN tutor_profiles tp ON u.id = tp.user_id
+            WHERE u.is_active = true AND tp.approved = true ORDER BY tp.is_featured DESC, u.first_name
         `);
-
-        res.render('about', {
-            title: 'About Us - BrightMinds Tutoring',
-            owners: owners.rows,
-            tutors: tutors.rows,
-            meta: { description: 'Meet the passionate team behind BrightMinds Tutoring.' }
-        });
+        res.render('about', { title: 'About Us - BrightMinds Tutoring', owners: owners.rows, tutors: tutors.rows, meta: { description: 'Meet the passionate team behind BrightMinds Tutoring.' } });
     } catch (err) {
         console.error(err);
         res.render('about', { title: 'About Us', owners: [], tutors: [], meta: {} });
@@ -71,135 +53,127 @@ router.get('/about', async (req, res) => {
 
 // Contact
 router.get('/contact', (req, res) => {
-    res.render('contact', {
-        title: 'Contact Us - BrightMinds Tutoring',
-        meta: { description: 'Get in touch with BrightMinds Tutoring. We are here to help with any questions or concerns.' }
-    });
+    res.render('contact', { title: 'Contact Us - BrightMinds Tutoring', meta: { description: 'Get in touch with BrightMinds Tutoring.' } });
 });
-
 router.post('/contact', verifyRecaptcha, async (req, res) => {
     try {
         const { name, email, phone, inquiry_type, subject, message } = req.body;
-        await pool.query(`
-            INSERT INTO inquiries (user_id, name, email, phone, inquiry_type, subject, message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-        `, [req.session.user?.id || null, name, email, phone || null, inquiry_type || 'general', subject, message]);
-
-        // Email notification would go here via nodemailer
+        await pool.query(`INSERT INTO inquiries (user_id, name, email, phone, inquiry_type, subject, message) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+            [req.session.user?.id || null, name, email, phone || null, inquiry_type || 'general', subject, message]);
         req.session.success = 'Your message has been sent! We will get back to you soon.';
         res.redirect('/contact');
-    } catch (err) {
-        console.error(err);
-        req.session.error = 'Something went wrong. Please try again.';
-        res.redirect('/contact');
-    }
+    } catch (err) { console.error(err); req.session.error = 'Something went wrong.'; res.redirect('/contact'); }
 });
 
 // Services
 router.get('/services', (req, res) => {
-    res.render('services', {
-        title: 'Our Services - BrightMinds Tutoring',
-        meta: { description: 'Explore our tutoring services including one-on-one sessions, group learning, and more.' }
-    });
+    res.render('services', { title: 'Our Services - BrightMinds Tutoring', meta: { description: 'Explore our tutoring services.' } });
 });
 
-// Consultation booking
+// Consultation
 router.get('/consultation', (req, res) => {
-    res.render('consultation', {
-        title: 'Book a Free Consultation - BrightMinds Tutoring',
-        meta: { description: 'Book a free consultation call to discuss your child\'s learning needs.' }
-    });
+    res.render('consultation', { title: 'Book a Free Consultation - BrightMinds Tutoring', meta: { description: 'Book a free consultation call.' } });
 });
-
 router.post('/consultation', verifyRecaptcha, async (req, res) => {
     try {
         const { name, email, phone, child_grade, subjects, preferred_time, message } = req.body;
-        await pool.query(`
-            INSERT INTO inquiries (name, email, phone, inquiry_type, subject, message)
-            VALUES ($1, $2, $3, 'inquiry', $4, $5)
-        `, [name, email, phone, 'Free Consultation Request', `Grade: ${child_grade}, Subjects: ${subjects}, Preferred Time: ${preferred_time}. ${message || ''}`]);
-
+        await pool.query(`INSERT INTO inquiries (name, email, phone, inquiry_type, subject, message) VALUES ($1,$2,$3,'inquiry',$4,$5)`,
+            [name, email, phone, 'Free Consultation Request', `Grade: ${child_grade}\nSubjects: ${subjects}\nPreferred Time: ${preferred_time}\nMessage: ${message || 'N/A'}`]);
         req.session.success = 'Your consultation request has been submitted! We will contact you within 24 hours.';
         res.redirect('/consultation');
-    } catch (err) {
-        console.error(err);
-        req.session.error = 'Something went wrong. Please try again.';
-        res.redirect('/consultation');
-    }
+    } catch (err) { console.error(err); req.session.error = 'Something went wrong.'; res.redirect('/consultation'); }
 });
 
-// Employment / Apply
+// Employment
 router.get('/employment', (req, res) => {
-    res.render('employment', {
-        title: 'Join Our Team - BrightMinds Tutoring',
-        meta: { description: 'Apply to become a tutor or register as a student at BrightMinds Tutoring.' }
-    });
+    res.render('employment', { title: 'Join Our Team - BrightMinds Tutoring', meta: { description: 'Apply to become a tutor.' } });
 });
-
 router.post('/employment', upload.single('resume'), verifyRecaptcha, async (req, res) => {
     try {
         const { applicant_type, first_name, last_name, email, phone, subjects, experience, education, availability, why_join, cover_letter } = req.body;
         const resumePath = req.file ? '/uploads/' + req.file.filename : null;
         const subjectsArray = subjects ? subjects.split(',').map(s => s.trim()) : [];
-
-        await pool.query(`
-            INSERT INTO applications (applicant_type, first_name, last_name, email, phone, resume_path, cover_letter, subjects, experience, education, availability, why_join)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        `, [applicant_type, first_name, last_name, email, phone, resumePath, cover_letter, subjectsArray, experience, education, availability, why_join]);
-
-        req.session.success = 'Your application has been submitted! We will review it and get back to you.';
+        await pool.query(`INSERT INTO applications (applicant_type, first_name, last_name, email, phone, resume_path, cover_letter, subjects, experience, education, availability, why_join) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+            [applicant_type, first_name, last_name, email, phone, resumePath, cover_letter, subjectsArray, experience, education, availability, why_join]);
+        req.session.success = 'Your application has been submitted!';
         res.redirect('/employment');
-    } catch (err) {
-        console.error(err);
-        req.session.error = 'Something went wrong. Please try again.';
-        res.redirect('/employment');
-    }
+    } catch (err) { console.error(err); req.session.error = 'Something went wrong.'; res.redirect('/employment'); }
 });
 
-// Terms and Conditions
+// Terms
 router.get('/terms', (req, res) => {
-    res.render('terms', {
-        title: 'Terms & Conditions - BrightMinds Tutoring',
-        meta: { description: 'Read our terms of service, rules, and regulations for BrightMinds Tutoring.' }
-    });
+    res.render('terms', { title: 'Terms & Conditions - BrightMinds Tutoring', meta: { description: 'Read our terms of service.' } });
 });
 
-// Charity page
+// Charity
 router.get('/charity', (req, res) => {
-    res.render('charity', {
-        title: 'Our Charity Mission - BrightMinds Tutoring',
-        meta: { description: 'Learn about our commitment to giving back. 3% of every payment goes to the Kids Education Fund.' }
-    });
+    res.render('charity', { title: 'Our Charity Mission - BrightMinds Tutoring', meta: { description: '3% of every payment goes to the Kids Education Fund.' } });
 });
 
-// Checkout
+// Checkout/Pricing - info page, book consultation to start
 router.get('/checkout', (req, res) => {
-    res.render('checkout', {
-        title: 'Checkout - BrightMinds Tutoring',
-        meta: { description: 'Complete your purchase with BrightMinds Tutoring.' }
-    });
+    res.render('checkout', { title: 'Pricing - BrightMinds Tutoring', meta: { description: 'Our tutoring plans and pricing.' } });
 });
 
+// Referral code check (one-time use, owner-assigned)
 router.post('/checkout/apply-referral', async (req, res) => {
     try {
         const { referral_code } = req.body;
         const result = await pool.query(
-            'SELECT id, first_name, referral_code FROM users WHERE referral_code = $1 AND is_active = true',
+            `SELECT * FROM referral_codes WHERE code = $1 AND is_active = true AND used_by IS NULL`,
             [referral_code.toUpperCase()]
         );
-
         if (result.rows.length > 0) {
-            // Don't let users use their own code
-            if (req.session.user && result.rows[0].id === req.session.user.id) {
-                return res.json({ success: false, message: 'You cannot use your own referral code.' });
-            }
-            return res.json({ success: true, discount: 10, message: 'Referral code applied! 10% discount.' });
+            return res.json({ success: true, discount: result.rows[0].discount_percent, message: `Referral code applied! ${result.rows[0].discount_percent}% discount.` });
+        }
+        const used = await pool.query('SELECT id FROM referral_codes WHERE code = $1 AND used_by IS NOT NULL', [referral_code.toUpperCase()]);
+        if (used.rows.length > 0) {
+            return res.json({ success: false, message: 'This referral code has already been used.' });
         }
         res.json({ success: false, message: 'Invalid referral code.' });
-    } catch (err) {
-        console.error(err);
-        res.json({ success: false, message: 'Something went wrong.' });
-    }
+    } catch (err) { console.error(err); res.json({ success: false, message: 'Something went wrong.' }); }
+});
+
+// Secret tutor signup
+router.get('/tutor-signup/:token', async (req, res) => {
+    try {
+        const invite = await pool.query(`SELECT * FROM tutor_invites WHERE token = $1 AND used = false AND expires_at > NOW()`, [req.params.token]);
+        if (invite.rows.length === 0) {
+            return res.render('error', { title: 'Invalid Link', message: 'This signup link is invalid or has expired. Please contact the admin for a new one.', code: 403 });
+        }
+        res.render('auth/tutor-signup', { title: 'Tutor Sign Up - BrightMinds', invite: invite.rows[0], token: req.params.token, meta: {} });
+    } catch (err) { console.error(err); res.render('error', { title: 'Error', message: 'Something went wrong.', code: 500 }); }
+});
+
+router.post('/tutor-signup/:token', async (req, res) => {
+    try {
+        const invite = await pool.query(`SELECT * FROM tutor_invites WHERE token = $1 AND used = false AND expires_at > NOW()`, [req.params.token]);
+        if (invite.rows.length === 0) { req.session.error = 'This signup link is invalid or has expired.'; return res.redirect('/'); }
+
+        const { email, password, confirm_password, first_name, last_name, phone } = req.body;
+        if (password !== confirm_password) { req.session.error = 'Passwords do not match.'; return res.redirect(`/tutor-signup/${req.params.token}`); }
+        if (password.length < 8) { req.session.error = 'Password must be at least 8 characters.'; return res.redirect(`/tutor-signup/${req.params.token}`); }
+
+        const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
+        if (existing.rows.length > 0) { req.session.error = 'An account with this email already exists.'; return res.redirect(`/tutor-signup/${req.params.token}`); }
+
+        const bcrypt = require('bcryptjs');
+        const hash = await bcrypt.hash(password, 12);
+        const refCode = 'BM' + crypto.randomBytes(4).toString('hex').toUpperCase();
+
+        const newUser = await pool.query(`
+            INSERT INTO users (email, password_hash, role, first_name, last_name, phone, referral_code)
+            VALUES ($1, $2, 'tutor', $3, $4, $5, $6) RETURNING id, email, role, first_name, last_name, referral_code
+        `, [email.toLowerCase(), hash, first_name, last_name, phone || null, refCode]);
+
+        const user = newUser.rows[0];
+        await pool.query(`INSERT INTO tutor_profiles (user_id, approved, subjects) VALUES ($1, true, $2)`, [user.id, invite.rows[0].subjects || []]);
+        await pool.query('UPDATE tutor_invites SET used = true, used_by = $1, used_at = NOW() WHERE token = $2', [user.id, req.params.token]);
+
+        req.session.user = { id: user.id, email: user.email, role: user.role, firstName: user.first_name, lastName: user.last_name, referralCode: user.referral_code };
+        req.session.success = 'Welcome to BrightMinds! Your tutor account is ready.';
+        res.redirect('/admin/tutor');
+    } catch (err) { console.error(err); req.session.error = 'Something went wrong.'; res.redirect(`/tutor-signup/${req.params.token}`); }
 });
 
 module.exports = router;

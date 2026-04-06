@@ -1,54 +1,70 @@
 <%- include('partials/header') %>
 <%- include('partials/nav') %>
-
 <main id="main-content">
-    <section class="section">
-        <div class="container" style="max-width:800px;">
-            <div class="section-header">
-                <h2>Terms, Rules & Regulations</h2>
-                <p>Please read these terms carefully before using BrightMinds Tutoring services.</p>
-            </div>
+    <section class="section" style="background:var(--beige);">
+        <div class="container" style="max-width:900px;">
+            <div class="section-header"><h2>Terms, Rules & Regulations</h2><p>Please read these terms carefully before using BrightMinds Tutoring services.</p></div>
 
-            <div class="card" style="padding:40px;">
+            <div class="card" style="padding:48px;">
                 <h3 style="margin-bottom:16px;color:var(--blue-700);">1. Session Policies</h3>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;"><strong>Cancellation Policy:</strong> Sessions may be cancelled up to 24 hours in advance without penalty. Cancellations made less than 24 hours before a scheduled session will be marked as a late cancellation.</p>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;"><strong>Late Cancellation Limit:</strong> Each student is allowed one late cancellation per billing cycle without penalty. Additional late cancellations within the same billing cycle may result in a fee equal to 50% of the session cost.</p>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:24px;"><strong>No-Shows:</strong> If a student does not appear for a scheduled session without prior notice, the session will be counted as used and will not be rescheduled.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Scheduling:</strong> All tutoring sessions are scheduled through the BrightMinds platform. Students and parents can view their tutor's availability through the calendar and request bookings. Tutors must confirm all booking requests before a session is finalized.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Cancellation Policy:</strong> Sessions may be cancelled up to 24 hours in advance without penalty. Cancellations made less than 24 hours before a scheduled session will be marked as a late cancellation.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Late Cancellation Limit:</strong> Each student is allowed one late cancellation per billing cycle without penalty. Additional late cancellations within the same billing cycle may result in a fee equal to 50% of the session cost.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>No-Shows:</strong> If a student does not appear for a scheduled session without prior notice, the session will be counted as used and will not be rescheduled. Repeated no-shows (three or more in a single billing cycle) may result in a review of the student's enrollment status.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:32px;"><strong>Session Duration:</strong> Standard sessions are one hour in length unless otherwise arranged. Sessions may not be shortened by either party without prior agreement. If a tutor is late, the session will be extended by the equivalent time or rescheduled at no charge.</p>
 
                 <h3 style="margin-bottom:16px;color:var(--blue-700);">2. Tutor Responsibilities</h3>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;"><strong>Missed Sessions by Tutors:</strong> If a tutor fails to attend a scheduled session, the session will be rescheduled at no cost to the student. If a tutor misses two or more sessions in a single month, the matter will be reviewed by management and may result in disciplinary action.</p>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:24px;"><strong>Session Reports:</strong> Tutors are required to complete a session sheet after each meeting, documenting topics covered, student performance, and plans for the next session.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Professionalism:</strong> Tutors are expected to maintain a professional, respectful, and encouraging demeanor during all interactions with students and parents. Tutors represent BrightMinds and should uphold our standards of excellence in every session.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Missed Sessions:</strong> If a tutor fails to attend a scheduled session, the session will be rescheduled at no cost to the student. If a tutor misses two or more sessions in a single month, the matter will be reviewed by management and may result in disciplinary action, including removal from the platform.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Session Reports:</strong> Tutors are required to complete a session sheet after each meeting, documenting topics covered, student performance, homework assigned, and plans for the next session. These reports are visible to parents and the BrightMinds administration.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:32px;"><strong>Report Cards:</strong> Tutors are expected to submit formal report cards at the end of each term or upon request. Report cards include grades, attendance scores, participation ratings, strengths, areas for improvement, and goals for the next term.</p>
 
                 <h3 style="margin-bottom:16px;color:var(--blue-700);">3. Payment and Billing</h3>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;"><strong>Billing Cycle:</strong> Subscriptions are billed on a monthly basis. Payment is due on or before the billing date shown in your dashboard.</p>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;"><strong>Payment Reminders:</strong> Parents and guardians will receive reminders via the platform and email when a payment is approaching. A text message reminder will also be sent when applicable.</p>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;"><strong>Referral Discounts:</strong> Each user receives a unique referral code upon registration. When a new user signs up using a referral code, the new user receives a 10% discount on their first billing cycle. Referral codes cannot be stacked or combined with other promotions.</p>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:24px;"><strong>Charity Contribution:</strong> 3% of every payment is donated to the <%= charityName %>. This is included in your subscription price and is not an additional charge.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Billing Cycle:</strong> Subscriptions are billed on a monthly recurring basis. Payment is due on or before the billing date shown in your dashboard. BrightMinds will send reminders via the platform and email as your billing date approaches.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Payment Methods:</strong> Payment arrangements are discussed during your consultation. BrightMinds offers flexible payment options to accommodate different family situations. Late payments may result in suspension of services until the balance is resolved.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Referral Discounts:</strong> BrightMinds offers referral discount codes on a case-by-case basis. Referral codes are one-time use and are generated by the BrightMinds team. Each code has a specific discount percentage and can only be applied once. Referral codes cannot be stacked, combined with other promotions, or transferred between families.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Price Changes:</strong> BrightMinds reserves the right to adjust pricing with at least 30 days written notice. Existing subscribers will be notified via email and through their dashboard. Price changes do not apply retroactively to the current billing cycle.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:32px;"><strong>Charity Contribution:</strong> 3% of every payment is donated to the <%= charityName %>. This is included in your subscription price and is not an additional charge. By using our services, you are contributing to education access for children in need.</p>
 
-                <h3 style="margin-bottom:16px;color:var(--blue-700);">4. Subscription Cancellation</h3>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;">You may cancel your subscription at any time through your parent/guardian dashboard. Cancellation takes effect at the end of the current billing cycle. No refunds are provided for partial months.</p>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:24px;">To cancel, navigate to your dashboard and select "Cancel Subscription." You will be asked to provide a reason for cancellation to help us improve our services.</p>
+                <h3 style="margin-bottom:16px;color:var(--blue-700);">4. Subscription Management</h3>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Cancellation:</strong> You may cancel your subscription at any time through your parent/guardian dashboard. Cancellation takes effect at the end of the current billing cycle. No prorated refunds are provided for partial months. You will continue to have access to scheduled sessions until the end of your paid period.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Pausing:</strong> If you need to temporarily pause your subscription (for vacations, holidays, or other reasons), please contact us through the inquiry form or message your coordinator. We accommodate reasonable pause requests on a case-by-case basis.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:32px;"><strong>Plan Changes:</strong> You can upgrade or downgrade your plan by contacting us through the dashboard. Upgrades take effect immediately, and downgrades take effect at the start of the next billing cycle.</p>
 
                 <h3 style="margin-bottom:16px;color:var(--blue-700);">5. Code of Conduct</h3>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;">All users, including students, parents, and tutors, are expected to maintain a respectful and professional environment. Harassment, discrimination, or abusive behavior of any kind will not be tolerated and may result in immediate account termination.</p>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:24px;">All communication between tutors and students should take place through the BrightMinds platform or during scheduled sessions. Personal contact information should not be exchanged without parental consent.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Respectful Environment:</strong> All users, including students, parents, and tutors, are expected to maintain a respectful and professional environment. Harassment, discrimination, bullying, or abusive behavior of any kind will not be tolerated and may result in immediate account termination without refund.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Communication:</strong> All communication between tutors and students should take place through the BrightMinds platform or during scheduled sessions. Personal contact information should not be exchanged without explicit parental consent. This policy exists to protect both students and tutors.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Academic Integrity:</strong> BrightMinds tutors are here to teach, guide, and support students in their learning journey. Tutors will not complete assignments, tests, or exams on behalf of students. Any request for academic dishonesty will be reported to the parent and may result in service termination.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:32px;"><strong>Complaints:</strong> If you have a complaint about a tutor, session, or any aspect of our service, please submit it through the complaint form in your dashboard or contact us directly. All complaints are reviewed within 48 hours and handled with discretion and care.</p>
 
-                <h3 style="margin-bottom:16px;color:var(--blue-700);">6. Check-Ins</h3>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:24px;">BrightMinds conducts check-ins every 3 months for every active student. These check-ins are designed to review progress, address any concerns, and ensure the tutoring relationship is working well. The platform will send automated alerts to remind the team when check-ins are due.</p>
+                <h3 style="margin-bottom:16px;color:var(--blue-700);">6. Check-Ins and Progress Reviews</h3>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Quarterly Check-Ins:</strong> BrightMinds conducts check-ins every 3 months for every active student. These check-ins are designed to review progress, address any concerns, evaluate the tutor-student relationship, and adjust the learning plan if needed.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Automated Reminders:</strong> The platform sends automated alerts to the BrightMinds team and to parents when check-ins are due. Parents are encouraged to participate in check-in discussions to ensure alignment on learning goals.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:32px;"><strong>Tutor Reassignment:</strong> If a check-in reveals that the current tutor-student pairing is not working effectively, BrightMinds will work with the family to find a better match at no additional cost.</p>
 
-                <h3 style="margin-bottom:16px;color:var(--blue-700);">7. Privacy and Data</h3>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;">BrightMinds Tutoring takes your privacy seriously. Personal information is collected only for the purpose of providing tutoring services and is never sold to third parties.</p>
-                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:24px;">Session data, progress reports, and communications are stored securely and accessible only to authorized users (the student, their parent/guardian, their tutor, and BrightMinds administration).</p>
+                <h3 style="margin-bottom:16px;color:var(--blue-700);">7. Video Sessions and Technology</h3>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Platform:</strong> Video sessions are conducted through our integrated video conferencing tool. No downloads or separate account signups are required. Students simply click the "Join" button in their dashboard at the scheduled time.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Technical Requirements:</strong> A stable internet connection, a device with a camera and microphone (computer, tablet, or phone), and a modern web browser are required for video sessions. BrightMinds is not responsible for technical issues on the student's end but will make reasonable efforts to troubleshoot.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:32px;"><strong>Recording:</strong> Sessions are not recorded by BrightMinds by default. Neither tutors nor students should record sessions without explicit written consent from all parties involved.</p>
 
-                <h3 style="margin-bottom:16px;color:var(--blue-700);">8. Modifications</h3>
-                <p style="color:var(--gray-600);line-height:1.8;">BrightMinds reserves the right to update these terms at any time. Users will be notified of significant changes via email. Continued use of the platform after changes are posted constitutes acceptance of the updated terms.</p>
+                <h3 style="margin-bottom:16px;color:var(--blue-700);">8. Privacy and Data</h3>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Data Collection:</strong> BrightMinds collects personal information solely for the purpose of providing tutoring services. This includes names, email addresses, phone numbers, grade levels, and learning preferences. We never sell personal data to third parties.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Data Access:</strong> Session data, progress reports, report cards, and communications are stored securely and accessible only to authorized users: the student, their parent/guardian, their assigned tutor, and BrightMinds administration.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:32px;"><strong>Account Security:</strong> Users are responsible for maintaining the security of their account credentials. BrightMinds will never ask for your password via email or message. If you suspect unauthorized access to your account, contact us immediately through the inquiry form.</p>
 
-                <div style="margin-top:32px;padding:20px;background:var(--blue-50);border-radius:var(--radius);text-align:center;">
+                <h3 style="margin-bottom:16px;color:var(--blue-700);">9. Liability</h3>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;"><strong>Service Guarantee:</strong> BrightMinds strives to provide the highest quality tutoring services. While we carefully vet all tutors and monitor session quality, we cannot guarantee specific academic outcomes. Learning is a collaborative process that depends on student engagement, practice, and consistency.</p>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:32px;"><strong>Limitation:</strong> BrightMinds is not liable for any indirect, incidental, or consequential damages arising from the use of our platform or services. Our total liability is limited to the amount paid by the user in the current billing cycle.</p>
+
+                <h3 style="margin-bottom:16px;color:var(--blue-700);">10. Modifications</h3>
+                <p style="color:var(--gray-600);line-height:1.9;margin-bottom:12px;">BrightMinds reserves the right to update these terms at any time. Users will be notified of significant changes via email and through the platform. Continued use of the platform after changes are posted constitutes acceptance of the updated terms.</p>
+                <p style="color:var(--gray-600);line-height:1.9;">These terms were last updated on January 1, 2025.</p>
+
+                <div style="margin-top:40px;padding:24px;background:var(--blue-50);border-radius:var(--radius);text-align:center;">
                     <p style="color:var(--gray-600);font-weight:600;">Questions about our terms? <a href="/contact">Contact us</a> and we will be happy to help.</p>
                 </div>
             </div>
         </div>
     </section>
 </main>
-
 <%- include('partials/footer') %>

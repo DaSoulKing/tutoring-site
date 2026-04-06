@@ -1,27 +1,47 @@
 <%- include('../partials/header') %>
 <%- include('../partials/nav') %>
-
 <main id="main-content">
     <div class="dashboard-grid">
         <aside class="dashboard-sidebar">
             <ul class="sidebar-menu">
                 <li><a href="/admin/owner">&#x1F3E0; Dashboard</a></li>
                 <li><a href="/admin/owner/calendar">&#x1F4C5; Calendar</a></li>
-                <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Manage Tutors</a></li>
-                <li><a href="/admin/owner/students" class="active">&#x1F393; Manage Students</a></li>
+                <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Tutors</a></li>
+                <li><a href="/admin/owner/students" class="active">&#x1F393; Students</a></li>
+                <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
+                <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
             </ul>
         </aside>
-
         <div class="dashboard-main">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
-                <h1 style="font-size:1.5rem;">Manage Students & Parents</h1>
+            <h1 style="font-size:1.5rem;margin-bottom:24px;">Manage Students & Parents</h1>
+
+            <!-- Assign Tutor -->
+            <% if (tutors && tutors.length > 0) { %>
+            <div class="card" style="padding:24px;margin-bottom:24px;background:var(--blue-50);border:2px solid var(--blue-200);">
+                <h3 style="font-size:1.1rem;margin-bottom:16px;">&#x1F517; Assign Tutor to Student</h3>
+                <form action="/admin/owner/assign-tutor" method="POST" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group" style="margin:0;flex:1;min-width:200px;">
+                        <label>Select Tutor</label>
+                        <select name="tutor_id" class="form-control" required>
+                            <option value="">Choose tutor...</option>
+                            <% tutors.forEach(t => { %><option value="<%= t.id %>"><%= t.first_name %> <%= t.last_name %></option><% }); %>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0;flex:1;min-width:200px;">
+                        <label>Select Student/Parent</label>
+                        <select name="student_id" class="form-control" required>
+                            <option value="">Choose student...</option>
+                            <% students.forEach(s => { %><option value="<%= s.id %>"><%= s.first_name %> <%= s.last_name %> (<%= s.email %>)</option><% }); %>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Assign</button>
+                </form>
             </div>
+            <% } %>
 
             <div class="table-wrapper">
                 <table>
-                    <thead>
-                        <tr><th>Name</th><th>Email</th><th>Role</th><th>Grade</th><th>Subjects</th><th>Actions</th></tr>
-                    </thead>
+                    <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Verified</th><th>Grade</th><th>Subjects</th><th>Actions</th></tr></thead>
                     <tbody>
                         <% if (students && students.length > 0) { %>
                             <% students.forEach(s => { %>
@@ -29,25 +49,17 @@
                                 <td><strong><%= s.first_name %> <%= s.last_name %></strong></td>
                                 <td><%= s.email %></td>
                                 <td><span class="badge-status badge-active"><%= s.role %></span></td>
+                                <td><span class="badge-status <%= s.email_verified ? 'badge-active' : 'badge-pending' %>"><%= s.email_verified ? 'Yes' : 'No' %></span></td>
                                 <td><%= s.grade_level || 'N/A' %></td>
-                                <td>
-                                    <% (s.subjects_needed || []).forEach(sub => { %>
-                                    <span class="subject-tag"><%= sub %></span>
-                                    <% }); %>
-                                </td>
-                                <td>
-                                    <a href="/admin/owner/notes/<%= s.id %>" class="btn btn-outline btn-sm" style="font-size:0.8rem;">Notes</a>
-                                </td>
+                                <td><% (s.subjects_needed || []).forEach(sub => { %><span class="subject-tag"><%= sub %></span> <% }); %></td>
+                                <td><a href="/admin/owner/notes/<%= s.id %>" class="btn btn-outline btn-sm" style="font-size:0.8rem;">Notes</a></td>
                             </tr>
                             <% }); %>
-                        <% } else { %>
-                            <tr><td colspan="6" style="text-align:center;color:var(--gray-400);">No students or parents found.</td></tr>
-                        <% } %>
+                        <% } else { %><tr><td colspan="7" style="text-align:center;color:var(--gray-400);">No students or parents found.</td></tr><% } %>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 </main>
-
 <%- include('../partials/footer') %>
