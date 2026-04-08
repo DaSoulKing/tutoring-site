@@ -17,6 +17,7 @@
     --radius-sm:8px;--radius:12px;--radius-lg:16px;--radius-full:9999px;
     --transition:0.25s cubic-bezier(0.4,0,0.2,1);
     --font-display:'Baloo 2',cursive;--font-body:'Nunito',sans-serif;
+    --test-var: black;
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
