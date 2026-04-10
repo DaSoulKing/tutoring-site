@@ -61,7 +61,7 @@
                 <% sessions.forEach(s => { %>
                 <div class="card" style="margin-bottom:12px;padding:20px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-                        <div><h4><%= s.student_first %> <%= s.student_last %></h4><p style="color:var(--gray-500);font-size:0.85rem;"><%= s.subject || 'General' %> &middot; <%= new Date(s.booking_date).toLocaleDateString() %> &middot; <%= s.start_time?.substring(0,5) %> - <%= s.end_time?.substring(0,5) %></p></div>
+                        <div><h4><%= s.student_first %> <%= s.student_last %></h4><p style="color:var(--gray-500);font-size:0.85rem;"><%= s.subject || 'General' %> &middot; <%= new Date(s.booking_date).toLocaleDateString() %> &middot; <%= s.start_time ? s.start_time.substring(0,5) : '' %> - <%= s.end_time ? s.end_time.substring(0,5) : '' %></p></div>
                         <div style="display:flex;gap:8px;align-items:center;">
                             <span class="badge-status badge-<%= s.status %>"><%= s.status %></span>
                             <% if (s.status === 'pending') { %><button onclick="confirmBooking(<%= s.id %>)" class="btn btn-sm" style="background:var(--green-500);color:white;">Confirm</button><% } %>
@@ -82,7 +82,7 @@
                 <% students.forEach(st => { %>
                 <div class="card" style="padding:20px;">
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-                        <div style="width:40px;height:40px;border-radius:50%;background:var(--yellow-100);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;color:var(--yellow-700);"><%= st.first_name?.charAt(0) %><%= st.last_name?.charAt(0) %></div>
+                        <div style="width:40px;height:40px;border-radius:50%;background:var(--yellow-100);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;color:var(--yellow-700);"><%= st.first_name ? st.first_name.charAt(0) : '' %><%= st.last_name ? st.last_name.charAt(0) : '' %></div>
                         <div><h4 style="font-size:0.95rem;"><%= st.first_name %> <%= st.last_name %></h4><p style="color:var(--gray-400);font-size:0.8rem;">Grade: <%= st.grade_level || 'N/A' %></p></div>
                     </div>
                     <div style="display:flex;gap:8px;">

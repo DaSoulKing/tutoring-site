@@ -61,7 +61,7 @@
                         </div>
                         <div style="text-align:right;">
                             <p style="font-weight:700;color:var(--gray-700);"><%= new Date(b.booking_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) %></p>
-                            <p style="color:var(--gray-500);font-size:0.85rem;"><%= b.start_time?.substring(0,5) %> - <%= b.end_time?.substring(0,5) %></p>
+                            <p style="color:var(--gray-500);font-size:0.85rem;"><%= b.start_time ? b.start_time.substring(0,5) : '' %> - <%= b.end_time ? b.end_time.substring(0,5) : '' %></p>
                         </div>
                         <div style="display:flex;gap:8px;">
                             <span class="badge-status badge-<%= b.status %>"><%= b.status %></span>
@@ -84,7 +84,7 @@
             <div class="card" style="margin-bottom:12px;padding:20px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div><h4 style="font-size:1rem;"><%= rc.term %></h4><p style="color:var(--gray-500);font-size:0.85rem;">By <%= rc.tutor_first %> <%= rc.tutor_last %> &middot; <%= new Date(rc.report_date).toLocaleDateString() %></p></div>
-                    <div class="grade-badge grade-<%= rc.overall_grade?.charAt(0) || 'B' %>"><%= rc.overall_grade || 'N/A' %></div>
+                    <div class="grade-badge grade-<%= (rc.overall_grade ? rc.overall_grade.charAt(0) : 'B') %>"><%= rc.overall_grade || 'N/A' %></div>
                 </div>
             </div>
             <% }); %>

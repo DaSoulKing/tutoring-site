@@ -82,7 +82,7 @@
                     </div>
                     <div class="report-card-row">
                         <span class="report-card-label">Overall Grade</span>
-                        <div class="grade-badge grade-<%= rc.overall_grade?.charAt(0) || 'B' %>"><%= rc.overall_grade %></div>
+                        <div class="grade-badge grade-<%= (rc.overall_grade ? rc.overall_grade.charAt(0) : 'B') %>"><%= rc.overall_grade %></div>
                     </div>
                     <div class="report-card-row">
                         <span class="report-card-label">Attendance</span>

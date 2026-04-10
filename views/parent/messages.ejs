@@ -15,7 +15,7 @@
                     <% if (conversations && conversations.length > 0) { %>
                         <% conversations.forEach(c => { %>
                         <a href="/parent/messages/<%= c.other_id %>" class="conversation-item <%= activeConversation && activeConversation.id == c.other_id ? 'active' : '' %>">
-                            <div class="conversation-avatar"><%= c.first_name?.charAt(0) %><%= c.last_name?.charAt(0) %></div>
+                            <div class="conversation-avatar"><%= c.first_name ? c.first_name.charAt(0) : '' %><%= c.last_name ? c.last_name.charAt(0) : '' %></div>
                             <div class="conversation-info">
                                 <h4><%= c.first_name %> <%= c.last_name %></h4>
                                 <p><%= c.role %></p>
