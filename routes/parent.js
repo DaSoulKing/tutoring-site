@@ -2,6 +2,11 @@ const router = require('express').Router();
 const pool = require('../db/pool');
 const { isAuthenticated, isParent } = require('../middleware/auth');
 
+// Validate integer params
+router.param('tutorId', (req, res, next, val) => { if (!/^\d+$/.test(val)) return res.status(400).render('error', { title: '400', message: 'Invalid request.', code: 400 }); next(); });
+router.param('userId', (req, res, next, val) => { if (!/^\d+$/.test(val)) return res.status(400).render('error', { title: '400', message: 'Invalid request.', code: 400 }); next(); });
+router.param('bookingId', (req, res, next, val) => { if (!/^\d+$/.test(val)) return res.status(400).render('error', { title: '400', message: 'Invalid request.', code: 400 }); next(); });
+
 // Dashboard
 router.get('/dashboard', isAuthenticated, isParent, async (req, res) => {
     try {

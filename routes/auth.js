@@ -115,6 +115,10 @@ router.post('/register', registerLimiter, verifyRecaptcha, async (req, res) => {
         }
         if (password !== confirm_password) { req.session.error = 'Passwords do not match.'; return res.redirect('/auth/register'); }
         if (password.length < 8) { req.session.error = 'Password must be at least 8 characters.'; return res.redirect('/auth/register'); }
+        if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+            req.session.error = 'Password must include uppercase, lowercase, and a number.';
+            return res.redirect('/auth/register');
+        }
         // Basic email format check
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { req.session.error = 'Please enter a valid email.'; return res.redirect('/auth/register'); }
 
@@ -254,7 +258,10 @@ router.post('/reset-password/:token', authLimiter, async (req, res) => {
         const password = req.body.password || '';
         const confirm_password = req.body.confirm_password || '';
         if (password !== confirm_password) { req.session.error = 'Passwords do not match.'; return res.redirect(`/auth/reset-password/${req.params.token}`); }
-        if (password.length < 8) { req.session.error = 'Password must be at least 8 characters.'; return res.redirect(`/auth/reset-password/${req.params.token}`); }
+        if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+            req.session.error = 'Password must be 8+ characters with uppercase, lowercase, and a number.';
+            return res.redirect(`/auth/reset-password/${req.params.token}`);
+        }
 
         const hash = await bcrypt.hash(password, 12);
         const result = await pool.query(

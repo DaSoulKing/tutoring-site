@@ -159,7 +159,10 @@ router.post('/tutor-signup/:token', signupLimiter, async (req, res) => {
 
         const { email, password, confirm_password, first_name, last_name, phone } = req.body;
         if (password !== confirm_password) { req.session.error = 'Passwords do not match.'; return res.redirect(`/tutor-signup/${req.params.token}`); }
-        if (password.length < 8) { req.session.error = 'Password must be at least 8 characters.'; return res.redirect(`/tutor-signup/${req.params.token}`); }
+        if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+            req.session.error = 'Password must be 8+ characters with uppercase, lowercase, and a number.';
+            return res.redirect(`/tutor-signup/${req.params.token}`);
+        }
 
         const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
         if (existing.rows.length > 0) { req.session.error = 'An account with this email already exists.'; return res.redirect(`/tutor-signup/${req.params.token}`); }

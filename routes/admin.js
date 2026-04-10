@@ -5,6 +5,24 @@ const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
 
+// Validate integer params on all admin routes
+router.param('id', (req, res, next, val) => {
+    if (!/^\d+$/.test(val)) return res.status(400).render('error', { title: '400', message: 'Invalid request.', code: 400 });
+    next();
+});
+router.param('userId', (req, res, next, val) => {
+    if (!/^\d+$/.test(val)) return res.status(400).render('error', { title: '400', message: 'Invalid request.', code: 400 });
+    next();
+});
+router.param('bookingId', (req, res, next, val) => {
+    if (!/^\d+$/.test(val)) return res.status(400).render('error', { title: '400', message: 'Invalid request.', code: 400 });
+    next();
+});
+router.param('studentId', (req, res, next, val) => {
+    if (!/^\d+$/.test(val)) return res.status(400).render('error', { title: '400', message: 'Invalid request.', code: 400 });
+    next();
+});
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'public', 'uploads')),
     filename: (req, file, cb) => {

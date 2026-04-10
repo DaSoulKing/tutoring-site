@@ -1,6 +1,15 @@
 const router = require('express').Router();
 const pool = require('../db/pool');
 const { isAuthenticated } = require('../middleware/auth');
+const rateLimit = require('express-rate-limit');
+
+// Rate limits for API actions
+const bookingLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, message: { success: false, message: 'Too many requests. Try again later.' } });
+const messageLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 60, message: { success: false, message: 'Too many messages. Slow down.' } });
+
+// Validate integer params
+router.param('id', (req, res, next, val) => { if (!/^\d+$/.test(val)) return res.status(400).json({ error: 'Invalid ID' }); next(); });
+router.param('tutorId', (req, res, next, val) => { if (!/^\d+$/.test(val)) return res.status(400).json({ error: 'Invalid ID' }); next(); });
 
 // Calendar events
 router.get('/calendar/events', isAuthenticated, async (req, res) => {
@@ -38,17 +47,18 @@ router.get('/calendar/events', isAuthenticated, async (req, res) => {
     } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 
-// Tutor availability
+// Tutor availability (public - only shows recurring schedule, not specific bookings)
 router.get('/tutor/:tutorId/availability', async (req, res) => {
     try {
-        const availability = await pool.query('SELECT * FROM tutor_availability WHERE tutor_id = $1 AND is_recurring = true ORDER BY day_of_week, start_time', [req.params.tutorId]);
-        const bookings = await pool.query(`SELECT booking_date, start_time, end_time, status FROM bookings WHERE tutor_id = $1 AND booking_date >= CURRENT_DATE AND status IN ('pending','confirmed') AND subject != 'Assigned by Admin'`, [req.params.tutorId]);
-        res.json({ availability: availability.rows, bookings: bookings.rows });
+        const tutorId = parseInt(req.params.tutorId, 10);
+        if (isNaN(tutorId)) return res.status(400).json({ error: 'Invalid ID' });
+        const availability = await pool.query('SELECT day_of_week, start_time, end_time FROM tutor_availability WHERE tutor_id = $1 AND is_recurring = true ORDER BY day_of_week, start_time', [tutorId]);
+        res.json({ availability: availability.rows });
     } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 
 // Create booking
-router.post('/bookings', isAuthenticated, async (req, res) => {
+router.post('/bookings', isAuthenticated, bookingLimiter, async (req, res) => {
     try {
         const { tutor_id, booking_date, start_time, end_time, subject } = req.body;
         const conflict = await pool.query(`SELECT id FROM bookings WHERE tutor_id = $1 AND booking_date = $2 AND status IN ('pending','confirmed') AND (start_time, end_time) OVERLAPS ($3::time, $4::time)`, [tutor_id, booking_date, start_time, end_time]);
@@ -63,7 +73,7 @@ router.post('/bookings', isAuthenticated, async (req, res) => {
 });
 
 // Cancel booking
-router.post('/bookings/:id/cancel', isAuthenticated, async (req, res) => {
+router.post('/bookings/:id/cancel', isAuthenticated, bookingLimiter, async (req, res) => {
     try {
         const booking = await pool.query('SELECT * FROM bookings WHERE id = $1 AND (student_id = $2 OR parent_id = $2 OR tutor_id = $2)', [req.params.id, req.session.user.id]);
         if (booking.rows.length === 0) return res.json({ success: false, message: 'Booking not found.' });
@@ -79,7 +89,7 @@ router.post('/bookings/:id/cancel', isAuthenticated, async (req, res) => {
 });
 
 // Confirm booking
-router.post('/bookings/:id/confirm', isAuthenticated, async (req, res) => {
+router.post('/bookings/:id/confirm', isAuthenticated, bookingLimiter, async (req, res) => {
     try {
         await pool.query("UPDATE bookings SET status = 'confirmed' WHERE id = $1 AND tutor_id = $2", [req.params.id, req.session.user.id]);
         res.json({ success: true });
@@ -95,7 +105,7 @@ router.get('/messages/unread', isAuthenticated, async (req, res) => {
 });
 
 // Send message (with authorization check)
-router.post('/messages', isAuthenticated, async (req, res) => {
+router.post('/messages', isAuthenticated, messageLimiter, async (req, res) => {
     try {
         const { receiver_id, body, message_type } = req.body;
         const senderId = req.session.user.id;
