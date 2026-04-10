@@ -19,7 +19,7 @@
             </div>
 
             <div class="card" style="padding:32px;">
-                <form action="/admin/tutor/session-sheet/<%= booking ? booking.id : '' %>" method="POST">
+                <form action="/admin/tutor/session-sheet/<%= booking ? booking.id : '' %>" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="form-group">
                         <label for="topics_covered">Topics Covered <span class="required">*</span></label>
                         <textarea id="topics_covered" name="topics_covered" class="form-control" rows="3" required placeholder="What was covered in this session..."><%= sheet ? sheet.topics_covered : '' %></textarea>

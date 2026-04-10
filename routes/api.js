@@ -54,7 +54,8 @@ router.post('/bookings', isAuthenticated, async (req, res) => {
         const conflict = await pool.query(`SELECT id FROM bookings WHERE tutor_id = $1 AND booking_date = $2 AND status IN ('pending','confirmed') AND (start_time, end_time) OVERLAPS ($3::time, $4::time)`, [tutor_id, booking_date, start_time, end_time]);
         if (conflict.rows.length > 0) return res.json({ success: false, message: 'This time slot is already booked.' });
 
-        const roomId = `brightminds-${Date.now()}`;
+        const crypto = require('crypto');
+        const roomId = `bm-${crypto.randomBytes(16).toString('hex')}`;
         const result = await pool.query(`INSERT INTO bookings (tutor_id, student_id, parent_id, booking_date, start_time, end_time, subject, meeting_room_id, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending') RETURNING id`,
             [tutor_id, req.session.user.id, req.session.user.id, booking_date, start_time, end_time, subject, roomId]);
         res.json({ success: true, bookingId: result.rows[0].id, message: 'Booking request submitted!' });
@@ -93,12 +94,29 @@ router.get('/messages/unread', isAuthenticated, async (req, res) => {
     } catch (err) { res.json({ count: 0 }); }
 });
 
-// Send message
+// Send message (with authorization check)
 router.post('/messages', isAuthenticated, async (req, res) => {
     try {
         const { receiver_id, body, message_type } = req.body;
+        const senderId = req.session.user.id;
+        const receiverId = parseInt(receiver_id);
+        if (isNaN(receiverId) || receiverId === senderId) return res.status(400).json({ success: false, message: 'Invalid recipient.' });
+
+        // Check relationship exists
+        const rel = await pool.query(`
+            SELECT 1 FROM bookings WHERE (tutor_id = $1 AND (student_id = $2 OR parent_id = $2))
+                OR (tutor_id = $2 AND (student_id = $1 OR parent_id = $1))
+            UNION SELECT 1 FROM messages WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1)
+            UNION SELECT 1 FROM users WHERE id = $2 AND role = 'owner'
+            LIMIT 1
+        `, [senderId, receiverId]);
+        if (rel.rows.length === 0) return res.status(403).json({ success: false, message: 'Not authorized to message this user.' });
+
+        const safeBody = (body || '').trim().substring(0, 5000);
+        if (!safeBody) return res.status(400).json({ success: false, message: 'Message cannot be empty.' });
+
         const result = await pool.query(`INSERT INTO messages (sender_id, receiver_id, body, message_type) VALUES ($1,$2,$3,$4) RETURNING *`,
-            [req.session.user.id, receiver_id, body, message_type || 'general']);
+            [senderId, receiverId, safeBody, message_type || 'general']);
         res.json({ success: true, message: result.rows[0] });
     } catch (err) { console.error(err); res.status(500).json({ success: false }); }
 });

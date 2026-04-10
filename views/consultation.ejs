@@ -12,7 +12,7 @@
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;max-width:1000px;margin:0 auto;">
                 <div class="card" style="padding:40px;">
-                    <form action="/consultation" method="POST" data-validate>
+                    <form action="/consultation" method="POST" data-validate><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <div class="form-group">
                             <label for="name">Parent/Guardian Name <span class="required">*</span></label>
                             <input type="text" id="name" name="name" class="form-control" required>

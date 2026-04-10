@@ -42,7 +42,7 @@
                             </div>
                             <% }); %>
                         </div>
-                        <form action="/parent/messages/<%= activeConversation.id %>" method="POST" class="message-input-area">
+                        <form action="/parent/messages/<%= activeConversation.id %>" method="POST" class="message-input-area"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                             <input type="text" name="body" class="form-control" placeholder="Type your message..." required autocomplete="off">
                             <button type="submit" class="btn btn-primary btn-sm">Send</button>
                         </form>

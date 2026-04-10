@@ -11,7 +11,7 @@
 
             <div class="card" style="padding:32px;">
                 <p style="color:var(--gray-500);margin-bottom:24px;">Submit a question, complaint, or general inquiry. Our team will respond within 24 hours.</p>
-                <form action="/parent/contact" method="POST" data-validate>
+                <form action="/parent/contact" method="POST" data-validate><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="form-group">
                         <label for="inquiry_type">Type <span class="required">*</span></label>
                         <select id="inquiry_type" name="inquiry_type" class="form-control" required>

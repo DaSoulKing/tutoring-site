@@ -15,7 +15,7 @@
             <!-- Create Report Card -->
             <div class="card" style="padding:24px;margin-bottom:32px;">
                 <h3 style="font-size:1.1rem;margin-bottom:16px;">Create New Report Card</h3>
-                <form action="/admin/tutor/report-card/<%= student.id %>" method="POST">
+                <form action="/admin/tutor/report-card/<%= student.id %>" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="form-row">
                         <div class="form-group">
                             <label for="term">Term/Period <span class="required">*</span></label>

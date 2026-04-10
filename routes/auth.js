@@ -83,7 +83,8 @@ router.post('/login', authLimiter, verifyRecaptcha, async (req, res) => {
 
         // Check email verification (skip for owners and tutors signed up via invite)
         if (user.role !== 'owner' && user.role !== 'tutor' && user.email_verified === false) {
-            req.session.error = 'Please verify your email first. Check your inbox or <a href="/auth/resend-verification?email=' + encodeURIComponent(email) + '">click here to resend</a>.';
+            req.session.error = 'Please verify your email first. Check your inbox or click the link below to resend.';
+            req.session.resendEmail = email;
             return res.redirect('/auth/login');
         }
 
@@ -96,7 +97,9 @@ router.post('/login', authLimiter, verifyRecaptcha, async (req, res) => {
                 firstName: user.first_name, lastName: user.last_name,
                 profilePicture: user.profile_picture, referralCode: user.referral_code,
             };
-            res.redirect(returnTo || getDashboardUrl(user.role));
+            // Validate returnTo is a safe local path (no protocol, no //, no backslash)
+            const safeReturn = (returnTo && typeof returnTo === 'string' && returnTo.startsWith('/') && !returnTo.startsWith('//') && !returnTo.includes('\\')) ? returnTo : null;
+            res.redirect(safeReturn || getDashboardUrl(user.role));
         });
     } catch (err) {
         console.error(err);
@@ -132,7 +135,7 @@ router.post('/register', registerLimiter, verifyRecaptcha, async (req, res) => {
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { req.session.error = 'Please enter a valid email.'; return res.redirect('/auth/register'); }
 
         const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-        if (existing.rows.length > 0) { req.session.error = 'An account with this email already exists.'; return res.redirect('/auth/register'); }
+        if (existing.rows.length > 0) { req.session.error = 'Unable to create account. If you already have an account, try logging in.'; return res.redirect('/auth/register'); }
 
         const hash = await bcrypt.hash(password, 12);
         const userReferralCode = 'BM' + crypto.randomBytes(4).toString('hex').toUpperCase();

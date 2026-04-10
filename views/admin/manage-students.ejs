@@ -19,7 +19,7 @@
             <% if (tutors && tutors.length > 0) { %>
             <div class="card" style="padding:24px;margin-bottom:24px;background:var(--blue-50);border:2px solid var(--blue-200);">
                 <h3 style="font-size:1.1rem;margin-bottom:16px;">&#x1F517; Assign Tutor to Student</h3>
-                <form action="/admin/owner/assign-tutor" method="POST" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;">
+                <form action="/admin/owner/assign-tutor" method="POST" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="form-group" style="margin:0;flex:1;min-width:200px;">
                         <label>Select Tutor</label>
                         <select name="tutor_id" class="form-control" required>
@@ -54,7 +54,7 @@
                                 <td><% (s.subjects_needed || []).forEach(sub => { %><span class="subject-tag"><%= sub %></span> <% }); %></td>
                                 <td style="display:flex;gap:6px;flex-wrap:wrap;">
                                     <% if (!s.email_verified) { %>
-                                    <form action="/admin/owner/users/<%= s.id %>/verify" method="POST"><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;font-size:0.75rem;">Verify</button></form>
+                                    <form action="/admin/owner/users/<%= s.id %>/verify" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;font-size:0.75rem;">Verify</button></form>
                                     <% } %>
                                     <a href="/admin/owner/notes/<%= s.id %>" class="btn btn-outline btn-sm" style="font-size:0.8rem;">Notes</a>
                                 </td>

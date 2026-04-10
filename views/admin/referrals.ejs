@@ -16,7 +16,7 @@
             <h1 style="font-size:1.5rem;margin-bottom:24px;">Referral Codes</h1>
             <div class="card" style="padding:24px;margin-bottom:24px;">
                 <h3 style="font-size:1.1rem;margin-bottom:16px;">Generate New Code</h3>
-                <form action="/admin/owner/referral-code" method="POST" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;">
+                <form action="/admin/owner/referral-code" method="POST" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="form-group" style="margin:0;"><label>Discount %</label><input type="number" name="discount_percent" value="10" class="form-control" style="width:80px;" min="1" max="100"></div>
                     <div class="form-group" style="margin:0;flex:1;min-width:200px;"><label>Note (optional)</label><input type="text" name="note" class="form-control" placeholder="e.g., For John's family"></div>
                     <button type="submit" class="btn btn-primary">Generate</button>

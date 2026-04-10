@@ -58,6 +58,18 @@ app.use(rateLimit({
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
+// Uploaded files: prevent MIME sniffing, force download for non-images
+app.use('/uploads', (req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'");
+    // Force download for non-image files (resumes, docs)
+    const ext = path.extname(req.path).toLowerCase();
+    if (!['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) {
+        res.setHeader('Content-Disposition', 'attachment');
+    }
+    next();
+});
+
 // Static files
 app.use(express.static(path.join(__dirname, 'public'), {
     maxAge: process.env.NODE_ENV === 'production' ? '1y' : 0,
@@ -71,7 +83,7 @@ app.use(session({
         tableName: 'session',
         createTableIfMissing: true,
     }),
-    secret: process.env.SESSION_SECRET || 'change-this-secret-immediately',
+    secret: process.env.SESSION_SECRET || (() => { console.error('FATAL: SESSION_SECRET not set'); process.exit(1); })(),
     name: 'bm.sid', // Custom name instead of default 'connect.sid'
     resave: false,
     saveUninitialized: false,
@@ -82,6 +94,11 @@ app.use(session({
         sameSite: 'lax', // CSRF protection
     },
 }));
+
+// CSRF protection
+const { csrfInject, csrfProtect } = require('./middleware/csrf');
+app.use(csrfInject);
+app.use(csrfProtect);
 
 // Globals for views
 app.use((req, res, next) => {
@@ -94,6 +111,7 @@ app.use((req, res, next) => {
     res.locals.charityPercent = 3;
     res.locals.success = req.session.success; delete req.session.success;
     res.locals.error = req.session.error; delete req.session.error;
+    res.locals.resendEmail = req.session.resendEmail; delete req.session.resendEmail;
     next();
 });
 

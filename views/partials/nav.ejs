@@ -35,8 +35,8 @@
     </nav>
 
     <% if (typeof success !== 'undefined' && success) { %>
-    <div class="alert alert-success" role="alert" style="border-radius:0;margin:0;"><span aria-hidden="true">&#x2705;</span> <%- success %></div>
+    <div class="alert alert-success" role="alert" style="border-radius:0;margin:0;"><span aria-hidden="true">&#x2705;</span> <%= success %></div>
     <% } %>
     <% if (typeof error !== 'undefined' && error) { %>
-    <div class="alert alert-error" role="alert" style="border-radius:0;margin:0;"><span aria-hidden="true">&#x26A0;&#xFE0F;</span> <%- error %></div>
+    <div class="alert alert-error" role="alert" style="border-radius:0;margin:0;"><span aria-hidden="true">&#x26A0;&#xFE0F;</span> <%= error %> <% if (typeof resendEmail !== 'undefined' && resendEmail) { %> <a href="/auth/resend-verification?email=<%= encodeURIComponent(resendEmail) %>">Click here to resend</a><% } %></div>
     <% } %>

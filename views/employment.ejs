@@ -12,7 +12,7 @@
 
             <div style="max-width:700px;margin:0 auto;">
                 <div class="card" style="padding:40px;">
-                    <form action="/employment" method="POST" enctype="multipart/form-data" data-validate>
+                    <form action="/employment" method="POST" enctype="multipart/form-data" data-validate><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <div class="form-group">
                             <label for="applicant_type">I am applying as <span class="required">*</span></label>
                             <select id="applicant_type" name="applicant_type" class="form-control" required>

@@ -27,7 +27,9 @@ async function verifyRecaptcha(req, res, next) {
         }
     } catch (err) {
         console.error('reCAPTCHA error:', err);
-        return next(); // Allow through on error
+        // FAIL CLOSED: if we can't verify, block the request
+        req.session.error = 'Security verification failed. Please try again.';
+        return res.redirect('back');
     }
 }
 

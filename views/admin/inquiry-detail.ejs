@@ -31,7 +31,7 @@
                 </div>
 
                 <% if (inquiry.status === 'open') { %>
-                <form action="/admin/owner/inquiries/<%= inquiry.id %>/status" method="POST">
+                <form action="/admin/owner/inquiries/<%= inquiry.id %>/status" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <input type="hidden" name="status" value="resolved">
                     <button type="submit" class="btn btn-primary">Mark as Resolved</button>
                 </form>

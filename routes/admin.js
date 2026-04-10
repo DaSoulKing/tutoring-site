@@ -7,9 +7,26 @@ const crypto = require('crypto');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'public', 'uploads')),
-    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.]/g, '_'))
+    filename: (req, file, cb) => {
+        // Generate random filename to prevent path traversal and info leakage
+        const ext = path.extname(file.originalname).toLowerCase();
+        cb(null, crypto.randomBytes(16).toString('hex') + ext);
+    }
 });
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+const allowedImageMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        // Only allow images for profile pictures
+        if (file.fieldname === 'profile_picture') {
+            return cb(null, allowedImageMimes.includes(file.mimetype));
+        }
+        // For resumes, check extension
+        const ext = path.extname(file.originalname).toLowerCase();
+        cb(null, ['.pdf', '.doc', '.docx'].includes(ext));
+    }
+});
 
 // Helper: send email
 async function sendEmail(to, subject, html) {

@@ -7,11 +7,15 @@ const crypto = require('crypto');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'public', 'uploads')),
-    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.]/g, '_'))
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+        cb(null, crypto.randomBytes(16).toString('hex') + ext);
+    }
 });
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: (req, file, cb) => {
     const allowed = ['.pdf', '.doc', '.docx'];
-    cb(null, allowed.includes(path.extname(file.originalname).toLowerCase()));
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, allowed.includes(ext) && ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(file.mimetype));
 }});
 
 // Home page
@@ -135,6 +139,9 @@ router.post('/checkout/apply-referral', async (req, res) => {
 });
 
 // Secret tutor signup
+const rateLimit = require('express-rate-limit');
+const signupLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: 'Too many signup attempts.' });
+
 router.get('/tutor-signup/:token', async (req, res) => {
     try {
         const invite = await pool.query(`SELECT * FROM tutor_invites WHERE token = $1 AND used = false AND expires_at > NOW()`, [req.params.token]);
@@ -145,7 +152,7 @@ router.get('/tutor-signup/:token', async (req, res) => {
     } catch (err) { console.error(err); res.render('error', { title: 'Error', message: 'Something went wrong.', code: 500 }); }
 });
 
-router.post('/tutor-signup/:token', async (req, res) => {
+router.post('/tutor-signup/:token', signupLimiter, async (req, res) => {
     try {
         const invite = await pool.query(`SELECT * FROM tutor_invites WHERE token = $1 AND used = false AND expires_at > NOW()`, [req.params.token]);
         if (invite.rows.length === 0) { req.session.error = 'This signup link is invalid or has expired.'; return res.redirect('/'); }

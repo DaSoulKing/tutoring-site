@@ -11,6 +11,18 @@ document.addEventListener('DOMContentLoaded', () => {
     initCancelSubscription();
 });
 
+// CSRF token helper - reads from meta tag
+function getCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.content : '';
+}
+
+// Secure fetch wrapper that includes CSRF token
+function secureFetch(url, options = {}) {
+    const defaults = { headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() } };
+    return fetch(url, { ...defaults, ...options, headers: { ...defaults.headers, ...(options.headers || {}) } });
+}
+
 function initNav() {
     const hamburger = document.querySelector('.nav-hamburger');
     const navLinks = document.querySelector('.nav-links');
@@ -130,7 +142,7 @@ function initReferralCode() {
         const resultEl = document.getElementById('referral-result');
         if (!code) return;
         try {
-            const resp = await fetch('/checkout/apply-referral', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referral_code: code }) });
+            const resp = await secureFetch('/checkout/apply-referral', { method: 'POST', body: JSON.stringify({ referral_code: code }) });
             const data = await resp.json();
             resultEl.className = data.success ? 'alert alert-success' : 'alert alert-error';
             resultEl.textContent = data.message;
@@ -214,9 +226,8 @@ function initAvailabilityEditor() {
 
     window.saveAvailability = async () => {
         try {
-            const resp = await fetch('/admin/tutor/availability', {
+            const resp = await secureFetch('/admin/tutor/availability', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ slots })
             });
             const data = await resp.json();
@@ -252,7 +263,7 @@ async function cancelBooking(bookingId) {
     if (!confirm('Cancel this booking?')) return;
     const reason = prompt('Reason (optional):') || '';
     try {
-        const resp = await fetch(`/api/bookings/${bookingId}/cancel`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason }) });
+        const resp = await secureFetch(`/api/bookings/${bookingId}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) });
         const data = await resp.json();
         alert(data.message);
         if (data.success) location.reload();
@@ -260,7 +271,7 @@ async function cancelBooking(bookingId) {
 }
 
 async function confirmBooking(bookingId) {
-    try { const resp = await fetch(`/api/bookings/${bookingId}/confirm`, { method: 'POST', headers: { 'Content-Type': 'application/json' } }); const data = await resp.json(); if (data.success) location.reload(); } catch (err) { alert('Failed.'); }
+    try { const resp = await secureFetch(`/api/bookings/${bookingId}/confirm`, { method: 'POST' }); const data = await resp.json(); if (data.success) location.reload(); } catch (err) { alert('Failed.'); }
 }
 
 function filterTutors(subject) {

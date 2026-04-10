@@ -1,12 +1,30 @@
 function isAuthenticated(req, res, next) {
     if (req.session && req.session.user) {
-        // Refresh session expiry on activity
         req.session.touch();
         return next();
     }
     req.session.error = 'Please log in to continue.';
-    req.session.returnTo = req.originalUrl;
+    // Validate returnTo is a safe local path
+    const url = req.originalUrl;
+    if (url && url.startsWith('/') && !url.startsWith('//') && !url.includes('\\')) {
+        req.session.returnTo = url;
+    }
     res.redirect('/auth/login');
+}
+
+// Validate that :id, :userId, :bookingId, :studentId params are integers
+function validateIntParam(...paramNames) {
+    return (req, res, next) => {
+        for (const name of paramNames) {
+            if (req.params[name] !== undefined) {
+                const val = parseInt(req.params[name], 10);
+                if (isNaN(val) || val < 1 || String(val) !== req.params[name]) {
+                    return res.status(400).render('error', { title: '400', message: 'Invalid request.', code: 400 });
+                }
+            }
+        }
+        next();
+    };
 }
 
 function isOwner(req, res, next) {
@@ -33,4 +51,4 @@ function isOwnerOrTutor(req, res, next) {
     res.redirect('/');
 }
 
-module.exports = { isAuthenticated, isOwner, isTutor, isParent, isOwnerOrTutor };
+module.exports = { isAuthenticated, isOwner, isTutor, isParent, isOwnerOrTutor, validateIntParam };

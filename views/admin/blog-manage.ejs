@@ -28,7 +28,7 @@
                         <div style="display:flex;gap:8px;">
                             <a href="/admin/owner/blog/<%= p.id %>/edit" class="btn btn-outline btn-sm">Edit</a>
                             <% if (p.is_published) { %><a href="/blog/<%= p.slug %>" class="btn btn-outline btn-sm" target="_blank">View</a><% } %>
-                            <form action="/admin/owner/blog/<%= p.id %>/delete" method="POST" onsubmit="return confirm('Delete this post?')"><button type="submit" class="btn btn-sm" style="background:var(--red-500);color:white;">Delete</button></form>
+                            <form action="/admin/owner/blog/<%= p.id %>/delete" method="POST" onsubmit="return confirm('Delete this post?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--red-500);color:white;">Delete</button></form>
                         </div>
                     </div>
                 </div>

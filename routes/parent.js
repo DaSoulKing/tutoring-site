@@ -89,8 +89,27 @@ router.get('/messages/:userId', isAuthenticated, async (req, res) => {
 
 router.post('/messages/:userId', isAuthenticated, async (req, res) => {
     try {
-        await pool.query(`INSERT INTO messages (sender_id, receiver_id, body, message_type) VALUES ($1,$2,$3,'general')`, [req.session.user.id, req.params.userId, req.body.body]);
-        res.redirect(`/parent/messages/${req.params.userId}`);
+        const senderId = req.session.user.id;
+        const receiverId = parseInt(req.params.userId);
+        if (isNaN(receiverId) || receiverId === senderId) { return res.redirect('/parent/messages'); }
+
+        // Authorization: check that a relationship exists (booking, existing conversation, or receiver is owner)
+        const relationship = await pool.query(`
+            SELECT 1 FROM bookings WHERE (tutor_id = $1 AND (student_id = $2 OR parent_id = $2))
+                OR (tutor_id = $2 AND (student_id = $1 OR parent_id = $1))
+            UNION SELECT 1 FROM messages WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1)
+            UNION SELECT 1 FROM users WHERE id = $2 AND role = 'owner'
+            LIMIT 1
+        `, [senderId, receiverId]);
+        if (relationship.rows.length === 0) {
+            req.session.error = 'You cannot message this user.';
+            return res.redirect('/parent/messages');
+        }
+
+        const body = (req.body.body || '').trim().substring(0, 5000);
+        if (!body) { return res.redirect(`/parent/messages/${receiverId}`); }
+        await pool.query(`INSERT INTO messages (sender_id, receiver_id, body, message_type) VALUES ($1,$2,$3,'general')`, [senderId, receiverId, body]);
+        res.redirect(`/parent/messages/${receiverId}`);
     } catch (err) { console.error(err); res.redirect('/parent/messages'); }
 });
 
@@ -130,7 +149,9 @@ router.get('/session/:bookingId', isAuthenticated, async (req, res) => {
         if (booking.rows.length === 0) { req.session.error = 'Session not found.'; return res.redirect('/parent/dashboard'); }
 
         const b = booking.rows[0];
-        const roomId = b.meeting_room_id || `brightminds-${b.id}-${b.booking_date}`;
+        // Use existing room ID or generate a cryptographically random one
+        const crypto = require('crypto');
+        const roomId = b.meeting_room_id || `bm-${crypto.randomBytes(16).toString('hex')}`;
         if (!b.meeting_room_id) await pool.query('UPDATE bookings SET meeting_room_id = $1 WHERE id = $2', [roomId, b.id]);
 
         res.render('parent/video-session', {

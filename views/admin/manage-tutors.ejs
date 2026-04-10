@@ -21,7 +21,7 @@
             <div class="card" style="padding:24px;margin-bottom:24px;background:var(--yellow-50);border:2px solid var(--yellow-200);">
                 <h3 style="font-size:1.1rem;margin-bottom:16px;">&#x1F517; Send Tutor Invite Link</h3>
                 <p style="color:var(--gray-600);font-size:0.9rem;margin-bottom:16px;">Generate a secret signup link. They create their own account and password. Expires in 7 days.</p>
-                <form action="/admin/owner/tutor-invite" method="POST" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;">
+                <form action="/admin/owner/tutor-invite" method="POST" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="form-group" style="margin:0;flex:1;min-width:200px;">
                         <label>Email (optional, to auto-send)</label>
                         <input type="email" name="email" class="form-control" placeholder="tutor@email.com">
@@ -65,7 +65,7 @@
                                 <td><% (t.subjects || []).forEach(s => { %><span class="subject-tag"><%= s %></span> <% }); %></td>
                                 <td><span class="badge-status <%= t.approved ? 'badge-active' : 'badge-pending' %>"><%= t.approved ? 'Approved' : 'Pending' %></span></td>
                                 <td style="display:flex;gap:6px;flex-wrap:wrap;">
-                                    <% if (!t.approved) { %><form action="/admin/owner/tutors/<%= t.id %>/approve" method="POST"><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;font-size:0.8rem;">Approve</button></form><% } %>
+                                    <% if (!t.approved) { %><form action="/admin/owner/tutors/<%= t.id %>/approve" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;font-size:0.8rem;">Approve</button></form><% } %>
                                     <a href="/admin/owner/notes/<%= t.id %>" class="btn btn-outline btn-sm" style="font-size:0.8rem;">Notes</a>
                                 </td>
                             </tr>

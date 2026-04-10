@@ -27,7 +27,7 @@
                 <a href="/admin/owner/tutors" class="btn btn-primary btn-sm">Manage Tutors</a>
                 <a href="/admin/owner/students" class="btn btn-outline btn-sm">Manage Students</a>
                 <a href="/admin/owner/blog/new" class="btn btn-outline btn-sm">Write Blog Post</a>
-                <form action="/admin/owner/referral-code" method="POST" style="display:flex;gap:8px;align-items:center;">
+                <form action="/admin/owner/referral-code" method="POST" style="display:flex;gap:8px;align-items:center;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <input type="number" name="discount_percent" value="10" class="form-control" style="width:60px;padding:6px;" min="1" max="100">
                     <input type="text" name="note" placeholder="Note (optional)" class="form-control" style="width:150px;padding:6px;">
                     <button type="submit" class="btn btn-secondary btn-sm">Generate Referral Code</button>
@@ -44,7 +44,7 @@
                         <h4><%= t.first_name %> <%= t.last_name %></h4>
                         <p style="color:var(--gray-500);font-size:0.85rem;"><%= t.email %> &middot; Subjects: <%= (t.subjects || []).join(', ') || 'None yet' %></p>
                     </div>
-                    <form action="/admin/owner/tutors/<%= t.id %>/approve" method="POST">
+                    <form action="/admin/owner/tutors/<%= t.id %>/approve" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;">Approve</button>
                     </form>
                 </div>
@@ -59,7 +59,7 @@
             <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--orange-500);">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
                     <div><h4><%= c.first_name %> <%= c.last_name %></h4><p style="color:var(--gray-500);font-size:0.85rem;">Due: <%= new Date(c.due_date).toLocaleDateString() %> &middot; <%= c.email %></p></div>
-                    <form action="/admin/owner/checkins/<%= c.id %>/complete" method="POST" style="display:flex;gap:8px;">
+                    <form action="/admin/owner/checkins/<%= c.id %>/complete" method="POST" style="display:flex;gap:8px;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <input type="text" name="notes" class="form-control" placeholder="Notes..." style="width:200px;padding:6px 12px;font-size:0.85rem;">
                         <button type="submit" class="btn btn-primary btn-sm">Complete</button>
                     </form>
@@ -98,8 +98,8 @@
                     <% if (app.cover_letter) { %><p style="margin-bottom:8px;"><strong>Cover letter:</strong> <%= app.cover_letter %></p><% } %>
                     <% if (app.resume_path) { %><p style="margin-bottom:16px;"><a href="<%= app.resume_path %>" target="_blank">View Resume</a></p><% } %>
                     <div style="display:flex;gap:8px;">
-                        <form action="/admin/owner/applications/<%= app.id %>/status" method="POST"><input type="hidden" name="status" value="accepted"><input type="hidden" name="reviewer_notes" value=""><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;">Accept</button></form>
-                        <form action="/admin/owner/applications/<%= app.id %>/status" method="POST"><input type="hidden" name="status" value="rejected"><input type="hidden" name="reviewer_notes" value=""><button type="submit" class="btn btn-sm" style="background:var(--red-500);color:white;">Reject</button></form>
+                        <form action="/admin/owner/applications/<%= app.id %>/status" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="status" value="accepted"><input type="hidden" name="reviewer_notes" value=""><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;">Accept</button></form>
+                        <form action="/admin/owner/applications/<%= app.id %>/status" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="status" value="rejected"><input type="hidden" name="reviewer_notes" value=""><button type="submit" class="btn btn-sm" style="background:var(--red-500);color:white;">Reject</button></form>
                     </div>
                 </div>
             </details>
@@ -117,7 +117,7 @@
                         <p style="color:var(--blue-500);font-size:0.85rem;font-weight:600;"><%= inq.subject %></p>
                         <p style="color:var(--gray-400);font-size:0.8rem;"><%= inq.email %> &middot; <%= inq.phone || 'No phone' %> &middot; <%= new Date(inq.created_at).toLocaleDateString() %></p>
                     </div>
-                    <form action="/admin/owner/inquiries/<%= inq.id %>/status" method="POST" onclick="event.stopPropagation();">
+                    <form action="/admin/owner/inquiries/<%= inq.id %>/status" method="POST" onclick="event.stopPropagation();"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <input type="hidden" name="status" value="resolved">
                         <button type="submit" class="btn btn-sm btn-outline">Resolve</button>
                     </form>

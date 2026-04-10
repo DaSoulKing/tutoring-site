@@ -43,11 +43,11 @@
 
                 <% if (application.status === 'pending') { %>
                 <div style="border-top:2px solid var(--gray-100);padding-top:24px;display:flex;gap:12px;">
-                    <form action="/admin/owner/applications/<%= application.id %>/status" method="POST">
+                    <form action="/admin/owner/applications/<%= application.id %>/status" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <input type="hidden" name="status" value="accepted"><input type="hidden" name="reviewer_notes" value="">
                         <button type="submit" class="btn" style="background:var(--green-500);color:white;">Accept Application</button>
                     </form>
-                    <form action="/admin/owner/applications/<%= application.id %>/status" method="POST">
+                    <form action="/admin/owner/applications/<%= application.id %>/status" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <input type="hidden" name="status" value="rejected"><input type="hidden" name="reviewer_notes" value="">
                         <button type="submit" class="btn" style="background:var(--red-500);color:white;">Reject Application</button>
                     </form>

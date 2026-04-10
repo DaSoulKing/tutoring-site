@@ -11,8 +11,8 @@
                     By <%= post.first_name %> <%= post.last_name %> &middot;
                     <%= new Date(post.published_at || post.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %>
                 </div>
-                <div style="color:var(--gray-700);line-height:1.9;font-size:1.05rem;">
-                    <%- post.content.replace(/\n/g, '<br>') %>
+                <div style="color:var(--gray-700);line-height:1.9;font-size:1.05rem;white-space:pre-wrap;">
+                    <%= post.content %>
                 </div>
             </article>
         </div>

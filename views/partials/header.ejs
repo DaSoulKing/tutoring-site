@@ -20,6 +20,9 @@
 
     <link rel="stylesheet" href="/css/style.css">
 
+    <!-- CSRF token for AJAX -->
+    <meta name="csrf-token" content="<%= csrfToken %>">
+
     <% if (recaptchaSiteKey) { %>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <% } %>

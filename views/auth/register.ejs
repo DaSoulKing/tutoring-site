@@ -10,7 +10,7 @@
             </div>
 
             <div class="card" style="padding:36px;">
-                <form action="/auth/register" method="POST" data-validate>
+                <form action="/auth/register" method="POST" data-validate><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="form-group">
                         <label for="role">I am a <span class="required">*</span></label>
                         <select id="role" name="role" class="form-control" required>

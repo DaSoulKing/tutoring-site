@@ -95,7 +95,7 @@
                 <div class="card" style="max-width:440px;padding:32px;">
                     <h3 style="margin-bottom:16px;">Cancel Subscription</h3>
                     <p style="color:var(--gray-500);margin-bottom:20px;">Cancellation takes effect at the end of your current billing cycle.</p>
-                    <form action="/parent/cancel-subscription" method="POST">
+                    <form action="/parent/cancel-subscription" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <div class="form-group"><label for="cancel_reason">Why are you cancelling?</label><textarea id="cancel_reason" name="cancel_reason" class="form-control"></textarea></div>
                         <div style="display:flex;gap:12px;">
                             <button type="submit" class="btn btn-danger">Confirm</button>
