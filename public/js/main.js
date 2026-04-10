@@ -179,84 +179,83 @@ function initAvailabilityEditor() {
     let slots = [];
 
     try {
-        const raw = editor.dataset.existing;
-        if (raw && raw !== '[]') {
-            slots = JSON.parse(raw);
-            // Ensure day_of_week is a number
-            slots = slots.map(s => ({ ...s, day_of_week: Number(s.day_of_week) }));
+        const raw = editor.getAttribute('data-existing');
+        if (raw && raw !== '[]' && raw !== '') {
+            const parsed = JSON.parse(raw);
+            for (let x = 0; x < parsed.length; x++) {
+                parsed[x].day_of_week = Number(parsed[x].day_of_week);
+            }
+            slots = parsed;
         }
     } catch(e) {
-        console.error('Failed to parse existing availability:', e);
+        console.error('Availability parse error:', e);
         slots = [];
     }
 
     function render() {
         let html = '';
-        days.forEach((day, i) => {
-            const daySlots = slots.filter(s => Number(s.day_of_week) === i);
+        for (let i = 0; i < days.length; i++) {
+            const daySlots = [];
+            for (let j = 0; j < slots.length; j++) {
+                if (Number(slots[j].day_of_week) === i) daySlots.push({ idx: j, slot: slots[j] });
+            }
+
             html += '<div style="margin-bottom:16px;padding:12px;background:var(--gray-50);border-radius:8px;">';
             html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
-            html += '<span style="font-weight:700;color:var(--gray-700);min-width:100px;">' + day + '</span>';
-            if (daySlots.length > 0) {
-                html += '<span style="font-size:0.75rem;color:var(--gray-400);">' + daySlots.length + ' slot' + (daySlots.length > 1 ? 's' : '') + '</span>';
-            }
+            html += '<span style="font-weight:700;color:var(--gray-700);">' + days[i] + '</span>';
+            if (daySlots.length > 0) html += '<span style="font-size:0.75rem;color:var(--green-600);font-weight:600;">' + daySlots.length + ' slot(s)</span>';
             html += '</div>';
 
-            daySlots.forEach((s, si) => {
-                html += '<div style="display:inline-flex;align-items:center;gap:6px;background:var(--blue-100);color:var(--blue-700);padding:4px 10px;border-radius:20px;font-size:0.85rem;font-weight:600;margin:0 6px 6px 0;">';
+            for (let k = 0; k < daySlots.length; k++) {
+                const s = daySlots[k].slot;
+                html += '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--blue-100);color:var(--blue-700);padding:4px 10px;border-radius:20px;font-size:0.85rem;font-weight:600;margin:0 6px 6px 0;">';
                 html += formatTime(s.start_time) + ' - ' + formatTime(s.end_time);
-                html += ' <button type="button" data-action="remove" data-day="' + i + '" data-slot="' + si + '" style="border:none;background:none;color:var(--red-500);cursor:pointer;font-weight:700;font-size:1rem;line-height:1;padding:0 2px;">&times;</button>';
-                html += '</div>';
-            });
+                html += ' <a href="#" class="avail-remove" data-idx="' + daySlots[k].idx + '" style="color:var(--red-500);font-weight:700;font-size:1.1rem;text-decoration:none;padding:0 2px;line-height:1;">&times;</a>';
+                html += '</span>';
+            }
 
-            html += '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">';
-            html += '<input type="time" data-start="' + i + '" style="padding:6px 10px;border:2px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.9rem;">';
+            html += '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">';
+            html += '<input type="time" class="avail-start" data-day="' + i + '" style="padding:6px 10px;border:2px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.9rem;background:white;">';
             html += '<span style="color:var(--gray-400);">to</span>';
-            html += '<input type="time" data-end="' + i + '" style="padding:6px 10px;border:2px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.9rem;">';
-            html += ' <button type="button" data-action="add" data-day="' + i + '" style="padding:6px 14px;background:var(--blue-500);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem;">+ Add</button>';
+            html += '<input type="time" class="avail-end" data-day="' + i + '" style="padding:6px 10px;border:2px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.9rem;background:white;">';
+            html += ' <a href="#" class="avail-add" data-day="' + i + '" style="display:inline-block;padding:6px 14px;background:var(--blue-500);color:white;border-radius:8px;font-weight:600;font-size:0.85rem;text-decoration:none;">+ Add</a>';
             html += '</div>';
             html += '</div>';
-        });
+        }
         editor.innerHTML = html;
-
-        // Attach event listeners via delegation (more reliable than onclick attributes)
-        editor.querySelectorAll('[data-action="add"]').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const dayIndex = Number(this.dataset.day);
-                const startEl = editor.querySelector('[data-start="' + dayIndex + '"]');
-                const endEl = editor.querySelector('[data-end="' + dayIndex + '"]');
-                if (!startEl || !endEl) { alert('Error: inputs not found'); return; }
-                if (!startEl.value || !endEl.value) { alert('Please select both start and end times.'); return; }
-                if (startEl.value >= endEl.value) { alert('End time must be after start time.'); return; }
-                slots.push({ day_of_week: dayIndex, start_time: startEl.value, end_time: endEl.value });
-                render();
-            });
-        });
-
-        editor.querySelectorAll('[data-action="remove"]').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const dayIndex = Number(this.dataset.day);
-                const slotIndex = Number(this.dataset.slot);
-                const daySlots = slots.filter(s => Number(s.day_of_week) === dayIndex);
-                const toRemove = daySlots[slotIndex];
-                if (toRemove) {
-                    slots = slots.filter(s => s !== toRemove);
-                    render();
-                }
-            });
-        });
     }
 
-    // Save button uses secureFetch
-    window.saveAvailability = async () => {
+    // Single event listener on the parent - handles all clicks via delegation
+    editor.addEventListener('click', function(e) {
+        const target = e.target;
+
+        if (target.classList.contains('avail-add')) {
+            e.preventDefault();
+            const dayIdx = Number(target.getAttribute('data-day'));
+            const startInput = editor.querySelector('.avail-start[data-day="' + dayIdx + '"]');
+            const endInput = editor.querySelector('.avail-end[data-day="' + dayIdx + '"]');
+            if (!startInput || !endInput) { alert('Error: time inputs not found'); return; }
+            if (!startInput.value || !endInput.value) { alert('Please pick both a start and end time.'); return; }
+            if (startInput.value >= endInput.value) { alert('End time must be after start time.'); return; }
+            slots.push({ day_of_week: dayIdx, start_time: startInput.value, end_time: endInput.value });
+            render();
+            return;
+        }
+
+        if (target.classList.contains('avail-remove')) {
+            e.preventDefault();
+            const removeIdx = Number(target.getAttribute('data-idx'));
+            slots.splice(removeIdx, 1);
+            render();
+            return;
+        }
+    });
+
+    window.saveAvailability = async function() {
         try {
             const resp = await secureFetch('/admin/tutor/availability', {
                 method: 'POST',
-                body: JSON.stringify({ slots })
+                body: JSON.stringify({ slots: slots })
             });
             const data = await resp.json();
             if (data.success) {
@@ -271,6 +270,7 @@ function initAvailabilityEditor() {
     };
 
     render();
+    console.log('Availability editor ready:', slots.length, 'existing slots');
 }
 
 function initMessagePolling() {
