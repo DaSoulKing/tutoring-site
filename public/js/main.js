@@ -170,60 +170,88 @@ function initAlertDismiss() {
     });
 }
 
-// ===== AVAILABILITY EDITOR - proper time inputs, no more prompt() =====
+// ===== AVAILABILITY EDITOR =====
 function initAvailabilityEditor() {
     const editor = document.getElementById('availability-editor');
     if (!editor) return;
+
     const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
     let slots = [];
-    try { slots = JSON.parse(editor.dataset.existing || '[]'); } catch(e) {}
+
+    try {
+        const raw = editor.dataset.existing;
+        if (raw && raw !== '[]') {
+            slots = JSON.parse(raw);
+            // Ensure day_of_week is a number
+            slots = slots.map(s => ({ ...s, day_of_week: Number(s.day_of_week) }));
+        }
+    } catch(e) {
+        console.error('Failed to parse existing availability:', e);
+        slots = [];
+    }
 
     function render() {
         let html = '';
         days.forEach((day, i) => {
-            const daySlots = slots.filter(s => s.day_of_week === i);
-            html += `<div style="margin-bottom:16px;padding:12px;background:var(--gray-50);border-radius:8px;">`;
-            html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">`;
-            html += `<span style="font-weight:700;color:var(--gray-700);min-width:100px;">${day}</span>`;
-            html += `</div>`;
+            const daySlots = slots.filter(s => Number(s.day_of_week) === i);
+            html += '<div style="margin-bottom:16px;padding:12px;background:var(--gray-50);border-radius:8px;">';
+            html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+            html += '<span style="font-weight:700;color:var(--gray-700);min-width:100px;">' + day + '</span>';
+            if (daySlots.length > 0) {
+                html += '<span style="font-size:0.75rem;color:var(--gray-400);">' + daySlots.length + ' slot' + (daySlots.length > 1 ? 's' : '') + '</span>';
+            }
+            html += '</div>';
 
-            // Existing slots for this day
             daySlots.forEach((s, si) => {
-                html += `<div style="display:inline-flex;align-items:center;gap:6px;background:var(--blue-100);color:var(--blue-700);padding:4px 10px;border-radius:20px;font-size:0.85rem;font-weight:600;margin:0 6px 6px 0;">`;
-                html += `${formatTime(s.start_time)} - ${formatTime(s.end_time)}`;
-                html += `<button onclick="removeSlot(${i}, ${si})" style="border:none;background:none;color:var(--red-500);cursor:pointer;font-weight:700;font-size:1rem;line-height:1;padding:0 2px;">&times;</button>`;
-                html += `</div>`;
+                html += '<div style="display:inline-flex;align-items:center;gap:6px;background:var(--blue-100);color:var(--blue-700);padding:4px 10px;border-radius:20px;font-size:0.85rem;font-weight:600;margin:0 6px 6px 0;">';
+                html += formatTime(s.start_time) + ' - ' + formatTime(s.end_time);
+                html += ' <button type="button" data-action="remove" data-day="' + i + '" data-slot="' + si + '" style="border:none;background:none;color:var(--red-500);cursor:pointer;font-weight:700;font-size:1rem;line-height:1;padding:0 2px;">&times;</button>';
+                html += '</div>';
             });
 
-            // Add new slot inline form
-            html += `<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">`;
-            html += `<input type="time" id="start-${i}" style="padding:6px 10px;border:2px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.9rem;">`;
-            html += `<span style="color:var(--gray-400);">to</span>`;
-            html += `<input type="time" id="end-${i}" style="padding:6px 10px;border:2px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.9rem;">`;
-            html += `<button onclick="addSlotFromInputs(${i})" style="padding:6px 14px;background:var(--blue-500);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem;">+ Add</button>`;
-            html += `</div>`;
-
-            html += `</div>`;
+            html += '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">';
+            html += '<input type="time" data-start="' + i + '" style="padding:6px 10px;border:2px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.9rem;">';
+            html += '<span style="color:var(--gray-400);">to</span>';
+            html += '<input type="time" data-end="' + i + '" style="padding:6px 10px;border:2px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.9rem;">';
+            html += ' <button type="button" data-action="add" data-day="' + i + '" style="padding:6px 14px;background:var(--blue-500);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem;">+ Add</button>';
+            html += '</div>';
+            html += '</div>';
         });
         editor.innerHTML = html;
+
+        // Attach event listeners via delegation (more reliable than onclick attributes)
+        editor.querySelectorAll('[data-action="add"]').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const dayIndex = Number(this.dataset.day);
+                const startEl = editor.querySelector('[data-start="' + dayIndex + '"]');
+                const endEl = editor.querySelector('[data-end="' + dayIndex + '"]');
+                if (!startEl || !endEl) { alert('Error: inputs not found'); return; }
+                if (!startEl.value || !endEl.value) { alert('Please select both start and end times.'); return; }
+                if (startEl.value >= endEl.value) { alert('End time must be after start time.'); return; }
+                slots.push({ day_of_week: dayIndex, start_time: startEl.value, end_time: endEl.value });
+                render();
+            });
+        });
+
+        editor.querySelectorAll('[data-action="remove"]').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const dayIndex = Number(this.dataset.day);
+                const slotIndex = Number(this.dataset.slot);
+                const daySlots = slots.filter(s => Number(s.day_of_week) === dayIndex);
+                const toRemove = daySlots[slotIndex];
+                if (toRemove) {
+                    slots = slots.filter(s => s !== toRemove);
+                    render();
+                }
+            });
+        });
     }
 
-    window.addSlotFromInputs = (dayIndex) => {
-        const startEl = document.getElementById(`start-${dayIndex}`);
-        const endEl = document.getElementById(`end-${dayIndex}`);
-        if (!startEl.value || !endEl.value) { alert('Please select both start and end times.'); return; }
-        if (startEl.value >= endEl.value) { alert('End time must be after start time.'); return; }
-        slots.push({ day_of_week: dayIndex, start_time: startEl.value, end_time: endEl.value });
-        render();
-    };
-
-    window.removeSlot = (dayIndex, slotIndex) => {
-        const daySlots = slots.filter(s => s.day_of_week === dayIndex);
-        const toRemove = daySlots[slotIndex];
-        slots = slots.filter(s => s !== toRemove);
-        render();
-    };
-
+    // Save button uses secureFetch
     window.saveAvailability = async () => {
         try {
             const resp = await secureFetch('/admin/tutor/availability', {

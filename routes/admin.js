@@ -28,21 +28,8 @@ const upload = multer({
     }
 });
 
-// Helper: send email
-async function sendEmail(to, subject, html) {
-    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) return false;
-    try {
-        const nodemailer = require('nodemailer');
-        const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: parseInt(process.env.SMTP_PORT) || 587,
-            secure: false,
-            auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-        });
-        await transporter.sendMail({ from: process.env.EMAIL_FROM || process.env.SMTP_USER, to, subject, html });
-        return true;
-    } catch (err) { console.error('Email failed:', err.message); return false; }
-}
+// Helper: send email (centralized)
+const { sendEmail, testEmail } = require('../utils/email');
 
 // ===== OWNER DASHBOARD =====
 router.get('/owner', isAuthenticated, isOwner, async (req, res) => {
@@ -147,6 +134,16 @@ router.post('/owner/referral-code', isAuthenticated, isOwner, async (req, res) =
             [code, parseInt(discount_percent) || 10, req.session.user.id, note || '']);
         req.session.success = `Referral code created: ${code} (${discount_percent}% off)`;
     } catch (err) { console.error(err); req.session.error = 'Failed.'; }
+    res.redirect('/admin/owner');
+});
+
+// Test email (admin only)
+router.post('/owner/test-email', isAuthenticated, isOwner, async (req, res) => {
+    const to = req.body.email || req.session.user.email;
+    const result = await testEmail(to);
+    req.session[result ? 'success' : 'error'] = result
+        ? `Test email sent to ${to}! Check your inbox.`
+        : 'Email failed. Check Railway logs for details. Consider using Resend API instead of SMTP.';
     res.redirect('/admin/owner');
 });
 

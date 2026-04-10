@@ -20,29 +20,13 @@ const registerLimiter = rateLimit({
     message: 'Too many accounts created. Please try again later.',
 });
 
-// Helper: check if SMTP is configured
-function smtpConfigured() {
-    return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+// Helper: check if any email provider is configured
+function emailConfigured() {
+    return !!(process.env.RESEND_API_KEY || (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS));
 }
 
-// Helper: send email (returns true/false)
-async function sendEmail(to, subject, html) {
-    if (!smtpConfigured()) return false;
-    try {
-        const nodemailer = require('nodemailer');
-        const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: parseInt(process.env.SMTP_PORT) || 587,
-            secure: false,
-            auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-        });
-        await transporter.sendMail({ from: process.env.EMAIL_FROM || process.env.SMTP_USER, to, subject, html });
-        return true;
-    } catch (err) {
-        console.error('Email send failed:', err.message);
-        return false;
-    }
-}
+// Centralized email utility
+const { sendEmail } = require('../utils/email');
 
 // Helper: sanitize string input
 function sanitize(str) {
@@ -143,7 +127,7 @@ router.post('/register', registerLimiter, verifyRecaptcha, async (req, res) => {
         const allowedRole = ['parent', 'student'].includes(role) ? role : 'parent';
 
         // If SMTP is not configured, auto-verify so users can actually log in
-        const autoVerify = !smtpConfigured();
+        const autoVerify = !emailConfigured();
 
         const result = await pool.query(`
             INSERT INTO users (email, password_hash, role, first_name, last_name, phone, referral_code, email_verified, verify_token)

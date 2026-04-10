@@ -32,6 +32,10 @@
                     <input type="text" name="note" placeholder="Note (optional)" class="form-control" style="width:150px;padding:6px;">
                     <button type="submit" class="btn btn-secondary btn-sm">Generate Referral Code</button>
                 </form>
+                <form action="/admin/owner/test-email" method="POST" style="display:flex;gap:8px;align-items:center;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="email" name="email" placeholder="Test email to..." class="form-control" style="width:180px;padding:6px;" value="<%= user.email %>">
+                    <button type="submit" class="btn btn-outline btn-sm">Test Email</button>
+                </form>
             </div>
 
             <!-- Pending Tutor Approvals -->
