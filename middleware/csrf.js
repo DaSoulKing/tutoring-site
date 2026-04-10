@@ -29,12 +29,17 @@ function csrfProtect(req, res, next) {
 }
 
 function csrfFail(req, res) {
-    if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json')) || req.path.startsWith('/api/')) {
+    const wantsJson = req.xhr
+        || (req.headers.accept && req.headers.accept.includes('application/json'))
+        || (req.headers['content-type'] && req.headers['content-type'].includes('application/json'))
+        || req.path.startsWith('/api/')
+        || req.path.includes('/availability');
+    if (wantsJson) {
         return res.status(403).json({ success: false, message: 'Invalid or missing security token.' });
     }
     req.session.error = 'Invalid form submission. Please try again.';
     const ref = req.headers.referer;
-    return res.redirect((ref && !ref.includes('://') === false) ? ref : '/');
+    return res.redirect(ref || '/');
 }
 
 module.exports = { csrfInject, csrfProtect };

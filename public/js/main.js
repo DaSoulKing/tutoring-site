@@ -19,7 +19,15 @@ function getCsrfToken() {
 
 // Secure fetch wrapper that includes CSRF token
 function secureFetch(url, options = {}) {
-    const defaults = { headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() } };
+    const token = getCsrfToken();
+    const defaults = {
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-Token': token
+        }
+    };
+    console.log('secureFetch:', url, 'CSRF token length:', token.length);
     return fetch(url, { ...defaults, ...options, headers: { ...defaults.headers, ...(options.headers || {}) } });
 }
 
@@ -76,9 +84,13 @@ function renderTutorDetails(container, data) {
 
 function formatTime(timeStr) {
     if (!timeStr) return '';
-    const [h, m] = timeStr.split(':');
-    const hour = parseInt(h);
-    return `${hour % 12 || 12}:${m || '00'} ${hour >= 12 ? 'PM' : 'AM'}`;
+    var parts = timeStr.split(':');
+    var hour = parseInt(parts[0], 10);
+    var min = parts[1] || '00';
+    var ampm = hour >= 12 ? 'PM' : 'AM';
+    var hour12 = hour % 12;
+    if (hour12 === 0) hour12 = 12;
+    return hour12 + ':' + min + ' ' + ampm;
 }
 
 // ===== CALENDAR =====
@@ -253,19 +265,27 @@ function initAvailabilityEditor() {
 
     window.saveAvailability = async function() {
         try {
-            const resp = await secureFetch('/admin/tutor/availability', {
+            console.log('Saving', slots.length, 'slots:', JSON.stringify(slots));
+            var resp = await secureFetch('/admin/tutor/availability', {
                 method: 'POST',
                 body: JSON.stringify({ slots: slots })
             });
-            const data = await resp.json();
+            console.log('Save response status:', resp.status);
+            if (!resp.ok) {
+                var errorText = await resp.text();
+                console.error('Save error response:', errorText);
+                alert('Failed to save (status ' + resp.status + '). Check browser console for details.');
+                return;
+            }
+            var data = await resp.json();
             if (data.success) {
                 alert('Availability saved!');
             } else {
                 alert('Failed to save: ' + (data.message || 'Unknown error'));
             }
         } catch (err) {
-            alert('Failed to save. Please try again.');
-            console.error(err);
+            console.error('Save availability error:', err);
+            alert('Failed to save. Check browser console (F12) for details.');
         }
     };
 
