@@ -6,7 +6,7 @@
         <div class="container">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
                 <h1 style="font-size:1.5rem;">Messages</h1>
-                <a href="/parent/dashboard" class="btn btn-outline btn-sm">&larr; Back to Dashboard</a>
+                <a href="<%= user.role === 'tutor' ? '/admin/tutor' : user.role === 'owner' ? '/admin/owner' : '/parent/dashboard' %>" class="btn btn-outline btn-sm">&larr; Back to Dashboard</a>
             </div>
 
             <div class="messages-layout">
@@ -61,7 +61,6 @@
 </main>
 
 <script>
-    // Auto-scroll to bottom of messages
     const messageList = document.getElementById('message-list');
     if (messageList) messageList.scrollTop = messageList.scrollHeight;
 </script>

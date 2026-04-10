@@ -1,5 +1,8 @@
 <%- include('../partials/header') %>
 <%- include('../partials/nav') %>
+
+<% const subjectOptions = ['Math', 'Algebra', 'Geometry', 'Calculus', 'Statistics', 'Science', 'Biology', 'Chemistry', 'Physics', 'English', 'Writing', 'Reading', 'Literature', 'History', 'Social Studies', 'Geography', 'French', 'Spanish', 'Mandarin', 'Computer Science', 'Coding', 'SAT Prep', 'ACT Prep', 'Test Strategy', 'Study Skills', 'Art', 'Music']; %>
+
 <main id="main-content">
     <div class="dashboard-grid">
         <aside class="dashboard-sidebar">
@@ -22,7 +25,16 @@
                 <form action="/admin/tutor/profile" method="POST" enctype="multipart/form-data">
                     <div class="form-row">
                         <div class="form-group"><label for="tagline">Tagline</label><input type="text" id="tagline" name="tagline" class="form-control" value="<%= profile.tagline || '' %>" placeholder="e.g., Making math fun since 2020"></div>
-                        <div class="form-group"><label for="subjects">Subjects (comma separated)</label><input type="text" id="subjects" name="subjects" class="form-control" value="<%= (profile.subjects || []).join(', ') %>"></div>
+                        <div class="form-group">
+                            <label for="subjects">Subjects</label>
+                            <select id="subjects-select" class="form-control" multiple style="min-height:120px;">
+                                <% subjectOptions.forEach(s => { %>
+                                <option value="<%= s %>" <%= (profile.subjects || []).includes(s) ? 'selected' : '' %>><%= s %></option>
+                                <% }); %>
+                            </select>
+                            <input type="hidden" name="subjects" id="subjects-hidden" value="<%= (profile.subjects || []).join(', ') %>">
+                            <p style="font-size:0.8rem;color:var(--gray-400);margin-top:4px;">Hold Ctrl/Cmd to select multiple</p>
+                        </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group"><label for="education">Education</label><input type="text" id="education" name="education" class="form-control" value="<%= profile.education || '' %>"></div>
@@ -30,17 +42,17 @@
                     </div>
                     <div class="form-group"><label for="bio">Bio</label><textarea id="bio" name="bio" class="form-control" rows="3"><%= profile.bio || '' %></textarea></div>
                     <div class="form-group"><label for="profile_picture">Profile Picture</label><input type="file" id="profile_picture" name="profile_picture" class="form-control" accept="image/*"></div>
-                    <button type="submit" class="btn btn-primary btn-sm">Update Profile</button>
+                    <button type="submit" class="btn btn-primary btn-sm" onclick="document.getElementById('subjects-hidden').value = Array.from(document.getElementById('subjects-select').selectedOptions).map(o=>o.value).join(', ');">Update Profile</button>
                 </form>
             </div>
 
-            <!-- Availability -->
+            <!-- Availability with proper time inputs -->
             <div class="card" style="margin-bottom:24px;padding:24px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                     <h2 style="font-size:1.15rem;">My Availability</h2>
                     <button onclick="saveAvailability()" class="btn btn-primary btn-sm">Save Availability</button>
                 </div>
-                <div id="availability-editor" data-existing='<%= JSON.stringify(availability.map(a => ({day_of_week: a.day_of_week, start_time: a.start_time.substring(0,5), end_time: a.end_time.substring(0,5)}))) %>'></div>
+                <div id="availability-editor" data-existing='<%= JSON.stringify((availability || []).map(a => ({day_of_week: a.day_of_week, start_time: a.start_time.substring(0,5), end_time: a.end_time.substring(0,5)}))) %>'></div>
             </div>
 
             <!-- Upcoming Sessions -->
@@ -86,4 +98,5 @@
         </div>
     </div>
 </main>
+
 <%- include('../partials/footer') %>

@@ -34,9 +34,8 @@ function initTutorCards() {
                 card.classList.add('expanded');
                 const expandArea = card.querySelector('.tutor-card-expand');
                 if (expandArea && !expandArea.dataset.loaded) {
-                    const tutorId = card.dataset.tutorId;
                     try {
-                        const resp = await fetch(`/tutors/${tutorId}/details`);
+                        const resp = await fetch(`/tutors/${card.dataset.tutorId}/details`);
                         const data = await resp.json();
                         if (data.tutor) { expandArea.dataset.loaded = 'true'; renderTutorDetails(expandArea, data); }
                     } catch (err) { console.error(err); }
@@ -55,18 +54,11 @@ function renderTutorDetails(container, data) {
     let availHtml = availability && availability.length > 0
         ? availability.map(a => `<div style="padding:4px 0;">${days[a.day_of_week]}: ${formatTime(a.start_time)} - ${formatTime(a.end_time)}</div>`).join('')
         : '<p style="color:var(--gray-400);">Contact tutor for availability.</p>';
-
     container.innerHTML = `<div style="padding-top:16px;">
         <p style="color:var(--gray-600);line-height:1.7;margin-bottom:16px;">${tutor.bio || 'No bio available.'}</p>
-        <div class="tutor-detail-grid">
-            <div class="tutor-detail-item"><label>Education</label><span>${tutor.education || 'N/A'}</span></div>
-            <div class="tutor-detail-item"><label>Experience</label><span>${tutor.experience_years || 0} years</span></div>
-        </div>
+        <div class="tutor-detail-grid"><div class="tutor-detail-item"><label>Education</label><span>${tutor.education || 'N/A'}</span></div><div class="tutor-detail-item"><label>Experience</label><span>${tutor.experience_years || 0} years</span></div></div>
         <div style="margin-top:20px;"><label style="font-size:0.8rem;color:var(--gray-400);font-weight:700;text-transform:uppercase;display:block;margin-bottom:8px;">Available Hours</label>${availHtml}</div>
-        <div style="margin-top:20px;display:flex;gap:12px;">
-            <a href="/consultation" class="btn btn-primary btn-sm">Book Consultation</a>
-            <a href="/contact" class="btn btn-outline btn-sm">Contact</a>
-        </div>
+        <div style="margin-top:20px;display:flex;gap:12px;"><a href="/consultation" class="btn btn-primary btn-sm">Book Consultation</a><a href="/contact" class="btn btn-outline btn-sm">Contact</a></div>
     </div>`;
 }
 
@@ -74,9 +66,10 @@ function formatTime(timeStr) {
     if (!timeStr) return '';
     const [h, m] = timeStr.split(':');
     const hour = parseInt(h);
-    return `${hour % 12 || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
+    return `${hour % 12 || 12}:${m || '00'} ${hour >= 12 ? 'PM' : 'AM'}`;
 }
 
+// ===== CALENDAR =====
 function initCalendar() {
     const calEl = document.getElementById('calendar');
     if (!calEl) return;
@@ -105,9 +98,7 @@ function renderCalendar(state, calEl) {
     const daysInMonth = new Date(state.year, state.month + 1, 0).getDate();
     const daysInPrevMonth = new Date(state.year, state.month, 0).getDate();
     const today = new Date();
-
     for (let i = firstDay - 1; i >= 0; i--) html += `<div class="calendar-day other-month"><span class="day-number">${daysInPrevMonth - i}</span></div>`;
-
     for (let day = 1; day <= daysInMonth; day++) {
         const isToday = today.getFullYear() === state.year && today.getMonth() === state.month && today.getDate() === day;
         const dayEvents = (state.events || []).filter(e => new Date(e.booking_date).getDate() === day);
@@ -118,7 +109,6 @@ function renderCalendar(state, calEl) {
         });
         html += '</div>';
     }
-
     const totalCells = firstDay + daysInMonth;
     const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
     for (let i = 1; i <= remaining; i++) html += `<div class="calendar-day other-month"><span class="day-number">${i}</span></div>`;
@@ -164,10 +154,11 @@ function initFormValidation() {
 
 function initAlertDismiss() {
     document.querySelectorAll('.alert').forEach(alert => {
-        setTimeout(() => { alert.style.opacity = '0'; alert.style.transform = 'translateY(-10px)'; setTimeout(() => alert.remove(), 300); }, 5000);
+        setTimeout(() => { alert.style.opacity = '0'; alert.style.transform = 'translateY(-10px)'; setTimeout(() => alert.remove(), 300); }, 6000);
     });
 }
 
+// ===== AVAILABILITY EDITOR - proper time inputs, no more prompt() =====
 function initAvailabilityEditor() {
     const editor = document.getElementById('availability-editor');
     if (!editor) return;
@@ -176,40 +167,70 @@ function initAvailabilityEditor() {
     try { slots = JSON.parse(editor.dataset.existing || '[]'); } catch(e) {}
 
     function render() {
-        let html = '<div style="margin-bottom:16px;">';
+        let html = '';
         days.forEach((day, i) => {
             const daySlots = slots.filter(s => s.day_of_week === i);
-            html += `<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap;">
-                <span style="width:100px;font-weight:700;color:var(--gray-700);">${day}</span>`;
+            html += `<div style="margin-bottom:16px;padding:12px;background:var(--gray-50);border-radius:8px;">`;
+            html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">`;
+            html += `<span style="font-weight:700;color:var(--gray-700);min-width:100px;">${day}</span>`;
+            html += `</div>`;
+
+            // Existing slots for this day
             daySlots.forEach((s, si) => {
-                html += `<span class="subject-tag" style="background:var(--blue-100);color:var(--blue-700);">
-                    ${formatTime(s.start_time)} - ${formatTime(s.end_time)}
-                    <button onclick="removeSlot(${i}, ${si})" style="border:none;background:none;color:var(--red-500);cursor:pointer;font-weight:700;margin-left:4px;">&times;</button>
-                </span>`;
+                html += `<div style="display:inline-flex;align-items:center;gap:6px;background:var(--blue-100);color:var(--blue-700);padding:4px 10px;border-radius:20px;font-size:0.85rem;font-weight:600;margin:0 6px 6px 0;">`;
+                html += `${formatTime(s.start_time)} - ${formatTime(s.end_time)}`;
+                html += `<button onclick="removeSlot(${i}, ${si})" style="border:none;background:none;color:var(--red-500);cursor:pointer;font-weight:700;font-size:1rem;line-height:1;padding:0 2px;">&times;</button>`;
+                html += `</div>`;
             });
-            html += `<button onclick="addSlot(${i})" class="btn btn-outline btn-sm" style="padding:4px 12px;font-size:0.8rem;">+ Add</button></div>`;
+
+            // Add new slot inline form
+            html += `<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">`;
+            html += `<input type="time" id="start-${i}" style="padding:6px 10px;border:2px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.9rem;">`;
+            html += `<span style="color:var(--gray-400);">to</span>`;
+            html += `<input type="time" id="end-${i}" style="padding:6px 10px;border:2px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.9rem;">`;
+            html += `<button onclick="addSlotFromInputs(${i})" style="padding:6px 14px;background:var(--blue-500);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem;">+ Add</button>`;
+            html += `</div>`;
+
+            html += `</div>`;
         });
-        html += '</div>';
         editor.innerHTML = html;
     }
 
-    window.addSlot = (dayIndex) => {
-        const start = prompt('Start time (e.g., 09:00):');
-        const end = prompt('End time (e.g., 10:00):');
-        if (start && end) { slots.push({ day_of_week: dayIndex, start_time: start, end_time: end }); render(); }
-    };
-    window.removeSlot = (dayIndex, slotIndex) => {
-        const daySlots = slots.filter(s => s.day_of_week === dayIndex);
-        slots = slots.filter(s => s !== daySlots[slotIndex]);
+    window.addSlotFromInputs = (dayIndex) => {
+        const startEl = document.getElementById(`start-${dayIndex}`);
+        const endEl = document.getElementById(`end-${dayIndex}`);
+        if (!startEl.value || !endEl.value) { alert('Please select both start and end times.'); return; }
+        if (startEl.value >= endEl.value) { alert('End time must be after start time.'); return; }
+        slots.push({ day_of_week: dayIndex, start_time: startEl.value, end_time: endEl.value });
         render();
     };
+
+    window.removeSlot = (dayIndex, slotIndex) => {
+        const daySlots = slots.filter(s => s.day_of_week === dayIndex);
+        const toRemove = daySlots[slotIndex];
+        slots = slots.filter(s => s !== toRemove);
+        render();
+    };
+
     window.saveAvailability = async () => {
         try {
-            const resp = await fetch('/admin/tutor/availability', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slots }) });
+            const resp = await fetch('/admin/tutor/availability', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slots })
+            });
             const data = await resp.json();
-            alert(data.success ? 'Availability saved!' : 'Failed to save.');
-        } catch (err) { alert('Failed to save.'); }
+            if (data.success) {
+                alert('Availability saved!');
+            } else {
+                alert('Failed to save: ' + (data.message || 'Unknown error'));
+            }
+        } catch (err) {
+            alert('Failed to save. Please try again.');
+            console.error(err);
+        }
     };
+
     render();
 }
 
@@ -247,5 +268,3 @@ function filterTutors(subject) {
     if (subject) { params.set('subject', subject); } else { params.delete('subject'); }
     window.location.search = params.toString();
 }
-
-function copyReferralCode(code) { navigator.clipboard.writeText(code).then(() => { const btn = event.target; const orig = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = orig, 2000); }); }

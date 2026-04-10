@@ -20,26 +20,13 @@
                     <% } else { %>
                         <li><a href="/parent/dashboard" class="<%= currentPath.startsWith('/parent') ? 'active' : '' %>">Dashboard</a></li>
                     <% } %>
-                <% } %>
-                <!-- These only show inside the mobile hamburger menu -->
-                <% if (user) { %>
-                    <li class="nav-mobile-auth"><a href="/auth/logout">Log Out (<%= user.firstName %>)</a></li>
+                    <li class="nav-auth-item"><span class="nav-greeting">Hi, <%= user.firstName %>!</span></li>
+                    <li class="nav-auth-item"><a href="/auth/logout" class="btn btn-outline btn-sm">Log Out</a></li>
                 <% } else { %>
-                    <li class="nav-mobile-auth"><a href="/auth/login">Log In</a></li>
-                    <li class="nav-mobile-auth"><a href="/consultation" style="color:var(--yellow-600);font-weight:700;">Book Free Consultation</a></li>
+                    <li class="nav-auth-item"><a href="/auth/login" class="btn btn-outline btn-sm">Log In</a></li>
+                    <li class="nav-auth-item"><a href="/consultation" class="btn btn-secondary btn-sm">Free Consultation</a></li>
                 <% } %>
             </ul>
-
-            <!-- Desktop only buttons -->
-            <div class="nav-cta">
-                <% if (user) { %>
-                    <span style="font-weight:600;color:var(--gray-600);font-size:0.9rem;">Hi, <%= user.firstName %>!</span>
-                    <a href="/auth/logout" class="btn btn-outline btn-sm">Log Out</a>
-                <% } else { %>
-                    <a href="/auth/login" class="btn btn-outline btn-sm">Log In</a>
-                    <a href="/consultation" class="btn btn-secondary btn-sm">Free Consultation</a>
-                <% } %>
-            </div>
 
             <button class="nav-hamburger" id="nav-hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-links">
                 <span></span><span></span><span></span>
@@ -48,8 +35,8 @@
     </nav>
 
     <% if (typeof success !== 'undefined' && success) { %>
-    <div class="alert alert-success" role="alert" style="border-radius:0;margin:0;"><span aria-hidden="true">&#x2705;</span> <%= success %></div>
+    <div class="alert alert-success" role="alert" style="border-radius:0;margin:0;"><span aria-hidden="true">&#x2705;</span> <%- success %></div>
     <% } %>
     <% if (typeof error !== 'undefined' && error) { %>
-    <div class="alert alert-error" role="alert" style="border-radius:0;margin:0;"><span aria-hidden="true">&#x26A0;&#xFE0F;</span> <%= error %></div>
+    <div class="alert alert-error" role="alert" style="border-radius:0;margin:0;"><span aria-hidden="true">&#x26A0;&#xFE0F;</span> <%- error %></div>
     <% } %>
