@@ -19,16 +19,23 @@ function getCsrfToken() {
 
 // Secure fetch wrapper that includes CSRF token
 function secureFetch(url, options = {}) {
-    const token = getCsrfToken();
-    const defaults = {
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-CSRF-Token': token
-        }
+    var token = getCsrfToken();
+    var headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-Token': token
     };
-    console.log('secureFetch:', url, 'CSRF token length:', token.length);
-    return fetch(url, { ...defaults, ...options, headers: { ...defaults.headers, ...(options.headers || {}) } });
+    // Inject _csrf into JSON body as fallback
+    if (options.body) {
+        try {
+            var parsed = JSON.parse(options.body);
+            parsed._csrf = token;
+            options.body = JSON.stringify(parsed);
+        } catch(e) {}
+    } else {
+        options.body = JSON.stringify({ _csrf: token });
+    }
+    return fetch(url, { method: options.method || 'GET', headers: headers, body: options.body });
 }
 
 function initNav() {
@@ -265,16 +272,22 @@ function initAvailabilityEditor() {
 
     window.saveAvailability = async function() {
         try {
-            console.log('Saving', slots.length, 'slots:', JSON.stringify(slots));
-            var resp = await secureFetch('/admin/tutor/availability', {
+            var token = getCsrfToken();
+            console.log('Saving', slots.length, 'slots, CSRF token length:', token.length);
+            var resp = await fetch('/admin/tutor/availability', {
                 method: 'POST',
-                body: JSON.stringify({ slots: slots })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-Token': token
+                },
+                body: JSON.stringify({ slots: slots, _csrf: token })
             });
             console.log('Save response status:', resp.status);
             if (!resp.ok) {
                 var errorText = await resp.text();
-                console.error('Save error response:', errorText);
-                alert('Failed to save (status ' + resp.status + '). Check browser console for details.');
+                console.error('Save error:', errorText);
+                alert('Failed to save (status ' + resp.status + '). Check browser console.');
                 return;
             }
             var data = await resp.json();
@@ -284,8 +297,8 @@ function initAvailabilityEditor() {
                 alert('Failed to save: ' + (data.message || 'Unknown error'));
             }
         } catch (err) {
-            console.error('Save availability error:', err);
-            alert('Failed to save. Check browser console (F12) for details.');
+            console.error('Save error:', err);
+            alert('Failed to save. Check browser console (F12).');
         }
     };
 
