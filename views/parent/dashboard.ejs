@@ -50,7 +50,10 @@
             <% } %>
 
             <!-- Upcoming Sessions -->
-            <h2 style="font-size:1.25rem;margin-bottom:16px;">Upcoming Sessions</h2>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h2 style="font-size:1.25rem;">Upcoming Sessions</h2>
+                <a href="/tutors" class="btn btn-primary btn-sm">Book New Session</a>
+            </div>
             <% if (bookings && bookings.length > 0) { %>
                 <% bookings.forEach(b => { %>
                 <div class="card" style="margin-bottom:12px;padding:20px;">

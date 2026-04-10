@@ -1,0 +1,179 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+
+<main id="main-content">
+    <section class="section" style="padding-top:32px;">
+        <div class="container" style="max-width:900px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <h1 style="font-size:1.5rem;">Book a Session</h1>
+                    <p style="color:var(--gray-500);">with <%= tutor.first_name %> <%= tutor.last_name %> <% if (tutor.tagline) { %>-- <%= tutor.tagline %><% } %></p>
+                </div>
+                <a href="/tutors" class="btn btn-outline btn-sm">&larr; All Tutors</a>
+            </div>
+
+            <% if (availability.length === 0) { %>
+            <div class="card" style="padding:40px;text-align:center;">
+                <p style="color:var(--gray-400);font-size:1.1rem;">This tutor has not set their availability yet.</p>
+                <p style="color:var(--gray-400);margin-top:8px;"><a href="/consultation">Request a consultation</a> and we will help match you.</p>
+            </div>
+            <% } else { %>
+
+            <div class="card" style="padding:24px;margin-bottom:24px;background:var(--blue-50);border:2px solid var(--blue-200);">
+                <p style="color:var(--blue-700);font-weight:600;">Pick an available time slot below. The tutor will confirm your request within 24 hours. Once confirmed, you can join the video session from your dashboard.</p>
+            </div>
+
+            <div id="booking-slots"></div>
+
+            <!-- Hidden form that gets submitted when a slot is picked -->
+            <form id="booking-form" action="/parent/book/<%= tutor.id %>" method="POST" style="display:none;">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="booking_date" id="form-date">
+                <input type="hidden" name="start_time" id="form-start">
+                <input type="hidden" name="end_time" id="form-end">
+                <input type="hidden" name="subject" id="form-subject">
+            </form>
+
+            <!-- Subject picker modal -->
+            <div id="subject-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+                <div class="card" style="max-width:400px;padding:32px;">
+                    <h3 style="margin-bottom:16px;">What subject?</h3>
+                    <p style="color:var(--gray-500);margin-bottom:16px;" id="modal-slot-info"></p>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+                        <% (tutor.subjects || []).forEach(function(s) { %>
+                        <button type="button" class="subject-pick filter-btn" data-subject="<%= s %>"><%= s %></button>
+                        <% }); %>
+                        <button type="button" class="subject-pick filter-btn" data-subject="General">General</button>
+                    </div>
+                    <button type="button" id="modal-close" class="btn btn-outline btn-sm" style="width:100%;">Cancel</button>
+                </div>
+            </div>
+
+            <script>
+            (function() {
+                var availability = <%- JSON.stringify(availability) %>;
+                var booked = <%- JSON.stringify(booked.map(function(b) { return { date: b.booking_date, start: b.start_time, end: b.end_time }; })) %>;
+                var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                var container = document.getElementById('booking-slots');
+                var modal = document.getElementById('subject-modal');
+                var pendingSlot = null;
+
+                function formatTime12(t) {
+                    var parts = t.split(':');
+                    var h = parseInt(parts[0], 10);
+                    var m = parts[1] || '00';
+                    var ampm = h >= 12 ? 'PM' : 'AM';
+                    var h12 = h % 12;
+                    if (h12 === 0) h12 = 12;
+                    return h12 + ':' + m + ' ' + ampm;
+                }
+
+                function isBooked(dateStr, start, end) {
+                    for (var i = 0; i < booked.length; i++) {
+                        var bd = booked[i].date.substring(0, 10);
+                        if (bd === dateStr && booked[i].start.substring(0,5) === start && booked[i].end.substring(0,5) === end) return true;
+                    }
+                    return false;
+                }
+
+                function formatDate(d) {
+                    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+                }
+
+                // Build slots for the next 14 days
+                var html = '';
+                var today = new Date();
+                var hasAnySlots = false;
+
+                for (var d = 0; d < 14; d++) {
+                    var date = new Date(today);
+                    date.setDate(today.getDate() + d);
+                    var dow = date.getDay();
+                    var dateStr = formatDate(date);
+                    var dayName = days[dow];
+                    var dateLabel = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+                    // Find availability for this day of week
+                    var daySlots = [];
+                    for (var a = 0; a < availability.length; a++) {
+                        if (Number(availability[a].day_of_week) === dow) {
+                            daySlots.push(availability[a]);
+                        }
+                    }
+
+                    if (daySlots.length === 0) continue;
+
+                    html += '<div style="margin-bottom:20px;">';
+                    html += '<h3 style="font-size:1rem;color:var(--gray-700);margin-bottom:10px;">' + dateLabel + '</h3>';
+                    html += '<div style="display:flex;flex-wrap:wrap;gap:10px;">';
+
+                    for (var s = 0; s < daySlots.length; s++) {
+                        var start = daySlots[s].start_time.substring(0, 5);
+                        var end = daySlots[s].end_time.substring(0, 5);
+                        var taken = isBooked(dateStr, start, end);
+
+                        if (taken) {
+                            html += '<div style="padding:10px 18px;border-radius:10px;background:var(--gray-100);color:var(--gray-400);font-weight:600;font-size:0.9rem;text-decoration:line-through;">';
+                            html += formatTime12(start) + ' - ' + formatTime12(end) + ' (booked)';
+                            html += '</div>';
+                        } else {
+                            hasAnySlots = true;
+                            html += '<a href="#" class="slot-btn" data-date="' + dateStr + '" data-start="' + start + '" data-end="' + end + '" data-label="' + dateLabel + ' ' + formatTime12(start) + ' - ' + formatTime12(end) + '" style="padding:10px 18px;border-radius:10px;background:var(--blue-50);border:2px solid var(--blue-200);color:var(--blue-700);font-weight:600;font-size:0.9rem;text-decoration:none;transition:all 0.2s;cursor:pointer;">';
+                            html += formatTime12(start) + ' - ' + formatTime12(end);
+                            html += '</a>';
+                        }
+                    }
+
+                    html += '</div></div>';
+                }
+
+                if (!hasAnySlots && html) {
+                    html += '<div class="card" style="padding:24px;text-align:center;"><p style="color:var(--gray-400);">All slots are booked for the next 2 weeks. Check back later or <a href="/consultation">request a consultation</a>.</p></div>';
+                }
+
+                container.innerHTML = html;
+
+                // Handle slot clicks
+                container.addEventListener('click', function(e) {
+                    var btn = e.target.closest('.slot-btn');
+                    if (!btn) return;
+                    e.preventDefault();
+                    pendingSlot = {
+                        date: btn.getAttribute('data-date'),
+                        start: btn.getAttribute('data-start'),
+                        end: btn.getAttribute('data-end'),
+                        label: btn.getAttribute('data-label')
+                    };
+                    document.getElementById('modal-slot-info').textContent = pendingSlot.label;
+                    modal.style.display = 'flex';
+                });
+
+                // Handle subject pick
+                modal.addEventListener('click', function(e) {
+                    var pick = e.target.closest('.subject-pick');
+                    if (pick && pendingSlot) {
+                        document.getElementById('form-date').value = pendingSlot.date;
+                        document.getElementById('form-start').value = pendingSlot.start;
+                        document.getElementById('form-end').value = pendingSlot.end;
+                        document.getElementById('form-subject').value = pick.getAttribute('data-subject');
+                        document.getElementById('booking-form').submit();
+                        return;
+                    }
+                    if (e.target.id === 'modal-close') {
+                        modal.style.display = 'none';
+                        pendingSlot = null;
+                    }
+                });
+            })();
+            </script>
+
+            <% } %>
+        </div>
+    </section>
+</main>
+
+<style>
+.slot-btn:hover { background: var(--blue-100) !important; border-color: var(--blue-400) !important; transform: translateY(-1px); }
+</style>
+
+<%- include('../partials/footer') %>

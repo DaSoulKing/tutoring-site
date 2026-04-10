@@ -85,7 +85,7 @@ function renderTutorDetails(container, data) {
         <p style="color:var(--gray-600);line-height:1.7;margin-bottom:16px;">${tutor.bio || 'No bio available.'}</p>
         <div class="tutor-detail-grid"><div class="tutor-detail-item"><label>Education</label><span>${tutor.education || 'N/A'}</span></div><div class="tutor-detail-item"><label>Experience</label><span>${tutor.experience_years || 0} years</span></div></div>
         <div style="margin-top:20px;"><label style="font-size:0.8rem;color:var(--gray-400);font-weight:700;text-transform:uppercase;display:block;margin-bottom:8px;">Available Hours</label>${availHtml}</div>
-        <div style="margin-top:20px;display:flex;gap:12px;"><a href="/consultation" class="btn btn-primary btn-sm">Book Consultation</a><a href="/contact" class="btn btn-outline btn-sm">Contact</a></div>
+        <div style="margin-top:20px;display:flex;gap:12px;"><a href="/parent/book/${tutor.id}" class="btn btn-primary btn-sm">Book Session</a><a href="/consultation" class="btn btn-outline btn-sm">Free Consultation</a></div>
     </div>`;
 }
 

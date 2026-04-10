@@ -161,4 +161,76 @@ router.get('/session/:bookingId', isAuthenticated, async (req, res) => {
     } catch (err) { console.error(err); res.redirect('/parent/dashboard'); }
 });
 
+// Book a session with a tutor
+router.get('/book/:tutorId', isAuthenticated, async (req, res) => {
+    try {
+        const tutorId = parseInt(req.params.tutorId, 10);
+        if (isNaN(tutorId)) return res.redirect('/tutors');
+
+        const tutor = await pool.query(`
+            SELECT u.id, u.first_name, u.last_name, u.profile_picture, tp.subjects, tp.tagline
+            FROM users u JOIN tutor_profiles tp ON u.id = tp.user_id
+            WHERE u.id = $1 AND u.is_active = true AND tp.approved = true
+        `, [tutorId]);
+        if (tutor.rows.length === 0) { req.session.error = 'Tutor not found.'; return res.redirect('/tutors'); }
+
+        // Get recurring availability
+        const availability = await pool.query(
+            'SELECT day_of_week, start_time, end_time FROM tutor_availability WHERE tutor_id = $1 AND is_recurring = true ORDER BY day_of_week, start_time',
+            [tutorId]
+        );
+
+        // Get existing bookings for next 14 days to show what's taken
+        const booked = await pool.query(`
+            SELECT booking_date, start_time, end_time FROM bookings
+            WHERE tutor_id = $1 AND booking_date >= CURRENT_DATE AND booking_date <= CURRENT_DATE + 14
+            AND status IN ('pending', 'confirmed')
+        `, [tutorId]);
+
+        res.render('parent/book-session', {
+            title: 'Book Session - ' + tutor.rows[0].first_name + ' ' + tutor.rows[0].last_name,
+            tutor: tutor.rows[0],
+            availability: availability.rows,
+            booked: booked.rows,
+            meta: {}
+        });
+    } catch (err) { console.error(err); res.redirect('/tutors'); }
+});
+
+// Submit booking
+router.post('/book/:tutorId', isAuthenticated, async (req, res) => {
+    try {
+        const tutorId = parseInt(req.params.tutorId, 10);
+        const { booking_date, start_time, end_time, subject } = req.body;
+
+        if (!booking_date || !start_time || !end_time) {
+            req.session.error = 'Please select a date and time.';
+            return res.redirect('/parent/book/' + tutorId);
+        }
+
+        // Check for conflicts
+        const conflict = await pool.query(`
+            SELECT id FROM bookings WHERE tutor_id = $1 AND booking_date = $2
+            AND status IN ('pending','confirmed')
+            AND (start_time, end_time) OVERLAPS ($3::time, $4::time)
+        `, [tutorId, booking_date, start_time, end_time]);
+
+        if (conflict.rows.length > 0) {
+            req.session.error = 'That time slot is already booked. Please pick another.';
+            return res.redirect('/parent/book/' + tutorId);
+        }
+
+        const crypto = require('crypto');
+        const roomId = 'bm-' + crypto.randomBytes(16).toString('hex');
+
+        await pool.query(`
+            INSERT INTO bookings (tutor_id, student_id, parent_id, booking_date, start_time, end_time, subject, meeting_room_id, status)
+            VALUES ($1, $2, $2, $3, $4, $5, $6, $7, 'pending')
+        `, [tutorId, req.session.user.id, booking_date, start_time, end_time, subject || 'General', roomId]);
+
+        req.session.success = 'Session requested! The tutor will confirm shortly.';
+        res.redirect('/parent/dashboard');
+    } catch (err) { console.error(err); req.session.error = 'Failed to book.'; res.redirect('/parent/book/' + req.params.tutorId); }
+});
+
 module.exports = router;
