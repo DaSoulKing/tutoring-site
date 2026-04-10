@@ -21,18 +21,16 @@ app.use(helmet({
         directives: {
             defaultSrc: ["'self'"],
             scriptSrc: ["'self'", "'unsafe-inline'", "https://www.google.com", "https://www.gstatic.com", "https://meet.jit.si"],
+            scriptSrcAttr: ["'unsafe-inline'"],  // Allow onclick handlers
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "https:"],
             frameSrc: ["https://www.google.com", "https://meet.jit.si", "https://8x8.vc"],
-            connectSrc: ["'self'", "https://meet.jit.si"],
+            connectSrc: ["'self'", "https://meet.jit.si", "https://api.resend.com"],
         },
     },
-    // Prevent clickjacking
     frameguard: { action: 'deny' },
-    // Don't sniff MIME types
     noSniff: true,
-    // XSS filter
     xssFilter: true,
 }));
 
@@ -40,7 +38,8 @@ app.use(helmet({
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    // Allow camera/mic for Jitsi video sessions
+    res.setHeader('Permissions-Policy', 'camera=(self "https://meet.jit.si"), microphone=(self "https://meet.jit.si"), geolocation=()');
     next();
 });
 

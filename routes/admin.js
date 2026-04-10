@@ -47,10 +47,13 @@ router.get('/owner', isAuthenticated, isOwner, async (req, res) => {
         const applications = await pool.query(`SELECT * FROM applications WHERE status = 'pending' ORDER BY created_at DESC LIMIT 20`);
         const pendingTutors = await pool.query(`SELECT u.*, tp.subjects, tp.bio FROM users u JOIN tutor_profiles tp ON u.id = tp.user_id WHERE u.role = 'tutor' AND tp.approved = false AND u.is_active = true`);
 
+        const testVideoUrl = req.session.testVideoUrl; delete req.session.testVideoUrl;
+        const testVideoRoom = req.session.testVideoRoom; delete req.session.testVideoRoom;
+
         res.render('admin/owner-dashboard', {
             title: 'Owner Dashboard', stats, checkins: checkins.rows,
             payments: payments.rows, inquiries: inquiries.rows, applications: applications.rows,
-            pendingTutors: pendingTutors.rows, meta: {}
+            pendingTutors: pendingTutors.rows, testVideoUrl, testVideoRoom, meta: {}
         });
     } catch (err) { console.error(err); req.session.error = 'Failed to load dashboard.'; res.redirect('/'); }
 });
@@ -145,6 +148,26 @@ router.post('/owner/test-email', isAuthenticated, isOwner, async (req, res) => {
         ? `Test email sent to ${to}! Check your inbox.`
         : 'Email failed. Check Railway logs for details. Consider using Resend API instead of SMTP.';
     res.redirect('/admin/owner');
+});
+
+// Test video call
+router.post('/owner/test-video', isAuthenticated, isOwner, async (req, res) => {
+    const roomId = 'bm-test-' + crypto.randomBytes(8).toString('hex');
+    req.session.testVideoRoom = roomId;
+    req.session.testVideoUrl = `https://meet.jit.si/${roomId}`;
+    res.redirect('/admin/owner');
+});
+
+// Video test page (opens Jitsi in a full page)
+router.get('/owner/video-test', isAuthenticated, isOwner, (req, res) => {
+    const room = req.query.room;
+    if (!room) return res.redirect('/admin/owner');
+    res.render('admin/video-test', {
+        title: 'Test Video Call',
+        roomId: room,
+        userName: req.session.user.firstName + ' ' + req.session.user.lastName,
+        meta: {}
+    });
 });
 
 // Assign tutor to student
