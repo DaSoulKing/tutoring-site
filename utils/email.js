@@ -39,14 +39,14 @@ async function sendEmail(to, subject, html) {
         return false;
     }
 
-    // Try SMTP first (free, no external service needed)
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-        return sendViaSMTP(cleanTo, cleanSubj, html);
-    }
-
-    // Fall back to Resend API if configured
+    // Try Resend first (HTTP API, works on all cloud hosts)
     if (process.env.RESEND_API_KEY) {
         return sendViaResend(cleanTo, cleanSubj, html);
+    }
+
+    // Fall back to SMTP (only works if port 587/465 isn't blocked)
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+        return sendViaSMTP(cleanTo, cleanSubj, html);
     }
 
     console.log('EMAIL SKIPPED: No provider configured. Set SMTP_HOST/USER/PASS or RESEND_API_KEY');
