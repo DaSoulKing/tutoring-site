@@ -42,7 +42,10 @@
                     </div>
                     <div>
                         <h4 style="font-size:0.95rem;"><%= t.first_name %> <%= t.last_name %></h4>
-                        <a href="/parent/messages/<%= t.id %>" style="font-size:0.8rem;">Message</a>
+                        <div style="display:flex;gap:10px;margin-top:4px;">
+                            <a href="/parent/book/<%= t.id %>" style="font-size:0.8rem;font-weight:600;">Book Session</a>
+                            <a href="/parent/messages/<%= t.id %>" style="font-size:0.8rem;">Message</a>
+                        </div>
                     </div>
                 </div>
                 <% }); %>

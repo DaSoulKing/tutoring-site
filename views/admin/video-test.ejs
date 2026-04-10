@@ -1,53 +1,25 @@
 <%- include('../partials/header') %>
 <%- include('../partials/nav') %>
 <main id="main-content">
-    <section class="section" style="padding:16px 0;">
-        <div class="container">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                <div>
-                    <h1 style="font-size:1.25rem;">Test Video Call</h1>
-                    <p style="color:var(--gray-500);font-size:0.9rem;">Open this page on another device or browser to test with two participants.</p>
-                </div>
+    <section class="section" style="padding-top:32px;">
+        <div class="container" style="max-width:700px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <h1 style="font-size:1.5rem;">Test Video Call</h1>
                 <a href="/admin/owner" class="btn btn-outline btn-sm">&larr; Dashboard</a>
             </div>
-            <div class="video-session-container" id="jitsi-container">
-                <div style="display:flex;align-items:center;justify-content:center;height:100%;background:var(--gray-100);">
-                    <div style="text-align:center;">
-                        <div class="loading-spinner"></div>
-                        <p style="color:var(--gray-500);margin-top:16px;">Loading video session...</p>
-                    </div>
+            <div class="card" style="padding:48px;text-align:center;">
+                <div style="font-size:4rem;margin-bottom:16px;">&#x1F4F9;</div>
+                <h2 style="font-size:1.5rem;margin-bottom:12px;">Test Room Ready</h2>
+                <p style="color:var(--gray-500);margin-bottom:32px;">Open this on two devices or browsers to test. No time limit, no signups needed.</p>
+                <a href="https://meet.jit.si/<%= roomId %>#userInfo.displayName=%22<%= encodeURIComponent(userName) %>%22" target="_blank" rel="noopener" class="btn btn-primary btn-lg" style="font-size:1.2rem;padding:18px 48px;">
+                    Join Video Call
+                </a>
+                <div style="margin-top:24px;padding:16px;background:var(--gray-50);border-radius:12px;">
+                    <p style="font-size:0.8rem;color:var(--gray-400);margin-bottom:8px;font-weight:600;">Room link for second device:</p>
+                    <code style="font-size:0.85rem;color:var(--blue-600);word-break:break-all;">https://meet.jit.si/<%= roomId %></code>
                 </div>
             </div>
         </div>
     </section>
 </main>
-<script src="https://meet.jit.si/external_api.js" async></script>
-<script>
-function initJitsi() {
-    if (typeof JitsiMeetExternalAPI === 'undefined') { setTimeout(initJitsi, 500); return; }
-    var container = document.getElementById('jitsi-container');
-    container.innerHTML = '';
-    var api = new JitsiMeetExternalAPI('meet.jit.si', {
-        roomName: '<%= roomId %>',
-        parentNode: container,
-        width: '100%',
-        height: '100%',
-        userInfo: { displayName: '<%= userName %>' },
-        configOverwrite: {
-            startWithAudioMuted: true,
-            startWithVideoMuted: false,
-            prejoinPageEnabled: true,
-            disableDeepLinking: true,
-        },
-        interfaceConfigOverwrite: {
-            SHOW_JITSI_WATERMARK: false,
-            SHOW_WATERMARK_FOR_GUESTS: false,
-            DEFAULT_BACKGROUND: '#1E3A5F',
-            TOOLBAR_ALWAYS_VISIBLE: true,
-        }
-    });
-    api.addEventListener('readyToClose', function() { window.location.href = '/admin/owner'; });
-}
-if (document.readyState === 'complete') { initJitsi(); } else { window.addEventListener('load', initJitsi); }
-</script>
 <%- include('../partials/footer') %>
