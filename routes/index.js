@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
         // Pull editable stats
         let stats = { stat_satisfaction: '97%', stat_satisfaction_label: 'Student Satisfaction', stat_students: '500+', stat_students_label: 'Students Helped', stat_tutors: '50+', stat_tutors_label: 'Expert Tutors', stat_improvement: '92%', stat_improvement_label: 'Grade Improvement' };
         try {
-            const settingsResult = await pool.query("SELECT key, value FROM site_settings WHERE key LIKE 'stat_%'");
+            const settingsResult = await pool.query('SELECT "key", "value" FROM site_settings WHERE "key" LIKE \'stat_%\'');
             settingsResult.rows.forEach(r => { stats[r.key] = r.value; });
         } catch(e) { /* table might not exist yet */ }
 

@@ -204,7 +204,7 @@ router.get('/owner/settings', isAuthenticated, isOwner, async (req, res) => {
     try {
         let settings = {};
         try {
-            const result = await pool.query("SELECT key, value FROM site_settings");
+            const result = await pool.query('SELECT "key", "value" FROM site_settings');
             result.rows.forEach(r => { settings[r.key] = r.value; });
         } catch(e) { /* table may not exist */ }
         res.render('admin/settings', { title: 'Site Settings', settings, meta: {} });
@@ -217,7 +217,7 @@ router.post('/owner/settings', isAuthenticated, isOwner, async (req, res) => {
         for (const key of fields) {
             const val = (req.body[key] || '').trim().substring(0, 200);
             if (val) {
-                await pool.query('INSERT INTO site_settings (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()', [key, val]);
+                await pool.query('INSERT INTO site_settings ("key", "value", updated_at) VALUES ($1, $2, NOW()) ON CONFLICT ("key") DO UPDATE SET "value" = $2, updated_at = NOW()', [key, val]);
             }
         }
         req.session.success = 'Homepage stats updated!';
