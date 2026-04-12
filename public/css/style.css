@@ -20,8 +20,8 @@
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;font-size:16px}
-body{font-family:var(--font-body);color:var(--gray-800);background:var(--beige);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+html{scroll-behavior:smooth;font-size:16px;overflow-x:hidden}
+body{font-family:var(--font-body);color:var(--gray-800);background:var(--beige);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;max-width:100vw}
 img{max-width:100%;height:auto;display:block}
 a{color:var(--blue-600);text-decoration:none;transition:color var(--transition)}a:hover{color:var(--blue-700)}
 a:focus-visible{outline:3px solid var(--blue-400);outline-offset:2px;border-radius:4px}
@@ -264,11 +264,12 @@ details.card summary{list-style:none}details.card summary::-webkit-details-marke
     .sidebar-menu a.active{border-bottom-color:var(--yellow-400)}
 }
 @media(max-width:768px){
-    /* Hide the nav and show hamburger */
     .nav-links{display:none}
     .nav-hamburger{display:block}
 
-    /* When open: stack everything vertically */
+    /* Nav logo: stack name on two lines, center */
+    .nav-logo{font-size:1.1rem;max-width:200px;line-height:1.2;flex-shrink:1}
+
     .nav-links.open{display:flex;flex-direction:column;position:absolute;top:72px;left:0;right:0;background:var(--beige);padding:16px;box-shadow:var(--shadow-lg);border-top:2px solid var(--yellow-200);z-index:999}
     .nav-links.open .nav-auth-item{margin-left:0;margin-top:8px}
     .nav-links.open .nav-greeting{padding:8px 16px;display:block}
@@ -278,14 +279,45 @@ details.card summary{list-style:none}details.card summary::-webkit-details-marke
     .hero h1{font-size:2.25rem}.hero-buttons{justify-content:center}.hero-visual{order:-1}.hero-illustration{max-width:280px}
     .stats-grid{grid-template-columns:repeat(2,1fr);gap:20px}
     .footer-grid{grid-template-columns:1fr 1fr}
-    .form-row{grid-template-columns:1fr}.tutor-grid{grid-template-columns:1fr}.tutor-detail-grid{grid-template-columns:1fr}
+    .form-row{grid-template-columns:1fr}
+    .tutor-grid{grid-template-columns:1fr}
+    .tutor-detail-grid{grid-template-columns:1fr}
     .messages-layout{grid-template-columns:1fr}.conversations-list{max-height:300px}
     .section{padding:48px 0}.section-header h2{font-size:1.75rem}.stat-item h3{font-size:1.75rem}
+
+    /* Fix login/register card overflow */
+    .container{padding:0 16px}
+    .card{padding:20px}
+
+    /* Fix consultation/contact 2-column to 1-column */
+    .two-col-layout{grid-template-columns:1fr !important;gap:24px !important}
+    div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr !important;gap:24px !important}
+    div[style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr !important;gap:24px !important}
+
+    /* Calendar mobile: list view instead of grid */
+    .calendar-grid{grid-template-columns:repeat(7,1fr)}
+    .calendar-day{min-height:60px;padding:4px;font-size:0.75rem}
+    .calendar-day-header{padding:8px 2px;font-size:0.65rem;letter-spacing:0}
+    .day-number{font-size:0.75rem}
+    .calendar-event{font-size:0.6rem;padding:2px 3px}
+    .calendar-day.today .day-number{width:22px;height:22px;font-size:0.7rem}
+
+    /* Blog grid */
+    .blog-grid{grid-template-columns:1fr}
 }
 @media(max-width:480px){
     .hero h1{font-size:1.75rem}.hero-illustration{max-width:200px}.hero-illustration .emoji-big{font-size:5rem}
     .stats-grid{grid-template-columns:1fr 1fr}.footer-grid{grid-template-columns:1fr}
     .btn-lg{padding:12px 24px;font-size:1rem}
+    .nav-logo{font-size:1rem;max-width:160px}
+    .nav-logo-img{height:36px;max-height:36px}
+    .section-header h2{font-size:1.5rem}
+    .services-grid{grid-template-columns:1fr}
+    .steps-grid{grid-template-columns:1fr}
+    /* Calendar even smaller */
+    .calendar-day{min-height:48px;padding:2px}
+    .calendar-event{display:none}
+    .calendar-day.today .day-number{width:20px;height:20px;font-size:0.65rem}
 }
 
 :focus-visible{outline:3px solid var(--blue-400);outline-offset:2px}

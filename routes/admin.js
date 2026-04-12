@@ -258,6 +258,40 @@ router.post('/owner/settings', isAuthenticated, isOwner, async (req, res) => {
     res.redirect('/admin/owner/settings');
 });
 
+// All tutor availability overview (admin)
+router.get('/owner/availability', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const tutors = await pool.query(`
+            SELECT u.id, u.first_name, u.last_name, tp.subjects
+            FROM users u JOIN tutor_profiles tp ON u.id = tp.user_id
+            WHERE u.role = 'tutor' AND u.is_active = true AND tp.approved = true
+            ORDER BY u.first_name
+        `);
+
+        const availability = await pool.query(`
+            SELECT ta.*, u.first_name, u.last_name
+            FROM tutor_availability ta JOIN users u ON ta.tutor_id = u.id
+            WHERE ta.is_recurring = true
+            ORDER BY u.first_name, ta.day_of_week, ta.start_time
+        `);
+
+        // Get all unique subjects for filtering
+        const subjects = await pool.query(`
+            SELECT DISTINCT unnest(tp.subjects) as subject
+            FROM tutor_profiles tp JOIN users u ON tp.user_id = u.id
+            WHERE u.is_active = true AND tp.approved = true ORDER BY subject
+        `);
+
+        res.render('admin/availability-overview', {
+            title: 'Tutor Availability',
+            tutors: tutors.rows,
+            availability: availability.rows,
+            subjects: subjects.rows.map(function(r) { return r.subject; }),
+            meta: {}
+        });
+    } catch (err) { console.error(err); res.redirect('/admin/owner'); }
+});
+
 // Manage tutors
 router.get('/owner/tutors', isAuthenticated, isOwner, async (req, res) => {
     try {

@@ -28,6 +28,9 @@
                         <div><h4><%= s.student_first %> <%= s.student_last %></h4><p style="color:var(--gray-500);font-size:0.85rem;"><%= s.subject || 'General' %> &middot; <%= new Date(s.booking_date).toLocaleDateString() %> &middot; <%= s.start_time ? s.start_time.substring(0,5) : '' %> - <%= s.end_time ? s.end_time.substring(0,5) : '' %></p></div>
                         <div style="display:flex;gap:8px;align-items:center;">
                             <span class="badge-status badge-<%= s.status %>"><%= s.status %></span>
+                            <% if (s.status === 'pending') { %>
+                            <form action="/api/bookings/<%= s.id %>/confirm" method="POST" style="display:inline;"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;">Confirm</button></form>
+                            <% } %>
                             <% if (s.status === 'confirmed') { %><a href="/parent/session/<%= s.id %>" class="btn btn-primary btn-sm">Join</a><% } %>
                             <a href="/admin/tutor/session-sheet/<%= s.id %>" class="btn btn-outline btn-sm">Sheet</a>
                         </div>
@@ -70,7 +73,7 @@
             <!-- PROFILE -->
             <div class="card" style="margin-bottom:24px;padding:24px;">
                 <h2 style="font-size:1.15rem;margin-bottom:16px;">My Profile</h2>
-                <form id="tutor-profile-form" action="/admin/tutor/profile" method="POST" enctype="multipart/form-data"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <form id="tutor-profile-form" action="/admin/tutor/profile?_csrf=<%= csrfToken %>" method="POST" enctype="multipart/form-data">
                     <div class="form-row">
                         <div class="form-group"><label for="tagline">Tagline</label><input type="text" id="tagline" name="tagline" class="form-control" value="<%= profile.tagline || '' %>" placeholder="e.g., Making math fun since 2020"></div>
                         <div class="form-group">

@@ -92,7 +92,12 @@ router.post('/bookings/:id/cancel', isAuthenticated, bookingLimiter, async (req,
 router.post('/bookings/:id/confirm', isAuthenticated, bookingLimiter, async (req, res) => {
     try {
         await pool.query("UPDATE bookings SET status = 'confirmed' WHERE id = $1 AND tutor_id = $2", [req.params.id, req.session.user.id]);
-        res.json({ success: true });
+        // Support both AJAX and form submission
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            return res.json({ success: true });
+        }
+        req.session.success = 'Session confirmed!';
+        res.redirect(req.headers.referer || '/admin/tutor');
     } catch (err) { console.error(err); res.status(500).json({ success: false }); }
 });
 

@@ -10,7 +10,7 @@
                 <p>Have a question, concern, or just want to say hello? We would love to hear from you.</p>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;max-width:1000px;margin:0 auto;">
+            <div class="two-col-layout" style="display:grid;grid-template-columns:1fr 1fr;gap:48px;max-width:1000px;margin:0 auto;">
                 <div>
                     <form action="/contact" method="POST" data-validate><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <div class="form-group">

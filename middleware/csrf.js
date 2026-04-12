@@ -15,6 +15,22 @@ function csrfInject(req, res, next) {
 function csrfProtect(req, res, next) {
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
 
+    // For multipart/form-data (file uploads), body isn't parsed yet when this runs.
+    // Check query string param as fallback, or skip for multipart and validate in route.
+    const contentType = req.headers['content-type'] || '';
+    if (contentType.includes('multipart/form-data')) {
+        // For file uploads: check _csrf in query string
+        const token = req.query._csrf;
+        const sessionToken = req.session?._csrf;
+        if (!token || !sessionToken) return csrfFail(req, res);
+        const tokenBuf = Buffer.from(String(token));
+        const sessionBuf = Buffer.from(String(sessionToken));
+        if (tokenBuf.length !== sessionBuf.length || !crypto.timingSafeEqual(tokenBuf, sessionBuf)) {
+            return csrfFail(req, res);
+        }
+        return next();
+    }
+
     const token = req.body?._csrf || req.headers['x-csrf-token'];
     const sessionToken = req.session?._csrf;
 

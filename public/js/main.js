@@ -135,7 +135,7 @@ function renderCalendar(state, calEl) {
         const dayEvents = (state.events || []).filter(e => new Date(e.booking_date).getDate() === day);
         html += `<div class="calendar-day${isToday ? ' today' : ''}"><span class="day-number">${day}</span>`;
         dayEvents.forEach(e => {
-            const label = e.tutor_first ? `${e.tutor_first} ${e.tutor_last?.charAt(0)}.` : `${e.student_first} ${e.student_last?.charAt(0)}.`;
+            var label = e.tutor_first ? (e.tutor_first + ' ' + (e.tutor_last ? e.tutor_last.charAt(0) : '') + '.') : (e.student_first + ' ' + (e.student_last ? e.student_last.charAt(0) : '') + '.');
             html += `<div class="calendar-event ${e.status}" title="${e.subject || ''} - ${label}">${formatTime(e.start_time)} ${label}</div>`;
         });
         html += '</div>';
@@ -147,8 +147,17 @@ function renderCalendar(state, calEl) {
 }
 
 function initCarousel() {
-    const track = document.querySelector('.carousel-track');
+    var track = document.querySelector('.carousel-track');
     if (!track) return;
+    var cards = track.innerHTML;
+    // Need at least 8 cards worth for smooth infinite scroll
+    var cardCount = track.querySelectorAll('.carousel-card').length;
+    if (cardCount === 0) return;
+    // Duplicate cards until we have at least 8
+    while (track.querySelectorAll('.carousel-card').length < 8) {
+        track.innerHTML += cards;
+    }
+    // Then double for seamless loop
     track.innerHTML = track.innerHTML + track.innerHTML;
 }
 
@@ -250,18 +259,41 @@ function initAvailabilityEditor() {
 
         if (target.classList.contains('avail-add')) {
             e.preventDefault();
-            const dayIdx = Number(target.getAttribute('data-day'));
-            const startInput = editor.querySelector('.avail-start[data-day="' + dayIdx + '"]');
-            const endInput = editor.querySelector('.avail-end[data-day="' + dayIdx + '"]');
+            var dayIdx = Number(target.getAttribute('data-day'));
+            var startInput = editor.querySelector('.avail-start[data-day="' + dayIdx + '"]');
+            var endInput = editor.querySelector('.avail-end[data-day="' + dayIdx + '"]');
             if (!startInput || !endInput) { alert('Error: time inputs not found'); return; }
             if (!startInput.value || !endInput.value) { alert('Please pick both a start and end time.'); return; }
             if (startInput.value >= endInput.value) { alert('End time must be after start time.'); return; }
-            // Enforce 1 hour max
+
+            // Auto-split into 1-hour chunks
             var startMins = parseInt(startInput.value.split(':')[0]) * 60 + parseInt(startInput.value.split(':')[1]);
             var endMins = parseInt(endInput.value.split(':')[0]) * 60 + parseInt(endInput.value.split(':')[1]);
-            if ((endMins - startMins) > 60) { alert('Each slot must be 1 hour or less.'); return; }
-            if ((endMins - startMins) < 30) { alert('Each slot must be at least 30 minutes.'); return; }
-            slots.push({ day_of_week: dayIdx, start_time: startInput.value, end_time: endInput.value });
+            var totalMins = endMins - startMins;
+
+            if (totalMins < 30) { alert('Minimum slot is 30 minutes.'); return; }
+
+            var cursor = startMins;
+            var added = 0;
+            while (cursor + 60 <= endMins) {
+                var sH = String(Math.floor(cursor / 60)).padStart(2, '0');
+                var sM = String(cursor % 60).padStart(2, '0');
+                var eH = String(Math.floor((cursor + 60) / 60)).padStart(2, '0');
+                var eM = String((cursor + 60) % 60).padStart(2, '0');
+                slots.push({ day_of_week: dayIdx, start_time: sH + ':' + sM, end_time: eH + ':' + eM });
+                cursor += 60;
+                added++;
+            }
+            // Handle remainder (30-59 min leftover)
+            if (endMins - cursor >= 30) {
+                var sH2 = String(Math.floor(cursor / 60)).padStart(2, '0');
+                var sM2 = String(cursor % 60).padStart(2, '0');
+                var eH2 = String(Math.floor(endMins / 60)).padStart(2, '0');
+                var eM2 = String(endMins % 60).padStart(2, '0');
+                slots.push({ day_of_week: dayIdx, start_time: sH2 + ':' + sM2, end_time: eH2 + ':' + eM2 });
+                added++;
+            }
+
             render();
             return;
         }
