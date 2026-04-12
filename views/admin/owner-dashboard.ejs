@@ -81,6 +81,29 @@
             <% }); %>
             <% } %>
 
+            <!-- Unverified Accounts -->
+            <% if (typeof unverifiedAccounts !== 'undefined' && unverifiedAccounts && unverifiedAccounts.length > 0) { %>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F4CB; Accounts Pending Approval (<%= unverifiedAccounts.length %>)</h2>
+            <% unverifiedAccounts.forEach(function(u) { %>
+            <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--blue-400);">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <h4><%= u.first_name %> <%= u.last_name %></h4>
+                        <p style="color:var(--gray-500);font-size:0.85rem;"><%= u.email %> &middot; <%= u.role %> &middot; Signed up <%= new Date(u.created_at).toLocaleDateString() %></p>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <form action="/admin/owner/users/<%= u.id %>/verify" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;">Approve</button>
+                        </form>
+                        <form action="/admin/owner/users/<%= u.id %>/delete" method="POST" onsubmit="return confirm('WARNING: This will permanently delete this account and all their data. This cannot be undone. Are you sure?');"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <button type="submit" class="btn btn-sm" style="background:var(--red-500);color:white;">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <% }); %>
+            <% } %>
+
             <!-- Check-in Alerts -->
             <% if (checkins && checkins.length > 0) { %>
             <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F514; 3-Month Check-ins Due</h2>

@@ -64,6 +64,7 @@ router.get('/owner', isAuthenticated, isOwner, async (req, res) => {
         const inquiries = await pool.query(`SELECT * FROM inquiries WHERE status = 'open' ORDER BY created_at DESC LIMIT 20`);
         const applications = await pool.query(`SELECT * FROM applications WHERE status = 'pending' ORDER BY created_at DESC LIMIT 20`);
         const pendingTutors = await pool.query(`SELECT u.*, tp.subjects, tp.bio FROM users u JOIN tutor_profiles tp ON u.id = tp.user_id WHERE u.role = 'tutor' AND tp.approved = false AND u.is_active = true`);
+        const unverifiedAccounts = await pool.query(`SELECT id, first_name, last_name, email, role, created_at FROM users WHERE email_verified = false AND role != 'owner' AND is_active = true ORDER BY created_at DESC`);
 
         const testVideoUrl = req.session.testVideoUrl; delete req.session.testVideoUrl;
         const testVideoRoom = req.session.testVideoRoom; delete req.session.testVideoRoom;
@@ -71,7 +72,8 @@ router.get('/owner', isAuthenticated, isOwner, async (req, res) => {
         res.render('admin/owner-dashboard', {
             title: 'Owner Dashboard', stats, checkins: checkins.rows,
             payments: payments.rows, inquiries: inquiries.rows, applications: applications.rows,
-            pendingTutors: pendingTutors.rows, testVideoUrl, testVideoRoom, meta: {}
+            pendingTutors: pendingTutors.rows, unverifiedAccounts: unverifiedAccounts.rows,
+            testVideoUrl, testVideoRoom, meta: {}
         });
     } catch (err) { console.error(err); req.session.error = 'Failed to load dashboard.'; res.redirect('/'); }
 });
@@ -124,13 +126,40 @@ router.post('/owner/tutor-invite', isAuthenticated, isOwner, async (req, res) =>
     } catch (err) { console.error(err); req.session.error = 'Failed to create invite.'; res.redirect('/admin/owner/tutors'); }
 });
 
-// Manual verify user
+// Approve (verify) user account
 router.post('/owner/users/:id/verify', isAuthenticated, isOwner, async (req, res) => {
     try {
         await pool.query('UPDATE users SET email_verified = true, verify_token = NULL WHERE id = $1', [req.params.id]);
-        req.session.success = 'User verified.';
+        req.session.success = 'Account approved!';
     } catch (err) { console.error(err); }
-    res.redirect('/admin/owner/students');
+    res.redirect(req.headers.referer || '/admin/owner');
+});
+
+// Delete user account (destructive)
+router.post('/owner/users/:id/delete', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const userId = parseInt(req.params.id, 10);
+        // Don't allow deleting the owner
+        const target = await pool.query('SELECT role, email_verified FROM users WHERE id = $1', [userId]);
+        if (target.rows.length === 0) { req.session.error = 'User not found.'; return res.redirect('/admin/owner'); }
+        if (target.rows[0].role === 'owner') { req.session.error = 'Cannot delete owner account.'; return res.redirect('/admin/owner'); }
+
+        // Delete related data first
+        await pool.query('DELETE FROM notes WHERE target_user_id = $1 OR author_id = $1', [userId]);
+        await pool.query('DELETE FROM messages WHERE sender_id = $1 OR receiver_id = $1', [userId]);
+        await pool.query('DELETE FROM bookings WHERE student_id = $1 OR parent_id = $1 OR tutor_id = $1', [userId]);
+        await pool.query('DELETE FROM checkins WHERE student_id = $1', [userId]);
+        await pool.query('DELETE FROM tutor_availability WHERE tutor_id = $1', [userId]);
+        await pool.query('DELETE FROM tutor_profiles WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM student_profiles WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM subscriptions WHERE parent_id = $1', [userId]);
+        await pool.query('DELETE FROM report_cards WHERE student_id = $1 OR tutor_id = $1', [userId]);
+        await pool.query('DELETE FROM session_sheets WHERE tutor_id = $1', [userId]);
+        await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+
+        req.session.success = 'Account deleted.';
+    } catch (err) { console.error(err); req.session.error = 'Failed to delete. ' + err.message; }
+    res.redirect(req.headers.referer || '/admin/owner');
 });
 
 // Admin reset user password

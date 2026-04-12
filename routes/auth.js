@@ -74,13 +74,6 @@ router.post('/login', authLimiter, verifyRecaptcha, async (req, res) => {
             return res.redirect('/auth/login');
         }
 
-        // Check email verification (skip for owners and tutors signed up via invite)
-        if (user.role !== 'owner' && user.role !== 'tutor' && user.email_verified === false) {
-            req.session.error = 'Please verify your email first. Check your inbox or click the link below to resend.';
-            req.session.resendEmail = email;
-            return res.redirect('/auth/login');
-        }
-
         // Regenerate session to prevent fixation
         const returnTo = req.session.returnTo;
         req.session.regenerate((err) => {
@@ -89,6 +82,7 @@ router.post('/login', authLimiter, verifyRecaptcha, async (req, res) => {
                 id: user.id, email: user.email, role: user.role,
                 firstName: user.first_name, lastName: user.last_name,
                 profilePicture: user.profile_picture, referralCode: user.referral_code,
+                verified: user.email_verified,
             };
             // Validate returnTo is a safe local path (no protocol, no //, no backslash)
             const safeReturn = (returnTo && typeof returnTo === 'string' && returnTo.startsWith('/') && !returnTo.startsWith('//') && !returnTo.includes('\\')) ? returnTo : null;
@@ -136,56 +130,30 @@ router.post('/register', registerLimiter, verifyRecaptcha, async (req, res) => {
 
         const hash = await bcrypt.hash(password, 12);
         const userReferralCode = 'BM' + crypto.randomBytes(4).toString('hex').toUpperCase();
-        const verifyToken = crypto.randomBytes(32).toString('hex');
         const allowedRole = ['parent', 'student'].includes(role) ? role : 'parent';
 
-        // If SMTP is not configured, auto-verify so users can actually log in
-        const autoVerify = !canSendToAnyone();
-
+        // Accounts start unverified. Admin approves them from the dashboard.
+        // reCAPTCHA prevents bot signups.
         const result = await pool.query(`
             INSERT INTO users (email, password_hash, role, first_name, last_name, phone, referral_code, email_verified, verify_token)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, false, NULL)
             RETURNING id, email, role, first_name, last_name, referral_code
-        `, [email, hash, allowedRole, first_name, last_name, phone || null, userReferralCode, autoVerify, autoVerify ? null : verifyToken]);
+        `, [email, hash, allowedRole, first_name, last_name, phone || null, userReferralCode]);
 
         const user = result.rows[0];
 
         // Schedule first check-in
         await pool.query(`INSERT INTO checkins (student_id, due_date) VALUES ($1, CURRENT_DATE + INTERVAL '3 months')`, [user.id]);
 
-        if (!autoVerify) {
-            // Try to send verification email
-            const verifyUrl = `${process.env.SITE_URL || 'http://localhost:3000'}/auth/verify/${verifyToken}`;
-            const sent = await sendEmail(email,
-                'Verify your ' + (process.env.SITE_NAME || 'BrightMinds') + ' account',
-                `<h2>Welcome!</h2><p>Click the link below to verify your email:</p><p><a href="${verifyUrl}">${verifyUrl}</a></p><p>This link expires in 24 hours.</p>`
-            );
-            if (!sent) {
-                // Email failed - auto-verify and log them in so they're not stuck
-                await pool.query('UPDATE users SET email_verified = true, verify_token = NULL WHERE id = $1', [user.id]);
-                console.log(`Auto-verified ${email} because email send failed`);
-                req.session.user = {
-                    id: user.id, email: user.email, role: user.role,
-                    firstName: user.first_name, lastName: user.last_name, referralCode: user.referral_code,
-                };
-                req.session.success = 'Account created! Welcome aboard.';
-                return res.redirect(getDashboardUrl(user.role));
-            }
-            // Email sent successfully
-            req.session.success = 'Account created! Check your email to verify before logging in.';
-            return res.redirect('/auth/login');
-        }
-
-        if (autoVerify) {
+        // Log them in immediately - admin will verify from their dashboard
+        req.session.regenerate((err) => {
             req.session.user = {
                 id: user.id, email: user.email, role: user.role,
                 firstName: user.first_name, lastName: user.last_name, referralCode: user.referral_code,
             };
-            req.session.success = 'Welcome! Your account is ready.';
-            return res.redirect(getDashboardUrl(user.role));
-        }
-
-        res.redirect('/auth/login');
+            req.session.success = 'Account created! An admin will review and approve your account shortly.';
+            res.redirect(getDashboardUrl(user.role));
+        });
     } catch (err) {
         console.error(err);
         req.session.error = 'Something went wrong.';

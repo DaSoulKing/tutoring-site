@@ -288,18 +288,12 @@ details.card summary{list-style:none}details.card summary::-webkit-details-marke
     .section{padding:48px 0}.section-header h2{font-size:1.75rem}.stat-item h3{font-size:1.75rem}
 
     /* Fix login/register card overflow */
-    .container{padding:0 16px;box-sizing:border-box}
-    .card{
-        padding:20px;
-        box-sizing:border-box;
-        max-width:100%;
-        align-self: center;
-        justify-self: center;
-    }
+    .container{padding:0 16px;box-sizing:border-box;margin-left:auto;margin-right:auto;width:100%}
+    .card{padding:20px;box-sizing:border-box;max-width:100%}
 
     /* Center forms and cards on mobile */
-    .section .card, .section form{margin-left:auto;margin-right:auto}
-    .two-col-layout > *{margin-left:auto;margin-right:auto;max-width:100%}
+    .section .card, .section form{margin-left:auto;margin-right:auto;max-width:100%}
+    .two-col-layout > *{margin-left:auto;margin-right:auto;max-width:100%;width:100%}
 
     /* Fix consultation/contact 2-column to 1-column */
     .two-col-layout{grid-template-columns:1fr !important;gap:24px !important}

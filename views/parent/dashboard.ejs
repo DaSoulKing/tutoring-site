@@ -15,6 +15,12 @@
         <div class="dashboard-main">
             <div class="dashboard-welcome"><h1>Welcome, <%= user.firstName %>!</h1><p>Here is your learning dashboard.</p></div>
 
+            <% if (user.verified === false) { %>
+            <div class="alert alert-warning" style="margin-bottom:24px;">
+                <strong>Account pending approval.</strong> An admin will review and activate your account shortly. You can explore your dashboard in the meantime.
+            </div>
+            <% } %>
+
             <!-- Subscription -->
             <% if (subscription) { %>
             <div class="card" style="margin-bottom:24px;padding:20px;">
