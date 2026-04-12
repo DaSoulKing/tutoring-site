@@ -49,7 +49,14 @@ router.get('/calendar', isAuthenticated, isParent, async (req, res) => {
             WHERE (b.student_id = $1 OR b.parent_id = $1) AND b.booking_date >= CURRENT_DATE - INTERVAL '30 days'
             AND b.subject != 'Assigned by Admin' ORDER BY b.booking_date, b.start_time
         `, [req.session.user.id]);
-        res.render('parent/calendar', { title: 'My Calendar', bookings: bookings.rows, meta: {} });
+
+        const assignedTutors = await pool.query(`
+            SELECT DISTINCT u.id, u.first_name, u.last_name, u.profile_picture
+            FROM bookings b JOIN users u ON b.tutor_id = u.id
+            WHERE (b.student_id = $1 OR b.parent_id = $1) AND b.status IN ('pending','confirmed','completed')
+        `, [req.session.user.id]);
+
+        res.render('parent/calendar', { title: 'My Calendar', bookings: bookings.rows, assignedTutors: assignedTutors.rows, meta: {} });
     } catch (err) { console.error(err); res.redirect('/parent/dashboard'); }
 });
 

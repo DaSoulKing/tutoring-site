@@ -5,7 +5,7 @@
         <aside class="dashboard-sidebar">
             <ul class="sidebar-menu">
                 <li><a href="/parent/dashboard" class="active">&#x1F3E0; Dashboard</a></li>
-                <li><a href="/parent/calendar">&#x1F4C5; Calendar</a></li>
+                <li><a href="/parent/calendar">&#x1F4C5; Calendar &amp; Book</a></li>
                 <li><a href="/parent/messages">&#x1F4AC; Messages <% if (unreadCount > 0) { %><span class="badge message-badge"><%= unreadCount %></span><% } %></a></li>
                 <li><a href="/parent/contact">&#x1F4E7; Contact/Inquiries</a></li>
                 <li><a href="/tutors">&#x1F50D; Find Tutors</a></li>
@@ -85,7 +85,7 @@
 
             <!-- Report Cards -->
             <% if (reportCards && reportCards.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:32px 0 16px;">Recent Report Cards</h2>
+            <h2 style="font-size:1.25rem;margin:32px 0 16px;">Monthly Report Cards</h2>
             <% reportCards.forEach(rc => { %>
             <div class="card" style="margin-bottom:12px;padding:20px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">

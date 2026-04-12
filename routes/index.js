@@ -21,21 +21,30 @@ const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilt
 // Home page
 router.get('/', async (req, res) => {
     try {
+        // Pull ALL approved tutors for carousel (not just featured)
         const tutorsResult = await pool.query(`
             SELECT u.id, u.first_name, u.last_name, u.profile_picture,
                    tp.bio, tp.tagline, tp.subjects, tp.carousel_description
             FROM users u JOIN tutor_profiles tp ON u.id = tp.user_id
-            WHERE u.is_active = true AND tp.approved = true AND tp.is_featured = true
-            ORDER BY RANDOM() LIMIT 10
+            WHERE u.is_active = true AND tp.approved = true
+            ORDER BY tp.is_featured DESC, RANDOM() LIMIT 20
         `);
+
+        // Pull editable stats
+        let stats = { stat_satisfaction: '97%', stat_satisfaction_label: 'Student Satisfaction', stat_students: '500+', stat_students_label: 'Students Helped', stat_tutors: '50+', stat_tutors_label: 'Expert Tutors', stat_improvement: '92%', stat_improvement_label: 'Grade Improvement' };
+        try {
+            const settingsResult = await pool.query("SELECT key, value FROM site_settings WHERE key LIKE 'stat_%'");
+            settingsResult.rows.forEach(r => { stats[r.key] = r.value; });
+        } catch(e) { /* table might not exist yet */ }
+
         res.render('home', {
-            title: 'BrightMinds Tutoring - Where Learning Comes Alive',
-            tutors: tutorsResult.rows,
-            meta: { description: 'BrightMinds Tutoring offers personalized, engaging tutoring for students of all ages. 3% of every payment goes to charity.', keywords: 'tutoring, education, kids tutoring, online tutoring' }
+            title: (process.env.SITE_NAME || 'BrightMinds Tutoring') + ' - Where Learning Comes Alive',
+            tutors: tutorsResult.rows, stats,
+            meta: { description: (process.env.SITE_NAME || 'BrightMinds Tutoring') + ' offers personalized, engaging tutoring for students of all ages. Part of every payment goes to charity.', keywords: 'tutoring, education, kids tutoring, online tutoring' }
         });
     } catch (err) {
         console.error(err);
-        res.render('home', { title: 'BrightMinds Tutoring', tutors: [], meta: {} });
+        res.render('home', { title: process.env.SITE_NAME || 'BrightMinds Tutoring', tutors: [], stats: {}, meta: {} });
     }
 });
 

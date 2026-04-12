@@ -199,6 +199,32 @@ router.post('/owner/assign-tutor', isAuthenticated, isOwner, async (req, res) =>
     res.redirect('/admin/owner/students');
 });
 
+// Site settings (edit homepage stats)
+router.get('/owner/settings', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        let settings = {};
+        try {
+            const result = await pool.query("SELECT key, value FROM site_settings");
+            result.rows.forEach(r => { settings[r.key] = r.value; });
+        } catch(e) { /* table may not exist */ }
+        res.render('admin/settings', { title: 'Site Settings', settings, meta: {} });
+    } catch (err) { console.error(err); res.redirect('/admin/owner'); }
+});
+
+router.post('/owner/settings', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const fields = ['stat_satisfaction', 'stat_satisfaction_label', 'stat_students', 'stat_students_label', 'stat_tutors', 'stat_tutors_label', 'stat_improvement', 'stat_improvement_label'];
+        for (const key of fields) {
+            const val = (req.body[key] || '').trim().substring(0, 200);
+            if (val) {
+                await pool.query('INSERT INTO site_settings (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()', [key, val]);
+            }
+        }
+        req.session.success = 'Homepage stats updated!';
+    } catch (err) { console.error(err); req.session.error = 'Failed to save settings.'; }
+    res.redirect('/admin/owner/settings');
+});
+
 // Manage tutors
 router.get('/owner/tutors', isAuthenticated, isOwner, async (req, res) => {
     try {

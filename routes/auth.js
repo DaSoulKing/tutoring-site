@@ -145,30 +145,37 @@ router.post('/register', registerLimiter, verifyRecaptcha, async (req, res) => {
         await pool.query(`INSERT INTO checkins (student_id, due_date) VALUES ($1, CURRENT_DATE + INTERVAL '3 months')`, [user.id]);
 
         if (!autoVerify) {
-            // Send verification email
+            // Try to send verification email
             const verifyUrl = `${process.env.SITE_URL || 'http://localhost:3000'}/auth/verify/${verifyToken}`;
             const sent = await sendEmail(email,
-                'Verify your BrightMinds account',
-                `<h2>Welcome to BrightMinds!</h2><p>Click the link below to verify your email:</p><p><a href="${verifyUrl}">${verifyUrl}</a></p><p>This link expires in 24 hours.</p>`
+                'Verify your ' + (process.env.SITE_NAME || 'BrightMinds') + ' account',
+                `<h2>Welcome!</h2><p>Click the link below to verify your email:</p><p><a href="${verifyUrl}">${verifyUrl}</a></p><p>This link expires in 24 hours.</p>`
             );
             if (!sent) {
-                // Email failed to send, auto-verify so they're not locked out
+                // Email failed - auto-verify and log them in so they're not stuck
                 await pool.query('UPDATE users SET email_verified = true, verify_token = NULL WHERE id = $1', [user.id]);
                 console.log(`Auto-verified ${email} because email send failed`);
+                req.session.user = {
+                    id: user.id, email: user.email, role: user.role,
+                    firstName: user.first_name, lastName: user.last_name, referralCode: user.referral_code,
+                };
+                req.session.success = 'Account created! Welcome aboard.';
+                return res.redirect(getDashboardUrl(user.role));
             }
+            // Email sent successfully
+            req.session.success = 'Account created! Check your email to verify before logging in.';
+            return res.redirect('/auth/login');
         }
 
         if (autoVerify) {
-            // Log them in directly since we auto-verified
             req.session.user = {
                 id: user.id, email: user.email, role: user.role,
                 firstName: user.first_name, lastName: user.last_name, referralCode: user.referral_code,
             };
-            req.session.success = 'Welcome to BrightMinds!';
+            req.session.success = 'Welcome! Your account is ready.';
             return res.redirect(getDashboardUrl(user.role));
         }
 
-        req.session.success = 'Account created! Check your email to verify before logging in.';
         res.redirect('/auth/login');
     } catch (err) {
         console.error(err);

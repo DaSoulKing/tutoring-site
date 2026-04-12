@@ -1,7 +1,7 @@
 <%- include('../partials/header') %>
 <%- include('../partials/nav') %>
 
-<% const subjectOptions = ['Math', 'Algebra', 'Geometry', 'Calculus', 'Statistics', 'Science', 'Biology', 'Chemistry', 'Physics', 'English', 'Writing', 'Reading', 'Literature', 'History', 'Social Studies', 'Geography', 'French', 'Spanish', 'Mandarin', 'Computer Science', 'Coding', 'SAT Prep', 'ACT Prep', 'Test Strategy', 'Study Skills', 'Art', 'Music']; %>
+<% var subjectOptions = ['Math', 'Algebra', 'Geometry', 'Calculus', 'Statistics', 'Science', 'Biology', 'Chemistry', 'Physics', 'English', 'Writing', 'Reading', 'Literature', 'History', 'Social Studies', 'Geography', 'French', 'Spanish', 'Mandarin', 'Computer Science', 'Coding', 'SAT Prep', 'ACT Prep', 'Test Strategy', 'Study Skills', 'Art', 'Music']; %>
 
 <main id="main-content">
     <div class="dashboard-grid">
@@ -19,16 +19,64 @@
             <div class="alert alert-warning">Your account is pending approval. You can set up your profile and availability while you wait.</div>
             <% } %>
 
-            <!-- Profile -->
+            <!-- UPCOMING SESSIONS (priority - shown first) -->
+            <h2 style="font-size:1.25rem;margin-bottom:16px;">Upcoming Sessions</h2>
+            <% if (sessions && sessions.length > 0) { %>
+                <% sessions.forEach(function(s) { %>
+                <div class="card" style="margin-bottom:12px;padding:20px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                        <div><h4><%= s.student_first %> <%= s.student_last %></h4><p style="color:var(--gray-500);font-size:0.85rem;"><%= s.subject || 'General' %> &middot; <%= new Date(s.booking_date).toLocaleDateString() %> &middot; <%= s.start_time ? s.start_time.substring(0,5) : '' %> - <%= s.end_time ? s.end_time.substring(0,5) : '' %></p></div>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <span class="badge-status badge-<%= s.status %>"><%= s.status %></span>
+                            <% if (s.status === 'confirmed') { %><a href="/parent/session/<%= s.id %>" class="btn btn-primary btn-sm">Join</a><% } %>
+                            <a href="/admin/tutor/session-sheet/<%= s.id %>" class="btn btn-outline btn-sm">Sheet</a>
+                        </div>
+                    </div>
+                </div>
+                <% }); %>
+            <% } else { %>
+                <div class="card" style="padding:32px;text-align:center;margin-bottom:24px;"><p style="color:var(--gray-400);">No upcoming sessions. Students can book from the calendar once you set your availability below.</p></div>
+            <% } %>
+
+            <!-- MY STUDENTS -->
+            <% if (students && students.length > 0) { %>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">My Students</h2>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;margin-bottom:24px;">
+                <% students.forEach(function(st) { %>
+                <div class="card" style="padding:20px;">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                        <div style="width:40px;height:40px;border-radius:50%;background:var(--yellow-100);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;color:var(--yellow-700);"><%= st.first_name ? st.first_name.charAt(0) : '' %><%= st.last_name ? st.last_name.charAt(0) : '' %></div>
+                        <div><h4 style="font-size:0.95rem;"><%= st.first_name %> <%= st.last_name %></h4><p style="color:var(--gray-400);font-size:0.8rem;">Grade: <%= st.grade_level || 'N/A' %></p></div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <a href="/admin/tutor/report-card/<%= st.id %>" class="btn btn-outline btn-sm" style="font-size:0.8rem;">Report Card</a>
+                        <a href="/parent/messages/<%= st.id %>" class="btn btn-outline btn-sm" style="font-size:0.8rem;">Message</a>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+            <% } %>
+
+            <!-- AVAILABILITY -->
+            <div class="card" style="margin-bottom:24px;padding:24px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <h2 style="font-size:1.15rem;">My Availability</h2>
+                    <button type="button" id="save-avail-btn" class="btn btn-primary btn-sm">Save Availability</button>
+                </div>
+                <p style="color:var(--gray-400);font-size:0.85rem;margin-bottom:16px;">Add your available hours. Each slot must be exactly 1 hour. Students will book these slots directly.</p>
+                <div id="availability-editor" data-existing='<%= JSON.stringify((availability || []).map(function(a) { return {day_of_week: a.day_of_week, start_time: a.start_time.substring(0,5), end_time: a.end_time.substring(0,5)}; })) %>'></div>
+            </div>
+
+            <!-- PROFILE -->
             <div class="card" style="margin-bottom:24px;padding:24px;">
                 <h2 style="font-size:1.15rem;margin-bottom:16px;">My Profile</h2>
-                <form action="/admin/tutor/profile" method="POST" enctype="multipart/form-data"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <form id="tutor-profile-form" action="/admin/tutor/profile" method="POST" enctype="multipart/form-data"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="form-row">
                         <div class="form-group"><label for="tagline">Tagline</label><input type="text" id="tagline" name="tagline" class="form-control" value="<%= profile.tagline || '' %>" placeholder="e.g., Making math fun since 2020"></div>
                         <div class="form-group">
                             <label for="subjects">Subjects</label>
                             <select id="subjects-select" class="form-control" multiple style="min-height:120px;">
-                                <% subjectOptions.forEach(s => { %>
+                                <% subjectOptions.forEach(function(s) { %>
                                 <option value="<%= s %>" <%= (profile.subjects || []).includes(s) ? 'selected' : '' %>><%= s %></option>
                                 <% }); %>
                             </select>
@@ -42,61 +90,29 @@
                     </div>
                     <div class="form-group"><label for="bio">Bio</label><textarea id="bio" name="bio" class="form-control" rows="3"><%= profile.bio || '' %></textarea></div>
                     <div class="form-group"><label for="profile_picture">Profile Picture</label><input type="file" id="profile_picture" name="profile_picture" class="form-control" accept="image/*"></div>
-                    <button type="submit" class="btn btn-primary btn-sm" onclick="document.getElementById('subjects-hidden').value = Array.from(document.getElementById('subjects-select').selectedOptions).map(o=>o.value).join(', ');">Update Profile</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Update Profile</button>
                 </form>
             </div>
-
-            <!-- Availability with proper time inputs -->
-            <div class="card" style="margin-bottom:24px;padding:24px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                    <h2 style="font-size:1.15rem;">My Availability</h2>
-                    <button type="button" onclick="saveAvailability()" class="btn btn-primary btn-sm">Save Availability</button>
-                </div>
-                <div id="availability-editor" data-existing='<%= JSON.stringify((availability || []).map(a => ({day_of_week: a.day_of_week, start_time: a.start_time.substring(0,5), end_time: a.end_time.substring(0,5)}))) %>'></div>
-            </div>
-
-            <!-- Upcoming Sessions -->
-            <h2 style="font-size:1.25rem;margin-bottom:16px;">Upcoming Sessions</h2>
-            <% if (sessions && sessions.length > 0) { %>
-                <% sessions.forEach(s => { %>
-                <div class="card" style="margin-bottom:12px;padding:20px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-                        <div><h4><%= s.student_first %> <%= s.student_last %></h4><p style="color:var(--gray-500);font-size:0.85rem;"><%= s.subject || 'General' %> &middot; <%= new Date(s.booking_date).toLocaleDateString() %> &middot; <%= s.start_time ? s.start_time.substring(0,5) : '' %> - <%= s.end_time ? s.end_time.substring(0,5) : '' %></p></div>
-                        <div style="display:flex;gap:8px;align-items:center;">
-                            <span class="badge-status badge-<%= s.status %>"><%= s.status %></span>
-                            <% if (s.status === 'pending') { %><button onclick="confirmBooking(<%= s.id %>)" class="btn btn-sm" style="background:var(--green-500);color:white;">Confirm</button><% } %>
-                            <% if (s.status === 'confirmed') { %><a href="/parent/session/<%= s.id %>" class="btn btn-primary btn-sm">Join</a><% } %>
-                            <a href="/admin/tutor/session-sheet/<%= s.id %>" class="btn btn-outline btn-sm">Sheet</a>
-                        </div>
-                    </div>
-                </div>
-                <% }); %>
-            <% } else { %>
-                <div class="card" style="padding:32px;text-align:center;"><p style="color:var(--gray-400);">No upcoming sessions.</p></div>
-            <% } %>
-
-            <!-- Students -->
-            <h2 style="font-size:1.25rem;margin:32px 0 16px;">My Students</h2>
-            <% if (students && students.length > 0) { %>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;">
-                <% students.forEach(st => { %>
-                <div class="card" style="padding:20px;">
-                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-                        <div style="width:40px;height:40px;border-radius:50%;background:var(--yellow-100);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;color:var(--yellow-700);"><%= st.first_name ? st.first_name.charAt(0) : '' %><%= st.last_name ? st.last_name.charAt(0) : '' %></div>
-                        <div><h4 style="font-size:0.95rem;"><%= st.first_name %> <%= st.last_name %></h4><p style="color:var(--gray-400);font-size:0.8rem;">Grade: <%= st.grade_level || 'N/A' %></p></div>
-                    </div>
-                    <div style="display:flex;gap:8px;">
-                        <a href="/admin/tutor/report-card/<%= st.id %>" class="btn btn-outline btn-sm" style="font-size:0.8rem;">Report Card</a>
-                        <a href="/parent/messages/<%= st.id %>" class="btn btn-outline btn-sm" style="font-size:0.8rem;">Message</a>
-                    </div>
-                </div>
-                <% }); %>
-            </div>
-            <% } else { %>
-                <div class="card" style="padding:32px;text-align:center;"><p style="color:var(--gray-400);">No students assigned yet.</p></div>
-            <% } %>
         </div>
     </div>
 </main>
+
+<script>
+// Fix subjects hidden field on form submit (no onclick needed)
+document.getElementById('tutor-profile-form').addEventListener('submit', function() {
+    var sel = document.getElementById('subjects-select');
+    var hidden = document.getElementById('subjects-hidden');
+    var selected = [];
+    for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].selected) selected.push(sel.options[i].value);
+    }
+    hidden.value = selected.join(', ');
+});
+
+// Wire save availability button
+document.getElementById('save-avail-btn').addEventListener('click', function() {
+    if (typeof saveAvailability === 'function') saveAvailability();
+});
+</script>
 
 <%- include('../partials/footer') %>

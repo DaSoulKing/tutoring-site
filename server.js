@@ -107,7 +107,6 @@ app.use((req, res, next) => {
     res.locals.siteUrl = process.env.SITE_URL || `http://localhost:${PORT}`;
     res.locals.recaptchaSiteKey = process.env.RECAPTCHA_SITE_KEY || '';
     res.locals.charityName = process.env.CHARITY_NAME || 'Kids Education Fund';
-    res.locals.charityPercent = 3;
     res.locals.success = req.session.success; delete req.session.success;
     res.locals.error = req.session.error; delete req.session.error;
     res.locals.resendEmail = req.session.resendEmail; delete req.session.resendEmail;

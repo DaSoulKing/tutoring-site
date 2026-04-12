@@ -256,6 +256,11 @@ function initAvailabilityEditor() {
             if (!startInput || !endInput) { alert('Error: time inputs not found'); return; }
             if (!startInput.value || !endInput.value) { alert('Please pick both a start and end time.'); return; }
             if (startInput.value >= endInput.value) { alert('End time must be after start time.'); return; }
+            // Enforce 1 hour max
+            var startMins = parseInt(startInput.value.split(':')[0]) * 60 + parseInt(startInput.value.split(':')[1]);
+            var endMins = parseInt(endInput.value.split(':')[0]) * 60 + parseInt(endInput.value.split(':')[1]);
+            if ((endMins - startMins) > 60) { alert('Each slot must be 1 hour or less.'); return; }
+            if ((endMins - startMins) < 30) { alert('Each slot must be at least 30 minutes.'); return; }
             slots.push({ day_of_week: dayIdx, start_time: startInput.value, end_time: endInput.value });
             render();
             return;

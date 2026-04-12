@@ -6,22 +6,19 @@
         <div class="container">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
                 <h1 style="font-size:1.5rem;">My Calendar</h1>
-                <a href="/parent/dashboard" class="btn btn-outline btn-sm">&larr; Back to Dashboard</a>
+                <div style="display:flex;gap:8px;">
+                    <a href="/tutors" class="btn btn-primary btn-sm">Book with New Tutor</a>
+                    <a href="/parent/dashboard" class="btn btn-outline btn-sm">&larr; Dashboard</a>
+                </div>
             </div>
 
             <div class="calendar-container" id="calendar">
                 <div class="calendar-header">
-                    <div class="calendar-nav">
-                        <button id="cal-prev" aria-label="Previous month">&larr;</button>
-                    </div>
+                    <div class="calendar-nav"><button id="cal-prev" aria-label="Previous month">&larr;</button></div>
                     <h3 id="cal-title">Loading...</h3>
-                    <div class="calendar-nav">
-                        <button id="cal-next" aria-label="Next month">&rarr;</button>
-                    </div>
+                    <div class="calendar-nav"><button id="cal-next" aria-label="Next month">&rarr;</button></div>
                 </div>
-                <div class="calendar-grid">
-                    <div class="loading-spinner" style="grid-column:1/-1;"></div>
-                </div>
+                <div class="calendar-grid"><div class="loading-spinner" style="grid-column:1/-1;"></div></div>
             </div>
 
             <div style="margin-top:20px;display:flex;gap:16px;flex-wrap:wrap;">
@@ -30,9 +27,30 @@
                 <div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;border-radius:3px;background:var(--gray-100);"></div><span style="font-size:0.85rem;color:var(--gray-500);">Cancelled</span></div>
             </div>
 
-            <div class="alert alert-info" style="margin-top:24px;">
-                <span aria-hidden="true">&#x1F4A1;</span> To book a new session, contact your tutor through <a href="/parent/messages">Messages</a> or <a href="/consultation">request a consultation</a>.
+            <!-- Quick Booking Section -->
+            <% if (assignedTutors && assignedTutors.length > 0) { %>
+            <div class="card" style="margin-top:32px;padding:24px;">
+                <h2 style="font-size:1.15rem;margin-bottom:8px;">Book a Session</h2>
+                <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:16px;">Click a tutor to see their available slots for the next 2 weeks.</p>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <% assignedTutors.forEach(function(t) { %>
+                    <a href="/parent/book/<%= t.id %>" class="card" style="padding:16px;display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;border:2px solid var(--blue-100);cursor:pointer;">
+                        <div style="width:40px;height:40px;border-radius:50%;background:var(--blue-100);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;color:var(--blue-600);overflow:hidden;">
+                            <% if (t.profile_picture) { %><img src="<%= t.profile_picture %>" alt="" width="40" height="40" style="object-fit:cover;"><% } else { %><%= t.first_name.charAt(0) %><%= t.last_name.charAt(0) %><% } %>
+                        </div>
+                        <div>
+                            <h4 style="font-size:0.9rem;"><%= t.first_name %> <%= t.last_name %></h4>
+                            <p style="font-size:0.8rem;color:var(--blue-500);">View available slots</p>
+                        </div>
+                    </a>
+                    <% }); %>
+                </div>
             </div>
+            <% } else { %>
+            <div class="alert alert-info" style="margin-top:24px;">
+                <span aria-hidden="true">&#x1F4A1;</span> To book sessions, browse our <a href="/tutors">tutors page</a> or <a href="/consultation">request a consultation</a>.
+            </div>
+            <% } %>
         </div>
     </section>
 </main>

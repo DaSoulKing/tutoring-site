@@ -1,8 +1,8 @@
     <nav class="nav" role="navigation" aria-label="Main navigation">
         <div class="nav-inner">
             <a href="/" class="nav-logo" aria-label="<%= siteName %> Home">
-                <div class="logo-icon" aria-hidden="true">BM</div>
-                Bright<span class="highlight">Minds</span>
+                <div class="logo-icon" aria-hidden="true"><%= (process.env.SITE_INITIALS || siteName.substring(0,2).toUpperCase()) %></div>
+                <%= siteName %>
             </a>
 
             <ul class="nav-links" id="nav-links">
@@ -14,11 +14,11 @@
                 <li><a href="/contact" class="<%= currentPath === '/contact' ? 'active' : '' %>">Contact</a></li>
                 <% if (user) { %>
                     <% if (user.role === 'owner') { %>
-                        <li><a href="/admin/owner" class="<%= currentPath.startsWith('/admin/owner') ? 'active' : '' %>">Dashboard</a></li>
+                        <li><a href="/admin/owner" class="btn btn-primary btn-sm" style="margin-left:8px;">Dashboard</a></li>
                     <% } else if (user.role === 'tutor') { %>
-                        <li><a href="/admin/tutor" class="<%= currentPath.startsWith('/admin/tutor') ? 'active' : '' %>">Dashboard</a></li>
+                        <li><a href="/admin/tutor" class="btn btn-primary btn-sm" style="margin-left:8px;">Dashboard</a></li>
                     <% } else { %>
-                        <li><a href="/parent/dashboard" class="<%= currentPath.startsWith('/parent') ? 'active' : '' %>">Dashboard</a></li>
+                        <li><a href="/parent/dashboard" class="btn btn-primary btn-sm" style="margin-left:8px;">Dashboard</a></li>
                     <% } %>
                     <li class="nav-auth-item"><span class="nav-greeting">Hi, <%= user.firstName %>!</span></li>
                     <li class="nav-auth-item"><a href="/auth/logout" class="btn btn-outline btn-sm">Log Out</a></li>
