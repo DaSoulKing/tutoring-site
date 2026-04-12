@@ -2,5 +2,6 @@ node_modules/
 .env
 public/uploads/*
 !public/uploads/.gitkeep
+!public/uploads/logo.png
 *.log
 .DS_Store
