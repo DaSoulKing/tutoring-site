@@ -70,6 +70,7 @@
                                 <td style="display:flex;gap:6px;flex-wrap:wrap;">
                                     <% if (!t.approved) { %><form action="/admin/owner/tutors/<%= t.id %>/approve" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;font-size:0.8rem;">Approve</button></form><% } %>
                                     <a href="/admin/owner/notes/<%= t.id %>" class="btn btn-outline btn-sm" style="font-size:0.8rem;">Notes</a>
+                                    <form action="/admin/owner/users/<%= t.id %>/delete" method="POST" onsubmit="return confirm('WARNING: This will permanently delete <%= t.first_name %> <%= t.last_name %> and all their data. This cannot be undone.');"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--red-500);color:white;font-size:0.8rem;">Delete</button></form>
                                 </td>
                             </tr>
                             <% }); %>
