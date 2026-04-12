@@ -199,6 +199,39 @@ router.post('/owner/assign-tutor', isAuthenticated, isOwner, async (req, res) =>
     res.redirect('/admin/owner/students');
 });
 
+// Owner profile update
+router.get('/owner/profile', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const owner = await pool.query('SELECT * FROM users WHERE id = $1', [req.session.user.id]);
+        res.render('admin/owner-profile', { title: 'My Profile', owner: owner.rows[0], meta: {} });
+    } catch (err) { console.error(err); res.redirect('/admin/owner'); }
+});
+
+router.post('/owner/profile', isAuthenticated, isOwner, upload.single('profile_picture'), async (req, res) => {
+    try {
+        const { first_name, last_name, phone } = req.body;
+        const cleanFirst = (first_name || '').trim().substring(0, 100);
+        const cleanLast = (last_name || '').trim().substring(0, 100);
+        const cleanPhone = (phone || '').trim().substring(0, 20);
+
+        if (req.file) {
+            await pool.query('UPDATE users SET first_name = $1, last_name = $2, phone = $3, profile_picture = $4 WHERE id = $5',
+                [cleanFirst, cleanLast, cleanPhone, '/uploads/' + req.file.filename, req.session.user.id]);
+        } else {
+            await pool.query('UPDATE users SET first_name = $1, last_name = $2, phone = $3 WHERE id = $4',
+                [cleanFirst, cleanLast, cleanPhone, req.session.user.id]);
+        }
+
+        // Update session so nav shows new name
+        req.session.user.firstName = cleanFirst;
+        req.session.user.lastName = cleanLast;
+        if (req.file) req.session.user.profilePicture = '/uploads/' + req.file.filename;
+
+        req.session.success = 'Profile updated!';
+        res.redirect('/admin/owner/profile');
+    } catch (err) { console.error(err); req.session.error = 'Failed to update.'; res.redirect('/admin/owner/profile'); }
+});
+
 // Site settings (edit homepage stats)
 router.get('/owner/settings', isAuthenticated, isOwner, async (req, res) => {
     try {
