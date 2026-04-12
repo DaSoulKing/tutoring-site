@@ -1,0 +1,106 @@
+<%- include('partials/header') %>
+<%- include('partials/nav') %>
+
+<main id="main-content">
+    <section class="section" style="background:linear-gradient(135deg, var(--blue-50), var(--yellow-50));">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Who We Are</span>
+                <h2>About BrightMinds Tutoring</h2>
+                <p>We started with a simple belief: every child deserves access to great education. That belief drives everything we do.</p>
+            </div>
+
+            <div style="max-width:800px;margin:0 auto;">
+                <div class="card" style="padding:40px;">
+                    <h3 style="margin-bottom:16px;">Our Story</h3>
+                    <p style="color:var(--gray-600);line-height:1.8;margin-bottom:16px;">BrightMinds Tutoring was founded by a team of educators and parents who saw a gap in how students learn. Traditional classroom settings do not always work for every child. Some need more time, different explanations, or just a patient voice guiding them through a tough concept.</p>
+                    <p style="color:var(--gray-600);line-height:1.8;margin-bottom:16px;">That is why we built BrightMinds. We connect students with carefully vetted, passionate tutors who genuinely care about helping kids succeed. Whether it is math, science, English, or test prep, our tutors bring energy, creativity, and expertise to every session.</p>
+                    <p style="color:var(--gray-600);line-height:1.8;">And because we believe in paying it forward, Part of every payment goes to the <%= charityName %>, helping provide educational resources to children who need them most.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Meet the Owners -->
+    <section class="section" aria-labelledby="owners-heading">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Leadership</span>
+                <h2 id="owners-heading">Meet the Founders</h2>
+                <p>The people behind BrightMinds who work tirelessly to create the best learning experience possible.</p>
+            </div>
+
+            <div style="display:flex;justify-content:center;gap:32px;flex-wrap:wrap;">
+                <% if (owners && owners.length > 0) { %>
+                    <% owners.forEach(owner => { %>
+                    <div class="card" style="text-align:center;padding:40px;max-width:320px;">
+                        <div style="width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--blue-400),var(--blue-600));margin:0 auto 20px;display:flex;align-items:center;justify-content:center;color:white;font-family:var(--font-display);font-size:2.5rem;font-weight:700;overflow:hidden;">
+                            <% if (owner.profile_picture) { %>
+                                <img src="<%= owner.profile_picture %>" alt="<%= owner.first_name %> <%= owner.last_name %>" width="120" height="120" style="object-fit:cover;" loading="lazy">
+                            <% } else { %>
+                                <%= owner.first_name.charAt(0) %><%= owner.last_name.charAt(0) %>
+                            <% } %>
+                        </div>
+                        <h3><%= owner.first_name %> <%= owner.last_name %></h3>
+                        <p style="color:var(--blue-500);font-weight:600;">Co-Founder</p>
+                    </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="card" style="text-align:center;padding:40px;max-width:320px;">
+                        <div style="width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--blue-400),var(--blue-600));margin:0 auto 20px;display:flex;align-items:center;justify-content:center;color:white;font-family:var(--font-display);font-size:2.5rem;font-weight:700;">BM</div>
+                        <h3>BrightMinds Team</h3>
+                        <p style="color:var(--blue-500);font-weight:600;">Founders</p>
+                        <p style="color:var(--gray-500);margin-top:12px;">Passionate educators building a brighter future for every student.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </section>
+
+    <!-- Meet the Tutors -->
+    <section class="section" style="background:var(--white);" aria-labelledby="team-heading">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Our Experts</span>
+                <h2 id="team-heading">Meet the Tutors</h2>
+                <p>Our tutors are more than teachers. They are mentors, cheerleaders, and guides on every student's learning journey.</p>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px;">
+                <% if (tutors && tutors.length > 0) { %>
+                    <% tutors.forEach(tutor => { %>
+                    <div class="card" style="text-align:center;padding:28px;">
+                        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--yellow-300),var(--yellow-500));margin:0 auto 16px;display:flex;align-items:center;justify-content:center;color:var(--gray-900);font-family:var(--font-display);font-size:1.75rem;font-weight:700;overflow:hidden;">
+                            <% if (tutor.profile_picture) { %>
+                                <img src="<%= tutor.profile_picture %>" alt="<%= tutor.first_name %>" width="80" height="80" style="object-fit:cover;" loading="lazy">
+                            <% } else { %>
+                                <%= tutor.first_name.charAt(0) %><%= tutor.last_name.charAt(0) %>
+                            <% } %>
+                        </div>
+                        <h3 style="font-size:1.1rem;"><%= tutor.first_name %> <%= tutor.last_name %></h3>
+                        <p style="color:var(--gray-500);font-size:0.9rem;margin:4px 0 12px;"><%= tutor.tagline || 'Expert Tutor' %></p>
+                        <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;">
+                            <% (tutor.subjects || []).forEach(s => { %>
+                            <span class="subject-tag"><%= s %></span>
+                            <% }); %>
+                        </div>
+                        <% if (tutor.experience_years) { %>
+                        <p style="color:var(--gray-400);font-size:0.8rem;margin-top:12px;font-weight:600;"><%= tutor.experience_years %> years of experience</p>
+                        <% } %>
+                    </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="card" style="text-align:center;padding:40px;grid-column:1/-1;">
+                        <p style="color:var(--gray-500);font-size:1.1rem;">Our tutor profiles are being set up. <a href="/consultation">Book a consultation</a> to learn about our available tutors!</p>
+                    </div>
+                <% } %>
+            </div>
+
+            <div style="text-align:center;margin-top:40px;">
+                <a href="/tutors" class="btn btn-primary">View All Tutors</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<%- include('partials/footer') %>

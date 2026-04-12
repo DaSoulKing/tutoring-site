@@ -1,0 +1,77 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+
+<main id="main-content">
+    <section class="section">
+        <div class="container" style="max-width:520px;">
+            <div style="text-align:center;margin-bottom:32px;">
+                <h2>Join BrightMinds!</h2>
+                <p style="color:var(--gray-500);">Create your account to get started</p>
+            </div>
+
+            <div class="card" style="padding:36px;">
+                <form action="/auth/register" method="POST" data-validate><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="form-group">
+                        <label for="role">I am a <span class="required">*</span></label>
+                        <select id="role" name="role" class="form-control" required>
+                            <option value="parent">Parent / Guardian</option>
+                            <option value="student">Student</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="first_name">First Name <span class="required">*</span></label>
+                            <input type="text" id="first_name" name="first_name" class="form-control" required autocomplete="given-name">
+                        </div>
+                        <div class="form-group">
+                            <label for="last_name">Last Name <span class="required">*</span></label>
+                            <input type="text" id="last_name" name="last_name" class="form-control" required autocomplete="family-name">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" class="form-control" required autocomplete="email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone" name="phone" class="form-control" autocomplete="tel">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password <span class="required">*</span> (8+ chars, uppercase, lowercase, number)</label>
+                        <input type="password" id="password" name="password" class="form-control" required minlength="8" autocomplete="new-password">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm Password <span class="required">*</span></label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required autocomplete="new-password">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="referral_code">Referral Code (optional, for 10% discount)</label>
+                        <input type="text" id="referral_code" name="referral_code" class="form-control" placeholder="e.g., BM1A2B3C4D" style="text-transform:uppercase;">
+                    </div>
+
+                    <% if (recaptchaSiteKey) { %>
+                    <div class="form-group"><div class="g-recaptcha" data-sitekey="<%= recaptchaSiteKey %>"></div></div>
+                    <% } %>
+
+                    <p style="font-size:0.85rem;color:var(--gray-400);margin-bottom:20px;">By signing up, you agree to our <a href="/terms">Terms & Conditions</a>.</p>
+
+                    <button type="submit" class="btn btn-primary btn-block btn-lg">Create Account</button>
+                </form>
+
+                <div style="text-align:center;margin-top:20px;">
+                    <p style="color:var(--gray-500);">Already have an account? <a href="/auth/login">Log in</a></p>
+                </div>
+            </div>
+
+            <p style="text-align:center;margin-top:16px;font-size:0.85rem;color:var(--gray-400);">Want to apply as a tutor? <a href="/employment">Apply here</a></p>
+        </div>
+    </section>
+</main>
+
+<%- include('../partials/footer') %>

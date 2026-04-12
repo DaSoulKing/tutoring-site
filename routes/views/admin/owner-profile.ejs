@@ -1,0 +1,60 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+<main id="main-content">
+    <div class="dashboard-grid">
+        <aside class="dashboard-sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="/admin/owner">&#x1F3E0; Dashboard</a></li>
+                <li><a href="/admin/owner/calendar">&#x1F4C5; Calendar</a></li>
+                <li><a href="/admin/owner/availability">&#x1F552; Availability</a></li>
+                <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Tutors</a></li>
+                <li><a href="/admin/owner/students">&#x1F393; Students</a></li>
+                <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
+                <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
+                <li><a href="/admin/owner/settings">&#x2699;&#xFE0F; Settings</a></li>
+                <li><a href="/admin/owner/profile" class="active">&#x1F464; My Profile</a></li>
+            </ul>
+        </aside>
+        <div class="dashboard-main">
+            <h1 style="font-size:1.5rem;margin-bottom:24px;">My Profile</h1>
+
+            <div class="card" style="padding:32px;max-width:600px;">
+                <!-- Current photo -->
+                <div style="text-align:center;margin-bottom:24px;">
+                    <div style="width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--blue-400),var(--blue-600));margin:0 auto;display:flex;align-items:center;justify-content:center;color:white;font-family:var(--font-display);font-size:2.5rem;font-weight:700;overflow:hidden;">
+                        <% if (owner.profile_picture) { %>
+                            <img src="<%= owner.profile_picture %>" alt="" width="120" height="120" style="object-fit:cover;">
+                        <% } else { %>
+                            <%= owner.first_name.charAt(0) %><%= owner.last_name.charAt(0) %>
+                        <% } %>
+                    </div>
+                    <p style="color:var(--gray-400);font-size:0.85rem;margin-top:8px;"><%= owner.email %></p>
+                </div>
+
+                <form action="/admin/owner/profile?_csrf=<%= csrfToken %>" method="POST" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="first_name">First Name</label>
+                            <input type="text" id="first_name" name="first_name" class="form-control" value="<%= owner.first_name %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="last_name">Last Name</label>
+                            <input type="text" id="last_name" name="last_name" class="form-control" value="<%= owner.last_name %>" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone" name="phone" class="form-control" value="<%= owner.phone || '' %>">
+                    </div>
+                    <div class="form-group">
+                        <label for="profile_picture">Profile Picture</label>
+                        <input type="file" id="profile_picture" name="profile_picture" class="form-control" accept="image/*">
+                        <p style="font-size:0.8rem;color:var(--gray-400);margin-top:4px;">This photo shows on the About Us page. JPG or PNG, max 5MB.</p>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+<%- include('../partials/footer') %>

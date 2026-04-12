@@ -1,0 +1,43 @@
+<%- include('partials/header') %>
+<%- include('partials/nav') %>
+
+<main id="main-content">
+    <section class="section" style="background:linear-gradient(135deg, #D1FAE5, var(--white));">
+        <div class="container" style="max-width:800px;">
+            <div class="section-header">
+                <span class="section-badge" style="background:#D1FAE5;color:var(--green-600);">Giving Back</span>
+                <h2>Our Charity Mission</h2>
+                <p>Part of every payment goes directly to supporting children's education.</p>
+            </div>
+
+            <div class="card" style="padding:40px;margin-bottom:32px;">
+                <h3 style="margin-bottom:16px;color:var(--green-600);">About <%= charityName %></h3>
+                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:16px;">The <%= charityName %> is dedicated to providing educational resources, supplies, and tutoring access to underprivileged children around the world. Every child deserves the chance to learn, grow, and reach their full potential, regardless of their background or circumstances.</p>
+                <p style="color:var(--gray-600);line-height:1.8;margin-bottom:16px;">Through partnerships with schools, community centers, and educational organizations, the fund provides textbooks, learning materials, technology access, and scholarship opportunities to children who need them most.</p>
+                <p style="color:var(--gray-600);line-height:1.8;">When you choose BrightMinds Tutoring, you are not just investing in your own child's education. You are helping other children get the same opportunities. It is a ripple effect of learning and kindness.</p>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;margin-bottom:32px;">
+                <div class="card" style="text-align:center;padding:28px;">
+                    <p style="font-size:2.5rem;font-family:var(--font-display);font-weight:800;color:var(--green-600);">A portion</p>
+                    <p style="color:var(--gray-500);font-weight:600;">Of Every Payment</p>
+                </div>
+                <div class="card" style="text-align:center;padding:28px;">
+                    <p style="font-size:2.5rem;font-family:var(--font-display);font-weight:800;color:var(--green-600);">1,200+</p>
+                    <p style="color:var(--gray-500);font-weight:600;">Children Helped</p>
+                </div>
+                <div class="card" style="text-align:center;padding:28px;">
+                    <p style="font-size:2.5rem;font-family:var(--font-display);font-weight:800;color:var(--green-600);">50+</p>
+                    <p style="color:var(--gray-500);font-weight:600;">Schools Supported</p>
+                </div>
+            </div>
+
+            <div class="card" style="background:linear-gradient(135deg, var(--green-500), #34D399);color:white;padding:40px;text-align:center;">
+                <h3 style="color:white;font-size:1.5rem;margin-bottom:12px;">Every Lesson Makes a Difference</h3>
+                <p style="color:rgba(255,255,255,0.9);line-height:1.8;">When your child learns, another child benefits. That is the BrightMinds promise. Together, we can make education accessible to everyone.</p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<%- include('partials/footer') %>

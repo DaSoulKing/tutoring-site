@@ -1,0 +1,116 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+<main id="main-content">
+    <div class="dashboard-grid">
+        <aside class="dashboard-sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="/parent/dashboard" class="active">&#x1F3E0; Dashboard</a></li>
+                <li><a href="/parent/calendar">&#x1F4C5; Calendar &amp; Book</a></li>
+                <li><a href="/parent/messages">&#x1F4AC; Messages <% if (unreadCount > 0) { %><span class="badge message-badge"><%= unreadCount %></span><% } %></a></li>
+                <li><a href="/parent/contact">&#x1F4E7; Contact/Inquiries</a></li>
+                <li><a href="/tutors">&#x1F50D; Find Tutors</a></li>
+                <li><a href="/checkout">&#x1F4B3; Plans & Pricing</a></li>
+            </ul>
+        </aside>
+        <div class="dashboard-main">
+            <div class="dashboard-welcome"><h1>Welcome, <%= user.firstName %>!</h1><p>Here is your learning dashboard.</p></div>
+
+            <!-- Subscription -->
+            <% if (subscription) { %>
+            <div class="card" style="margin-bottom:24px;padding:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <h3 style="font-size:1rem;">Active Plan: <%= subscription.plan_name %></h3>
+                        <p style="color:var(--gray-500);font-size:0.85rem;">Next billing: <%= new Date(subscription.next_billing_date).toLocaleDateString() %></p>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <span class="badge-status badge-active">Active</span>
+                        <button id="cancel-subscription-btn" class="btn btn-sm" style="background:var(--gray-100);color:var(--gray-600);font-size:0.8rem;">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <% } %>
+
+            <!-- Assigned Tutors -->
+            <% if (assignedTutors && assignedTutors.length > 0) { %>
+            <h2 style="font-size:1.25rem;margin-bottom:16px;">Your Tutors</h2>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
+                <% assignedTutors.forEach(t => { %>
+                <div class="card" style="padding:16px;display:flex;align-items:center;gap:12px;">
+                    <div style="width:44px;height:44px;border-radius:50%;background:var(--blue-100);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;color:var(--blue-600);overflow:hidden;">
+                        <% if (t.profile_picture) { %><img src="<%= t.profile_picture %>" alt="" width="44" height="44" style="object-fit:cover;"><% } else { %><%= t.first_name.charAt(0) %><%= t.last_name.charAt(0) %><% } %>
+                    </div>
+                    <div>
+                        <h4 style="font-size:0.95rem;"><%= t.first_name %> <%= t.last_name %></h4>
+                        <div style="display:flex;gap:10px;margin-top:4px;">
+                            <a href="/parent/book/<%= t.id %>" style="font-size:0.8rem;font-weight:600;">Book Session</a>
+                            <a href="/parent/messages/<%= t.id %>" style="font-size:0.8rem;">Message</a>
+                        </div>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+            <% } %>
+
+            <!-- Upcoming Sessions -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h2 style="font-size:1.25rem;">Upcoming Sessions</h2>
+                <a href="/tutors" class="btn btn-primary btn-sm">Book New Session</a>
+            </div>
+            <% if (bookings && bookings.length > 0) { %>
+                <% bookings.forEach(b => { %>
+                <div class="card" style="margin-bottom:12px;padding:20px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <div style="width:48px;height:48px;border-radius:50%;background:var(--blue-100);display:flex;align-items:center;justify-content:center;font-size:1.2rem;" aria-hidden="true">&#x1F468;&#x200D;&#x1F3EB;</div>
+                            <div><h4 style="font-size:1rem;"><%= b.tutor_first %> <%= b.tutor_last %></h4><p style="color:var(--gray-500);font-size:0.85rem;"><%= b.subject || 'General Session' %></p></div>
+                        </div>
+                        <div style="text-align:right;">
+                            <p style="font-weight:700;color:var(--gray-700);"><%= new Date(b.booking_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) %></p>
+                            <p style="color:var(--gray-500);font-size:0.85rem;"><%= b.start_time ? b.start_time.substring(0,5) : '' %> - <%= b.end_time ? b.end_time.substring(0,5) : '' %></p>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <span class="badge-status badge-<%= b.status %>"><%= b.status %></span>
+                            <% if (b.status === 'confirmed') { %><a href="/parent/session/<%= b.id %>" class="btn btn-primary btn-sm">Join</a><% } %>
+                            <button onclick="cancelBooking(<%= b.id %>)" class="btn btn-sm" style="background:var(--gray-100);color:var(--gray-600);font-size:0.8rem;">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+                <% }); %>
+            <% } else { %>
+                <div class="card" style="padding:32px;text-align:center;">
+                    <p style="color:var(--gray-400);">No upcoming sessions. <a href="/consultation">Book a consultation</a> to get started!</p>
+                </div>
+            <% } %>
+
+            <!-- Report Cards -->
+            <% if (reportCards && reportCards.length > 0) { %>
+            <h2 style="font-size:1.25rem;margin:32px 0 16px;">Monthly Report Cards</h2>
+            <% reportCards.forEach(rc => { %>
+            <div class="card" style="margin-bottom:12px;padding:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div><h4 style="font-size:1rem;"><%= rc.term %></h4><p style="color:var(--gray-500);font-size:0.85rem;">By <%= rc.tutor_first %> <%= rc.tutor_last %> &middot; <%= new Date(rc.report_date).toLocaleDateString() %></p></div>
+                    <div class="grade-badge grade-<%= (rc.overall_grade ? rc.overall_grade.charAt(0) : 'B') %>"><%= rc.overall_grade || 'N/A' %></div>
+                </div>
+            </div>
+            <% }); %>
+            <% } %>
+
+            <!-- Cancel Modal -->
+            <div id="cancel-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+                <div class="card" style="max-width:440px;padding:32px;">
+                    <h3 style="margin-bottom:16px;">Cancel Subscription</h3>
+                    <p style="color:var(--gray-500);margin-bottom:20px;">Cancellation takes effect at the end of your current billing cycle.</p>
+                    <form action="/parent/cancel-subscription" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <div class="form-group"><label for="cancel_reason">Why are you cancelling?</label><textarea id="cancel_reason" name="cancel_reason" class="form-control"></textarea></div>
+                        <div style="display:flex;gap:12px;">
+                            <button type="submit" class="btn btn-danger">Confirm</button>
+                            <button type="button" id="cancel-modal-close" class="btn btn-outline">Keep Plan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<%- include('../partials/footer') %>

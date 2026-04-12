@@ -1,0 +1,51 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+
+<main id="main-content">
+    <section class="section" style="padding-top:32px;">
+        <div class="container" style="max-width:800px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <h1 style="font-size:1.5rem;">Notes: <%= targetUser.first_name %> <%= targetUser.last_name %></h1>
+                    <p style="color:var(--gray-500);font-size:0.9rem;">Role: <%= targetUser.role %> &middot; <%= targetUser.email %></p>
+                </div>
+                <a href="/admin/owner" class="btn btn-outline btn-sm">&larr; Dashboard</a>
+            </div>
+
+            <!-- Add Note -->
+            <div class="card" style="padding:24px;margin-bottom:24px;">
+                <h3 style="font-size:1.1rem;margin-bottom:16px;">Add New Note</h3>
+                <form action="/admin/owner/notes/<%= targetUser.id %>" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="form-group">
+                        <textarea name="content" class="form-control" rows="4" required placeholder="Write your note here..."></textarea>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="is_pinned"> <span style="font-size:0.9rem;color:var(--gray-600);">Pin this note</span>
+                        </label>
+                        <button type="submit" class="btn btn-primary btn-sm">Add Note</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Existing Notes -->
+            <% if (notes && notes.length > 0) { %>
+                <% notes.forEach(note => { %>
+                <div class="note-card <%= note.is_pinned ? 'pinned' : '' %>">
+                    <% if (note.is_pinned) { %><span style="font-size:0.75rem;color:var(--blue-500);font-weight:700;">&#x1F4CC; PINNED</span><% } %>
+                    <p style="color:var(--gray-700);line-height:1.7;margin-top:4px;"><%= note.content %></p>
+                    <div class="note-meta">
+                        By <%= note.author_first %> <%= note.author_last %> &middot; <%= new Date(note.created_at).toLocaleDateString() %> at <%= new Date(note.created_at).toLocaleTimeString() %>
+                    </div>
+                </div>
+                <% }); %>
+            <% } else { %>
+                <div style="text-align:center;padding:40px;color:var(--gray-400);">
+                    <p>No notes yet. Add one above.</p>
+                </div>
+            <% } %>
+        </div>
+    </section>
+</main>
+
+<%- include('../partials/footer') %>

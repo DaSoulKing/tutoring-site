@@ -1,0 +1,163 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+<main id="main-content">
+    <div class="dashboard-grid">
+        <aside class="dashboard-sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="/admin/owner" class="active">&#x1F3E0; Dashboard</a></li>
+                <li><a href="/admin/owner/calendar">&#x1F4C5; Calendar</a></li>
+                <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Tutors</a></li>
+                <li><a href="/admin/owner/students">&#x1F393; Students</a></li>
+                <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
+                <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
+                <li><a href="/admin/owner/settings">&#x2699;&#xFE0F; Settings</a></li>
+                <li><a href="/admin/owner/profile">&#x1F464; My Profile</a></li>
+            </ul>
+        </aside>
+        <div class="dashboard-main">
+            <div class="dashboard-welcome"><h1>Owner Dashboard</h1><p>Welcome back, <%= user.firstName %>.</p></div>
+
+            <div class="stat-cards">
+                <div class="stat-card"><h3><%= stats.tutors %></h3><p>Active Tutors</p></div>
+                <div class="stat-card yellow"><h3><%= stats.students %></h3><p>Students/Parents</p></div>
+                <div class="stat-card green"><h3><%= stats.activeSubscriptions %></h3><p>Subscriptions</p></div>
+                <div class="stat-card red"><h3><%= stats.openInquiries %></h3><p>Open Inquiries</p></div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:32px;">
+                <a href="/admin/owner/tutors" class="btn btn-primary btn-sm">Manage Tutors</a>
+                <a href="/admin/owner/students" class="btn btn-outline btn-sm">Manage Students</a>
+                <a href="/admin/owner/blog/new" class="btn btn-outline btn-sm">Write Blog Post</a>
+                <form action="/admin/owner/referral-code" method="POST" style="display:flex;gap:8px;align-items:center;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="number" name="discount_percent" value="10" class="form-control" style="width:60px;padding:6px;" min="1" max="100">
+                    <input type="text" name="note" placeholder="Note (optional)" class="form-control" style="width:150px;padding:6px;">
+                    <button type="submit" class="btn btn-secondary btn-sm">Generate Referral Code</button>
+                </form>
+                <form action="/admin/owner/test-email" method="POST" style="display:flex;gap:8px;align-items:center;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="email" name="email" placeholder="Test email to..." class="form-control" style="width:180px;padding:6px;" value="<%= user.email %>">
+                    <button type="submit" class="btn btn-outline btn-sm">Test Email</button>
+                </form>
+                <form action="/admin/owner/test-video" method="POST" style="display:flex;gap:8px;align-items:center;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-outline btn-sm">Test Video Call</button>
+                </form>
+            </div>
+
+            <% if (typeof testVideoUrl !== 'undefined' && testVideoUrl) { %>
+            <div class="alert alert-info" style="margin-bottom:24px;">
+                <div>
+                    <strong>Test Video Room Ready!</strong> Open this link on two devices to test:
+                    <div style="margin-top:8px;padding:8px 12px;background:white;border-radius:8px;font-family:monospace;font-size:0.85rem;word-break:break-all;"><%= testVideoUrl %></div>
+                    <div style="margin-top:8px;display:flex;gap:8px;">
+                        <a href="/admin/owner/video-test?room=<%= testVideoRoom %>" class="btn btn-primary btn-sm" target="_blank">Join as Device 1</a>
+                        <button type="button" class="btn btn-outline btn-sm" id="copy-video-link" data-link="<%= testVideoUrl %>">Copy Link for Device 2</button>
+                    </div>
+                </div>
+            </div>
+            <script>
+            document.getElementById('copy-video-link')?.addEventListener('click', function() {
+                navigator.clipboard.writeText(this.dataset.link).then(() => { this.textContent = 'Copied!'; setTimeout(() => { this.textContent = 'Copy Link for Device 2'; }, 2000); }).catch(() => {
+                    const t = document.createElement('textarea'); t.value = this.dataset.link; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); this.textContent = 'Copied!';
+                });
+            });
+            </script>
+            <% } %>
+
+            <!-- Pending Tutor Approvals -->
+            <% if (pendingTutors && pendingTutors.length > 0) { %>
+            <h2 style="font-size:1.25rem;margin-bottom:16px;">&#x23F3; Tutors Pending Approval</h2>
+            <% pendingTutors.forEach(t => { %>
+            <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--yellow-500);">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <h4><%= t.first_name %> <%= t.last_name %></h4>
+                        <p style="color:var(--gray-500);font-size:0.85rem;"><%= t.email %> &middot; Subjects: <%= (t.subjects || []).join(', ') || 'None yet' %></p>
+                    </div>
+                    <form action="/admin/owner/tutors/<%= t.id %>/approve" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;">Approve</button>
+                    </form>
+                </div>
+            </div>
+            <% }); %>
+            <% } %>
+
+            <!-- Check-in Alerts -->
+            <% if (checkins && checkins.length > 0) { %>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F514; 3-Month Check-ins Due</h2>
+            <% checkins.forEach(c => { %>
+            <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--orange-500);">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div><h4><%= c.first_name %> <%= c.last_name %></h4><p style="color:var(--gray-500);font-size:0.85rem;">Due: <%= new Date(c.due_date).toLocaleDateString() %> &middot; <%= c.email %></p></div>
+                    <form action="/admin/owner/checkins/<%= c.id %>/complete" method="POST" style="display:flex;gap:8px;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <input type="text" name="notes" class="form-control" placeholder="Notes..." style="width:200px;padding:6px 12px;font-size:0.85rem;">
+                        <button type="submit" class="btn btn-primary btn-sm">Complete</button>
+                    </form>
+                </div>
+            </div>
+            <% }); %>
+            <% } %>
+
+            <!-- Payment Reminders -->
+            <% if (payments && payments.length > 0) { %>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F4B0; Payment Reminders</h2>
+            <div class="table-wrapper"><table><thead><tr><th>Client</th><th>Email</th><th>Phone</th><th>Plan</th><th>Billing Date</th><th>Amount</th></tr></thead><tbody>
+                <% payments.forEach(p => { %>
+                <tr><td><strong><%= p.first_name %> <%= p.last_name %></strong></td><td><%= p.email %></td><td><%= p.phone || 'N/A' %></td><td><%= p.plan_name %></td><td><%= new Date(p.next_billing_date).toLocaleDateString() %></td><td>$<%= parseFloat(p.price).toFixed(2) %></td></tr>
+                <% }); %>
+            </tbody></table></div>
+            <% } %>
+
+            <!-- Applications - expandable -->
+            <% if (applications && applications.length > 0) { %>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F4CB; Pending Applications (<%= stats.pendingApplications %>)</h2>
+            <% applications.forEach(app => { %>
+            <details class="card" style="margin-bottom:12px;padding:20px;cursor:pointer;">
+                <summary style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <h4><%= app.first_name %> <%= app.last_name %> <span class="badge-status badge-pending"><%= app.applicant_type %></span></h4>
+                        <p style="color:var(--gray-500);font-size:0.85rem;"><%= app.email %> &middot; <%= app.phone || 'No phone' %> &middot; Subjects: <%= (app.subjects || []).join(', ') %></p>
+                    </div>
+                    <a href="/admin/owner/applications/<%= app.id %>" class="btn btn-outline btn-sm" onclick="event.stopPropagation();">Full Details</a>
+                </summary>
+                <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--gray-100);">
+                    <% if (app.education) { %><p style="margin-bottom:8px;"><strong>Education:</strong> <%= app.education %></p><% } %>
+                    <% if (app.experience) { %><p style="margin-bottom:8px;"><strong>Experience:</strong> <%= app.experience %></p><% } %>
+                    <% if (app.availability) { %><p style="margin-bottom:8px;"><strong>Availability:</strong> <%= app.availability %></p><% } %>
+                    <% if (app.why_join) { %><p style="margin-bottom:8px;"><strong>Why join:</strong> <%= app.why_join %></p><% } %>
+                    <% if (app.cover_letter) { %><p style="margin-bottom:8px;"><strong>Cover letter:</strong> <%= app.cover_letter %></p><% } %>
+                    <% if (app.resume_path) { %><p style="margin-bottom:16px;"><a href="<%= app.resume_path %>" target="_blank">View Resume</a></p><% } %>
+                    <div style="display:flex;gap:8px;">
+                        <form action="/admin/owner/applications/<%= app.id %>/status" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="status" value="accepted"><input type="hidden" name="reviewer_notes" value=""><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;">Accept</button></form>
+                        <form action="/admin/owner/applications/<%= app.id %>/status" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="status" value="rejected"><input type="hidden" name="reviewer_notes" value=""><button type="submit" class="btn btn-sm" style="background:var(--red-500);color:white;">Reject</button></form>
+                    </div>
+                </div>
+            </details>
+            <% }); %>
+            <% } %>
+
+            <!-- Inquiries - expandable -->
+            <% if (inquiries && inquiries.length > 0) { %>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F4E8; Open Inquiries/Consultations (<%= stats.openInquiries %>)</h2>
+            <% inquiries.forEach(inq => { %>
+            <details class="card" style="margin-bottom:12px;padding:20px;cursor:pointer;">
+                <summary style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <h4><%= inq.name %> <span class="badge-status badge-pending"><%= inq.inquiry_type %></span></h4>
+                        <p style="color:var(--blue-500);font-size:0.85rem;font-weight:600;"><%= inq.subject %></p>
+                        <p style="color:var(--gray-400);font-size:0.8rem;"><%= inq.email %> &middot; <%= inq.phone || 'No phone' %> &middot; <%= new Date(inq.created_at).toLocaleDateString() %></p>
+                    </div>
+                    <form action="/admin/owner/inquiries/<%= inq.id %>/status" method="POST" onclick="event.stopPropagation();"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <input type="hidden" name="status" value="resolved">
+                        <button type="submit" class="btn btn-sm btn-outline">Resolve</button>
+                    </form>
+                </summary>
+                <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--gray-100);">
+                    <p style="color:var(--gray-700);line-height:1.8;white-space:pre-wrap;"><%= inq.message %></p>
+                </div>
+            </details>
+            <% }); %>
+            <% } %>
+        </div>
+    </div>
+</main>
+<%- include('../partials/footer') %>

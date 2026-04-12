@@ -1,0 +1,77 @@
+<%- include('partials/header') %>
+<%- include('partials/nav') %>
+
+<main id="main-content">
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Flexible Plans</span>
+                <h2>Plans That Fit Your Family</h2>
+                <p>Every family is different. We build a plan around your child's needs and your schedule during a free consultation.</p>
+            </div>
+
+            <div class="services-grid" style="max-width:1000px;margin:0 auto 48px;">
+                <div class="card" style="padding:32px;text-align:center;border-top:4px solid var(--blue-400);">
+                    <h3 style="color:var(--blue-600);margin-bottom:12px;">Starter</h3>
+                    <p style="font-size:1.5rem;font-family:var(--font-display);font-weight:800;color:var(--gray-800);margin:16px 0;">4 sessions/month</p>
+                    <p style="color:var(--gray-500);margin-bottom:24px;">One dedicated tutor, weekly one-hour sessions. Perfect for maintaining momentum.</p>
+                    <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; 4 one-hour sessions</p>
+                    <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; Monthly progress reports</p>
+                    <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; Direct tutor messaging</p>
+                    <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:24px;">&#x2705; Quarterly check-ins</p>
+                    <a href="/consultation" class="btn btn-outline btn-block">Discuss Pricing</a>
+                </div>
+
+                <div class="card" style="padding:32px;text-align:center;border-top:4px solid var(--yellow-400);position:relative;">
+                    <span style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--yellow-400);color:var(--gray-900);padding:4px 20px;border-radius:var(--radius-full);font-weight:700;font-size:0.85rem;">Most Popular</span>
+                    <h3 style="color:var(--yellow-600);margin-bottom:12px;">Growth</h3>
+                    <p style="font-size:1.5rem;font-family:var(--font-display);font-weight:800;color:var(--gray-800);margin:16px 0;">8 sessions/month</p>
+                    <p style="color:var(--gray-500);margin-bottom:24px;">Twice-a-week sessions for faster progress. Flexible scheduling around your life.</p>
+                    <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; 8 one-hour sessions</p>
+                    <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; Everything in Starter</p>
+                    <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; Group session access</p>
+                    <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:24px;">&#x2705; Priority scheduling</p>
+                    <a href="/consultation" class="btn btn-secondary btn-block">Discuss Pricing</a>
+                </div>
+
+                <div class="card" style="padding:32px;text-align:center;border-top:4px solid var(--blue-600);">
+                    <h3 style="color:var(--blue-600);margin-bottom:12px;">Premium</h3>
+                    <p style="font-size:1.5rem;font-family:var(--font-display);font-weight:800;color:var(--gray-800);margin:16px 0;">Unlimited sessions</p>
+                    <p style="color:var(--gray-500);margin-bottom:24px;">As many sessions as your child needs. Multiple subjects, dedicated coordinator.</p>
+                    <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; Unlimited one-hour sessions</p>
+                    <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; Everything in Growth</p>
+                    <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:8px;">&#x2705; Multiple subjects</p>
+                    <p style="color:var(--gray-500);font-size:0.9rem;margin-bottom:24px;">&#x2705; Dedicated coordinator</p>
+                    <a href="/consultation" class="btn btn-outline btn-block">Discuss Pricing</a>
+                </div>
+            </div>
+
+            <div style="max-width:600px;margin:0 auto;">
+                <div class="card" style="padding:32px;text-align:center;">
+                    <h3 style="font-size:1.2rem;margin-bottom:12px;">How Pricing Works</h3>
+                    <p style="color:var(--gray-600);line-height:1.8;margin-bottom:20px;">We discuss pricing during your free consultation and tailor a plan to your family's budget and needs. No surprises, no hidden fees. Once you agree, we set up your account and you can start booking sessions right away.</p>
+                    <a href="/consultation" class="btn btn-primary btn-lg">Start with a Free Consultation</a>
+                </div>
+            </div>
+
+            <!-- Referral Code -->
+            <div style="max-width:500px;margin:32px auto 0;">
+                <div class="card" style="padding:28px;">
+                    <h3 style="font-size:1.1rem;margin-bottom:16px;text-align:center;">&#x1F381; Have a Referral Code?</h3>
+                    <form id="referral-form" style="display:flex;gap:12px;">
+                        <input type="text" id="referral-code" class="form-control" placeholder="Enter referral code" style="text-transform:uppercase;">
+                        <button type="submit" class="btn btn-primary">Check</button>
+                    </form>
+                    <div id="referral-result" style="display:none;margin-top:12px;"></div>
+                    <p style="text-align:center;margin-top:12px;font-size:0.85rem;color:var(--gray-400);">Mention your referral code during your consultation to receive a discount.</p>
+                </div>
+            </div>
+
+            <div style="text-align:center;margin-top:24px;">
+                <p style="color:var(--gray-400);font-size:0.9rem;">&#x1F49A; Part of every payment supports <%= charityName %>. <a href="/charity">Learn more</a>.</p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<%- include('partials/footer') %>

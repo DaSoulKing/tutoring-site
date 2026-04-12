@@ -1,0 +1,155 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+<main id="main-content">
+    <div class="dashboard-grid">
+        <aside class="dashboard-sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="/admin/owner">&#x1F3E0; Dashboard</a></li>
+                <li><a href="/admin/owner/calendar">&#x1F4C5; Calendar</a></li>
+                <li><a href="/admin/owner/availability" class="active">&#x1F552; Availability</a></li>
+                <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Tutors</a></li>
+                <li><a href="/admin/owner/students">&#x1F393; Students</a></li>
+                <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
+                <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
+                <li><a href="/admin/owner/settings">&#x2699;&#xFE0F; Settings</a></li>
+                <li><a href="/admin/owner/profile">&#x1F464; My Profile</a></li>
+            </ul>
+        </aside>
+        <div class="dashboard-main">
+            <h1 style="font-size:1.5rem;margin-bottom:8px;">Tutor Availability Overview</h1>
+            <p style="color:var(--gray-500);margin-bottom:24px;">See when all tutors are available. Filter by tutor or subject.</p>
+
+            <!-- Filters -->
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;">
+                <select id="filter-tutor" class="form-control" style="width:auto;min-width:180px;padding:8px 12px;">
+                    <option value="">All Tutors</option>
+                    <% tutors.forEach(function(t) { %>
+                    <option value="<%= t.id %>"><%= t.first_name %> <%= t.last_name %></option>
+                    <% }); %>
+                </select>
+                <select id="filter-subject" class="form-control" style="width:auto;min-width:180px;padding:8px 12px;">
+                    <option value="">All Subjects</option>
+                    <% subjects.forEach(function(s) { %>
+                    <option value="<%= s %>"><%= s %></option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <!-- Weekly grid -->
+            <div class="card" style="padding:0;overflow:hidden;">
+                <div id="avail-grid" style="display:grid;grid-template-columns:120px repeat(7,1fr);"></div>
+            </div>
+
+            <!-- Tutor list summary -->
+            <div id="tutor-summary" style="margin-top:24px;"></div>
+        </div>
+    </div>
+</main>
+
+<script>
+(function() {
+    var allAvail = <%- JSON.stringify(availability.map(function(a) {
+        return { tutor_id: a.tutor_id, first_name: a.first_name, last_name: a.last_name, day: a.day_of_week, start: a.start_time.substring(0,5), end: a.end_time.substring(0,5) };
+    })) %>;
+
+    var allTutors = <%- JSON.stringify(tutors.map(function(t) { return { id: t.id, name: t.first_name + ' ' + t.last_name, subjects: t.subjects || [] }; })) %>;
+
+    var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var grid = document.getElementById('avail-grid');
+    var summary = document.getElementById('tutor-summary');
+    var filterTutor = document.getElementById('filter-tutor');
+    var filterSubject = document.getElementById('filter-subject');
+
+    function formatTime12(t) {
+        var parts = t.split(':');
+        var h = parseInt(parts[0], 10);
+        var m = parts[1] || '00';
+        var h12 = h % 12; if (h12 === 0) h12 = 12;
+        return h12 + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
+    }
+
+    function render() {
+        var tutorId = filterTutor.value;
+        var subject = filterSubject.value;
+
+        // Filter tutors
+        var visibleTutors = allTutors;
+        if (tutorId) visibleTutors = visibleTutors.filter(function(t) { return String(t.id) === tutorId; });
+        if (subject) visibleTutors = visibleTutors.filter(function(t) { return t.subjects.indexOf(subject) >= 0; });
+        var visibleIds = visibleTutors.map(function(t) { return t.id; });
+
+        var filtered = allAvail.filter(function(a) { return visibleIds.indexOf(a.tutor_id) >= 0; });
+
+        // Build grid
+        var html = '<div style="padding:12px;font-weight:700;font-size:0.8rem;color:var(--gray-500);background:var(--gray-50);border-bottom:1px solid var(--gray-200);">Time</div>';
+        for (var d = 0; d < 7; d++) {
+            html += '<div style="padding:12px;font-weight:700;font-size:0.8rem;color:var(--gray-500);text-align:center;background:var(--gray-50);border-bottom:1px solid var(--gray-200);border-left:1px solid var(--gray-100);">' + days[d] + '</div>';
+        }
+
+        // Build time rows (7am to 10pm)
+        for (var h = 7; h <= 21; h++) {
+            var timeStr = String(h).padStart(2,'0') + ':00';
+            var h12 = h % 12; if (h12 === 0) h12 = 12;
+            var label = h12 + ':00 ' + (h >= 12 ? 'PM' : 'AM');
+
+            html += '<div style="padding:8px 12px;font-size:0.8rem;color:var(--gray-500);font-weight:600;border-bottom:1px solid var(--gray-50);">' + label + '</div>';
+
+            for (var d2 = 0; d2 < 7; d2++) {
+                var slotTutors = [];
+                for (var f = 0; f < filtered.length; f++) {
+                    var a = filtered[f];
+                    if (Number(a.day) === d2) {
+                        var startH = parseInt(a.start.split(':')[0]);
+                        var endH = parseInt(a.end.split(':')[0]);
+                        if (h >= startH && h < endH) {
+                            var name = a.first_name + ' ' + a.last_name.charAt(0) + '.';
+                            if (slotTutors.indexOf(name) < 0) slotTutors.push(name);
+                        }
+                    }
+                }
+
+                if (slotTutors.length > 0) {
+                    html += '<div style="padding:4px 6px;background:var(--blue-50);border-left:1px solid var(--gray-100);border-bottom:1px solid var(--gray-50);font-size:0.7rem;color:var(--blue-700);">' + slotTutors.join(', ') + '</div>';
+                } else {
+                    html += '<div style="padding:4px;border-left:1px solid var(--gray-100);border-bottom:1px solid var(--gray-50);"></div>';
+                }
+            }
+        }
+
+        grid.innerHTML = html;
+
+        // Tutor summary cards
+        var sHtml = '<h2 style="font-size:1.15rem;margin-bottom:12px;">Tutor Summary</h2><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">';
+        for (var t = 0; t < visibleTutors.length; t++) {
+            var tutor = visibleTutors[t];
+            var tutorSlots = filtered.filter(function(a) { return a.tutor_id === tutor.id; });
+            var slotsByDay = {};
+            for (var s = 0; s < tutorSlots.length; s++) {
+                var dayName = days[tutorSlots[s].day];
+                if (!slotsByDay[dayName]) slotsByDay[dayName] = [];
+                slotsByDay[dayName].push(formatTime12(tutorSlots[s].start) + '-' + formatTime12(tutorSlots[s].end));
+            }
+
+            sHtml += '<div class="card" style="padding:16px;">';
+            sHtml += '<h4 style="font-size:0.95rem;margin-bottom:8px;">' + tutor.name + '</h4>';
+            if (Object.keys(slotsByDay).length > 0) {
+                for (var dayKey in slotsByDay) {
+                    sHtml += '<p style="font-size:0.8rem;color:var(--gray-600);"><strong>' + dayKey + ':</strong> ' + slotsByDay[dayKey].join(', ') + '</p>';
+                }
+            } else {
+                sHtml += '<p style="font-size:0.8rem;color:var(--gray-400);">No availability set</p>';
+            }
+            sHtml += '<p style="font-size:0.75rem;color:var(--gray-400);margin-top:6px;">' + tutorSlots.length + ' slots/week</p>';
+            sHtml += '</div>';
+        }
+        sHtml += '</div>';
+        summary.innerHTML = sHtml;
+    }
+
+    filterTutor.addEventListener('change', render);
+    filterSubject.addEventListener('change', render);
+    render();
+})();
+</script>
+
+<%- include('../partials/footer') %>

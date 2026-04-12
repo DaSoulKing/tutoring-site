@@ -5,11 +5,15 @@
     <section class="section" style="padding-top:32px;">
         <div class="container">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
-                <h1 style="font-size:1.5rem;"><%= role === 'owner' ? 'All Sessions Calendar' : 'My Calendar' %></h1>
-                <a href="/admin/<%= role === 'owner' ? 'owner' : 'tutor' %>" class="btn btn-outline btn-sm">&larr; Dashboard</a>
+                <h1 style="font-size:1.5rem;">My Calendar</h1>
+                <div style="display:flex;gap:8px;">
+                    <a href="/tutors" class="btn btn-primary btn-sm">Browse Tutors</a>
+                    <a href="/parent/dashboard" class="btn btn-outline btn-sm">&larr; Dashboard</a>
+                </div>
             </div>
 
             <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;">
+                <!-- Calendar -->
                 <div style="flex:1;min-width:300px;">
                     <div class="calendar-container" id="calendar">
                         <div class="calendar-header">
@@ -22,8 +26,9 @@
                     <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;">
                         <div style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;border-radius:3px;background:var(--blue-100);"></div><span style="font-size:0.8rem;color:var(--gray-500);">Confirmed</span></div>
                         <div style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;border-radius:3px;background:var(--yellow-100);"></div><span style="font-size:0.8rem;color:var(--gray-500);">Pending</span></div>
+                        <div style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;border-radius:3px;background:#D1FAE5;"></div><span style="font-size:0.8rem;color:var(--gray-500);">Available to book</span></div>
                     </div>
-                    <p style="color:var(--gray-400);font-size:0.85rem;margin-top:8px;">Click any day to see details and add notes.</p>
+                    <p style="color:var(--gray-400);font-size:0.85rem;margin-top:8px;">Click any day to see details and book sessions.</p>
                 </div>
 
                 <!-- Slide-in Panel -->
@@ -34,7 +39,11 @@
                             <button type="button" id="panel-close" style="border:none;background:none;font-size:1.2rem;cursor:pointer;color:var(--gray-400);">&times;</button>
                         </div>
 
+                        <!-- Existing bookings for this day -->
                         <div id="panel-bookings"></div>
+
+                        <!-- Available slots to book -->
+                        <div id="panel-available"></div>
 
                         <!-- Notes -->
                         <div style="margin-top:16px;border-top:1px solid var(--gray-100);padding-top:16px;">
@@ -54,36 +63,46 @@
 
 <script>
 (function() {
+    var assignedTutors = <%- JSON.stringify((assignedTutors || []).map(function(t) { return { id: t.id, name: t.first_name + ' ' + t.last_name, pic: t.profile_picture }; })) %>;
+    var csrfToken = '<%= csrfToken %>';
     var panel = document.getElementById('day-panel');
     var panelDate = document.getElementById('panel-date');
     var panelBookings = document.getElementById('panel-bookings');
+    var panelAvailable = document.getElementById('panel-available');
     var panelNotes = document.getElementById('panel-notes');
     var selectedDate = null;
     var calendarNotes = {};
-    var noteKey = 'bm_cal_notes_<%= role %>';
 
-    try { calendarNotes = JSON.parse(localStorage.getItem(noteKey) || '{}'); } catch(e) {}
+    // Load notes from localStorage
+    try { calendarNotes = JSON.parse(localStorage.getItem('bm_cal_notes') || '{}'); } catch(e) {}
 
-    function saveNotes() { try { localStorage.setItem(noteKey, JSON.stringify(calendarNotes)); } catch(e) {} }
+    function saveNotes() {
+        try { localStorage.setItem('bm_cal_notes', JSON.stringify(calendarNotes)); } catch(e) {}
+    }
 
     function formatTime12(t) {
         if (!t) return '';
         var parts = t.split(':');
         var h = parseInt(parts[0], 10);
         var m = parts[1] || '00';
-        var h12 = h % 12; if (h12 === 0) h12 = 12;
-        return h12 + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
+        var ampm = h >= 12 ? 'PM' : 'AM';
+        var h12 = h % 12;
+        if (h12 === 0) h12 = 12;
+        return h12 + ':' + m + ' ' + ampm;
     }
 
     function formatDateStr(d) {
         return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     }
 
+    // Close panel
     document.getElementById('panel-close').addEventListener('click', function() {
-        panel.style.display = 'none'; selectedDate = null;
+        panel.style.display = 'none';
+        selectedDate = null;
         document.querySelectorAll('.calendar-day.selected').forEach(function(el) { el.classList.remove('selected'); });
     });
 
+    // Note form
     document.getElementById('note-form').addEventListener('submit', function(e) {
         e.preventDefault();
         var input = document.getElementById('note-input');
@@ -91,71 +110,134 @@
         if (!text || !selectedDate) return;
         if (!calendarNotes[selectedDate]) calendarNotes[selectedDate] = [];
         calendarNotes[selectedDate].push({ text: text, time: new Date().toLocaleTimeString() });
-        saveNotes(); renderNotes(); input.value = '';
+        saveNotes();
+        renderNotes();
+        input.value = '';
     });
 
     function renderNotes() {
         var notes = calendarNotes[selectedDate] || [];
-        if (notes.length === 0) { panelNotes.innerHTML = '<p style="color:var(--gray-400);font-size:0.8rem;">No notes yet.</p>'; return; }
+        if (notes.length === 0) {
+            panelNotes.innerHTML = '<p style="color:var(--gray-400);font-size:0.8rem;">No notes for this day.</p>';
+            return;
+        }
         var html = '';
         for (var i = 0; i < notes.length; i++) {
             html += '<div style="padding:6px 0;border-bottom:1px solid var(--gray-50);display:flex;justify-content:space-between;align-items:start;gap:8px;">';
             html += '<p style="font-size:0.85rem;color:var(--gray-700);flex:1;">' + notes[i].text.replace(/</g, '&lt;') + '</p>';
-            html += '<a href="#" class="note-del" data-idx="' + i + '" style="color:var(--red-400);font-size:0.8rem;text-decoration:none;">x</a></div>';
+            html += '<a href="#" class="note-delete" data-idx="' + i + '" style="color:var(--red-400);font-size:0.8rem;text-decoration:none;">x</a>';
+            html += '</div>';
         }
         panelNotes.innerHTML = html;
-        panelNotes.querySelectorAll('.note-del').forEach(function(btn) {
-            btn.addEventListener('click', function(e) { e.preventDefault(); calendarNotes[selectedDate].splice(Number(this.getAttribute('data-idx')), 1); saveNotes(); renderNotes(); });
+
+        panelNotes.querySelectorAll('.note-delete').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                calendarNotes[selectedDate].splice(Number(this.getAttribute('data-idx')), 1);
+                saveNotes();
+                renderNotes();
+            });
         });
     }
 
-    document.getElementById('calendar').addEventListener('click', function(e) {
+    // Override calendar day click to open panel
+    var origRenderCalendar = window.renderCalendar;
+    var calEl = document.getElementById('calendar');
+
+    calEl.addEventListener('click', function(e) {
         var dayEl = e.target.closest('.calendar-day:not(.other-month)');
         if (!dayEl) return;
+
         var dayNum = dayEl.querySelector('.day-number');
         if (!dayNum) return;
         var day = parseInt(dayNum.textContent);
         var titleEl = document.getElementById('cal-title');
-        var parts = titleEl.textContent.split(' ');
+        var titleParts = titleEl.textContent.split(' ');
         var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-        var monthIdx = months.indexOf(parts[0]);
-        var year = parseInt(parts[1]);
+        var monthIdx = months.indexOf(titleParts[0]);
+        var year = parseInt(titleParts[1]);
         var date = new Date(year, monthIdx, day);
         selectedDate = formatDateStr(date);
 
         document.querySelectorAll('.calendar-day.selected').forEach(function(el) { el.classList.remove('selected'); });
         dayEl.classList.add('selected');
+
         panelDate.textContent = date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
         panel.style.display = 'block';
 
-        loadDayDetails(selectedDate);
+        loadDayDetails(selectedDate, date.getDay());
         renderNotes();
     });
 
-    async function loadDayDetails(dateStr) {
+    async function loadDayDetails(dateStr, dayOfWeek) {
         panelBookings.innerHTML = '<div class="loading-spinner" style="margin:12px auto;width:24px;height:24px;"></div>';
+        panelAvailable.innerHTML = '';
+
         try {
+            // Get existing bookings for this day
             var month = parseInt(dateStr.split('-')[1]);
             var year = parseInt(dateStr.split('-')[0]);
             var resp = await fetch('/api/calendar/events?month=' + month + '&year=' + year);
             var events = await resp.json();
-            var dayEvents = events.filter(function(ev) { return (ev.booking_date || '').substring(0, 10) === dateStr; });
+            var dayEvents = events.filter(function(ev) {
+                return ev.booking_date && ev.booking_date.substring(0, 10) === dateStr;
+            });
 
+            // Render bookings
             if (dayEvents.length > 0) {
-                var html = '<h4 style="font-size:0.9rem;color:var(--gray-600);margin-bottom:8px;">Sessions</h4>';
+                var bHtml = '<h4 style="font-size:0.9rem;color:var(--gray-600);margin-bottom:8px;">Your Sessions</h4>';
                 for (var i = 0; i < dayEvents.length; i++) {
                     var ev = dayEvents[i];
                     var name = ev.tutor_first ? (ev.tutor_first + ' ' + (ev.tutor_last || '').charAt(0) + '.') : (ev.student_first + ' ' + (ev.student_last || '').charAt(0) + '.');
-                    html += '<div style="padding:8px 12px;border-radius:8px;margin-bottom:6px;font-size:0.85rem;font-weight:600;" class="calendar-event ' + ev.status + '">';
-                    html += formatTime12(ev.start_time) + ' - ' + formatTime12(ev.end_time) + ' ' + name;
-                    if (ev.subject) html += ' <span style="font-weight:400;color:var(--gray-500);">(' + ev.subject + ')</span>';
-                    html += '</div>';
+                    bHtml += '<div style="padding:8px 12px;border-radius:8px;margin-bottom:6px;font-size:0.85rem;font-weight:600;" class="calendar-event ' + ev.status + '">';
+                    bHtml += formatTime12(ev.start_time) + ' - ' + formatTime12(ev.end_time) + ' ' + name;
+                    if (ev.subject) bHtml += ' <span style="font-weight:400;color:var(--gray-500);">(' + ev.subject + ')</span>';
+                    bHtml += '</div>';
                 }
-                panelBookings.innerHTML = html;
+                panelBookings.innerHTML = bHtml;
             } else {
-                panelBookings.innerHTML = '<p style="color:var(--gray-400);font-size:0.85rem;">No sessions this day.</p>';
+                panelBookings.innerHTML = '<p style="color:var(--gray-400);font-size:0.85rem;margin-bottom:12px;">No sessions this day.</p>';
+            }
+
+            // Get available tutor slots for this day
+            if (assignedTutors.length > 0) {
+                var aHtml = '<h4 style="font-size:0.9rem;color:var(--gray-600);margin:12px 0 8px;">Available Slots</h4>';
+                var hasSlots = false;
+
+                for (var t = 0; t < assignedTutors.length; t++) {
+                    var tutor = assignedTutors[t];
+                    var availResp = await fetch('/api/tutor/' + tutor.id + '/availability');
+                    var availData = await availResp.json();
+                    var daySlots = (availData.availability || []).filter(function(a) { return Number(a.day_of_week) === dayOfWeek; });
+
+                    for (var s = 0; s < daySlots.length; s++) {
+                        var slot = daySlots[s];
+                        var start = (slot.start_time || '').substring(0, 5);
+                        var end = (slot.end_time || '').substring(0, 5);
+                        // Check if already booked
+                        var taken = dayEvents.some(function(ev) {
+                            return ev.start_time && ev.start_time.substring(0, 5) === start;
+                        });
+
+                        if (!taken) {
+                            hasSlots = true;
+                            aHtml += '<a href="/parent/book/' + tutor.id + '" class="slot-book-btn" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:8px;background:var(--blue-50);border:1px solid var(--blue-200);margin-bottom:6px;text-decoration:none;color:var(--blue-700);font-size:0.85rem;font-weight:600;transition:all 0.15s;">';
+                            aHtml += '<span>' + formatTime12(start) + ' - ' + formatTime12(end) + '</span>';
+                            aHtml += '<span style="font-weight:400;color:var(--gray-500);">' + tutor.name + '</span>';
+                            aHtml += '</a>';
+                        }
+                    }
+                }
+
+                if (!hasSlots) {
+                    aHtml += '<p style="color:var(--gray-400);font-size:0.85rem;">No open slots this day.</p>';
+                }
+                panelAvailable.innerHTML = aHtml;
+            } else {
+                panelAvailable.innerHTML = '<p style="color:var(--gray-400);font-size:0.85rem;margin-top:12px;"><a href="/tutors">Browse tutors</a> to start booking.</p>';
             }
         } catch (err) {
+            console.error('Error loading day details:', err);
             panelBookings.innerHTML = '<p style="color:var(--red-400);font-size:0.85rem;">Failed to load.</p>';
         }
     }
@@ -165,7 +247,10 @@
 <style>
 .calendar-day{cursor:pointer}
 .calendar-day.selected{background:var(--blue-100) !important;border-color:var(--blue-400) !important}
-@media(max-width:768px){ #day-panel{width:100% !important;min-width:0 !important;order:2} }
+.slot-book-btn:hover{background:var(--blue-100) !important;border-color:var(--blue-400) !important}
+@media(max-width:768px){
+    #day-panel{width:100% !important;min-width:0 !important;order:2}
+}
 </style>
 
 <%- include('../partials/footer') %>

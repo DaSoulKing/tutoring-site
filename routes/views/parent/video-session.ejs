@@ -1,0 +1,67 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+
+<main id="main-content">
+    <section class="section" style="padding-top:32px;">
+        <div class="container" style="max-width:700px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <h1 style="font-size:1.5rem;">Video Session</h1>
+                    <p style="color:var(--gray-500);font-size:0.9rem;">
+                        with <%= booking.tutor_first %> <%= booking.tutor_last %>
+                        &middot; <%= booking.subject || 'General' %>
+                        &middot; <%= new Date(booking.booking_date).toLocaleDateString() %>
+                    </p>
+                </div>
+                <a href="<%= user.role === 'tutor' ? '/admin/tutor' : '/parent/dashboard' %>" class="btn btn-outline btn-sm">&larr; Dashboard</a>
+            </div>
+
+            <div class="card" style="padding:48px;text-align:center;">
+                <div style="font-size:4rem;margin-bottom:16px;">&#x1F4F9;</div>
+                <h2 style="font-size:1.5rem;margin-bottom:12px;">Ready to Join?</h2>
+                <p style="color:var(--gray-500);margin-bottom:8px;line-height:1.7;">Your video session will open in a new tab. No downloads or signups needed.</p>
+                <p style="color:var(--gray-500);margin-bottom:32px;line-height:1.7;">Share the link below with your <% if (user.role === 'tutor') { %>student<% } else { %>tutor<% } %> if they need it.</p>
+
+                <a href="https://meet.jit.si/<%= roomId %>#userInfo.displayName=%22<%= encodeURIComponent(userName) %>%22" target="_blank" rel="noopener" class="btn btn-primary btn-lg" style="font-size:1.2rem;padding:18px 48px;">
+                    Join Video Call
+                </a>
+
+                <div style="margin-top:32px;padding:16px;background:var(--gray-50);border-radius:12px;">
+                    <p style="font-size:0.8rem;color:var(--gray-400);margin-bottom:8px;font-weight:600;">Session Link (share if needed):</p>
+                    <div style="display:flex;gap:8px;align-items:center;justify-content:center;">
+                        <code style="font-size:0.8rem;color:var(--blue-600);word-break:break-all;" id="room-link">https://meet.jit.si/<%= roomId %></code>
+                        <button type="button" id="copy-room" class="btn btn-outline btn-sm" style="font-size:0.75rem;">Copy</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top:24px;">
+                <div class="card" style="padding:20px;background:var(--blue-50);border:2px solid var(--blue-200);">
+                    <h3 style="font-size:1rem;margin-bottom:8px;">Session Tips</h3>
+                    <p style="color:var(--gray-600);font-size:0.9rem;line-height:1.7;">Make sure your camera and microphone are working before joining. Find a quiet, well-lit space. The session has no time limit. When done, just close the tab and come back here.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+document.getElementById('copy-room').addEventListener('click', function() {
+    var link = document.getElementById('room-link').textContent;
+    navigator.clipboard.writeText(link).then(function() {
+        document.getElementById('copy-room').textContent = 'Copied!';
+        setTimeout(function() { document.getElementById('copy-room').textContent = 'Copy'; }, 2000);
+    }).catch(function() {
+        var t = document.createElement('textarea');
+        t.value = link;
+        document.body.appendChild(t);
+        t.select();
+        document.execCommand('copy');
+        document.body.removeChild(t);
+        document.getElementById('copy-room').textContent = 'Copied!';
+        setTimeout(function() { document.getElementById('copy-room').textContent = 'Copy'; }, 2000);
+    });
+});
+</script>
+
+<%- include('../partials/footer') %>

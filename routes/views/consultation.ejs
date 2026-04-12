@@ -1,0 +1,84 @@
+<%- include('partials/header') %>
+<%- include('partials/nav') %>
+
+<main id="main-content">
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">No Cost, No Obligation</span>
+                <h2>Book a Free Consultation</h2>
+                <p>Let us learn about your child's needs and show you how BrightMinds can help. It takes just 15 minutes.</p>
+            </div>
+
+            <div class="two-col-layout" style="display:grid;grid-template-columns:1fr 1fr;gap:48px;max-width:1000px;margin:0 auto;">
+                <div class="card" style="padding:40px;">
+                    <form action="/consultation" method="POST" data-validate><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <div class="form-group">
+                            <label for="name">Parent/Guardian Name <span class="required">*</span></label>
+                            <input type="text" id="name" name="name" class="form-control" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="email">Email <span class="required">*</span></label>
+                                <input type="email" id="email" name="email" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Phone <span class="required">*</span></label>
+                                <input type="tel" id="phone" name="phone" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="child_grade">Child's Grade Level <span class="required">*</span></label>
+                                <select id="child_grade" name="child_grade" class="form-control" required>
+                                    <option value="">Select grade...</option>
+                                    <option>K-2nd</option><option>3rd-5th</option><option>6th-8th</option>
+                                    <option>9th-10th</option><option>11th-12th</option><option>College</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="subjects">Subjects Needed <span class="required">*</span></label>
+                                <input type="text" id="subjects" name="subjects" class="form-control" required placeholder="Math, English...">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="preferred_time">Preferred Call Time</label>
+                            <select id="preferred_time" name="preferred_time" class="form-control">
+                                <option>Morning (9 AM - 12 PM)</option>
+                                <option>Afternoon (12 PM - 4 PM)</option>
+                                <option>Evening (4 PM - 7 PM)</option>
+                                <option>Flexible</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Anything else we should know?</label>
+                            <textarea id="message" name="message" class="form-control" placeholder="Tell us about your child's learning goals, challenges, or preferences..."></textarea>
+                        </div>
+                        <% if (recaptchaSiteKey) { %>
+                        <div class="form-group"><div class="g-recaptcha" data-sitekey="<%= recaptchaSiteKey %>"></div></div>
+                        <% } %>
+                        <button type="submit" class="btn btn-secondary btn-block btn-lg">Request Free Consultation</button>
+                    </form>
+                </div>
+
+                <div>
+                    <div class="card" style="background:var(--blue-50);border:2px solid var(--blue-200);padding:32px;margin-bottom:24px;">
+                        <h3 style="font-size:1.2rem;margin-bottom:16px;">What to Expect</h3>
+                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;">&#x2705; A friendly 15-minute call with our team</p>
+                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;">&#x2705; Discussion of your child's academic needs</p>
+                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;">&#x2705; Personalized tutor recommendations</p>
+                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;">&#x2705; Overview of our programs and pricing</p>
+                        <p style="color:var(--gray-600);line-height:1.8;">&#x2705; No pressure, no commitment</p>
+                    </div>
+                    <div class="card" style="text-align:center;padding:32px;">
+                        <p style="font-size:3rem;margin-bottom:8px;" aria-hidden="true">&#x1F4DE;</p>
+                        <h3 style="font-size:1.1rem;">Prefer to call directly?</h3>
+                        <p style="color:var(--gray-500);margin-top:8px;">(555) 123-MIND</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<%- include('partials/footer') %>
