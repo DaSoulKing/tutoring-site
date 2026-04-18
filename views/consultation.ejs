@@ -38,7 +38,13 @@
                             </div>
                             <div class="form-group">
                                 <label for="subjects">Subjects Needed <span class="required">*</span></label>
-                                <input type="text" id="subjects" name="subjects" class="form-control" required placeholder="Math, English...">
+                                <select id="subjects-select" class="form-control" multiple style="min-height:100px;">
+                                    <% ['Math','Algebra','Geometry','Calculus','Statistics','Science','Biology','Chemistry','Physics','English','Writing','Reading','Literature','History','Social Studies','Geography','French','Spanish','Mandarin','Computer Science','Coding','SAT Prep','ACT Prep','Test Strategy','Study Skills','Art','Music'].forEach(function(s) { %>
+                                    <option value="<%= s %>"><%= s %></option>
+                                    <% }); %>
+                                </select>
+                                <input type="hidden" name="subjects" id="subjects-hidden" value="">
+                                <p style="font-size:0.75rem;color:var(--gray-400);margin-top:4px;">Hold Ctrl/Cmd for multiple</p>
                             </div>
                         </div>
                         <div class="form-group">
@@ -80,5 +86,19 @@
         </div>
     </section>
 </main>
+
+<script>
+document.querySelector('form[data-validate]').addEventListener('submit', function() {
+    var sel = document.getElementById('subjects-select');
+    var hidden = document.getElementById('subjects-hidden');
+    if (sel && hidden) {
+        var selected = [];
+        for (var i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].selected) selected.push(sel.options[i].value);
+        }
+        hidden.value = selected.join(', ');
+    }
+});
+</script>
 
 <%- include('partials/footer') %>

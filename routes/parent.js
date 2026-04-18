@@ -220,6 +220,42 @@ router.post('/book/:tutorId', isAuthenticated, async (req, res) => {
             return res.redirect('/parent/book/' + tutorId);
         }
 
+        // Block bookings in the past
+        const bookingDateTime = new Date(booking_date + 'T' + start_time);
+        if (bookingDateTime < new Date()) {
+            req.session.error = 'Cannot book a session in the past. Please select a future date and time.';
+            return res.redirect('/parent/book/' + tutorId);
+        }
+
+        // Check payment status - block if unpaid
+        const payCheck = await pool.query('SELECT payment_status FROM users WHERE id = $1', [req.session.user.id]);
+        if (payCheck.rows[0] && payCheck.rows[0].payment_status === 'unpaid') {
+            // Check if they have a subscription and are within their session limit
+            const sub = await pool.query("SELECT sessions_per_month FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
+            const sessionCount = await pool.query("SELECT COUNT(*) FROM bookings WHERE student_id = $1 AND booking_date >= date_trunc('month', CURRENT_DATE) AND status IN ('pending','confirmed')", [req.session.user.id]);
+            const used = parseInt(sessionCount.rows[0].count);
+            const allowed = sub.rows[0] ? sub.rows[0].sessions_per_month : 0;
+            if (allowed === 0 || used >= allowed) {
+                req.session.error = 'Your account has an outstanding balance. Please contact us to arrange payment before booking additional sessions.';
+                return res.redirect('/parent/book/' + tutorId);
+            }
+        }
+
+        // Check payment status
+        const userCheck = await pool.query('SELECT payment_status FROM users WHERE id = $1', [req.session.user.id]);
+        if (userCheck.rows[0] && userCheck.rows[0].payment_status === 'unpaid') {
+            // Check if they have an active subscription with remaining sessions
+            const sub = await pool.query("SELECT sessions_per_month FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
+            const sessionsThisMonth = await pool.query("SELECT COUNT(*) FROM bookings WHERE (student_id = $1 OR parent_id = $1) AND booking_date >= date_trunc('month', CURRENT_DATE) AND booking_date < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month' AND status IN ('pending','confirmed','completed')", [req.session.user.id]);
+            const limit = sub.rows[0] ? sub.rows[0].sessions_per_month : 0;
+            const used = parseInt(sessionsThisMonth.rows[0].count);
+
+            if (limit === 0 || used >= limit) {
+                req.session.error = 'Your payment is outstanding or you have used all your sessions for this month. Please contact the admin to resolve.';
+                return res.redirect('/parent/book/' + tutorId);
+            }
+        }
+
         // Check for conflicts
         const conflict = await pool.query(`
             SELECT id FROM bookings WHERE tutor_id = $1 AND booking_date = $2

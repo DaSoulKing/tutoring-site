@@ -1,0 +1,50 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+<main id="main-content">
+    <div class="dashboard-grid">
+        <aside class="dashboard-sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="/admin/owner">&#x1F3E0; Dashboard</a></li>
+                <li><a href="/admin/owner/calendar">&#x1F4C5; Calendar</a></li>
+                <li><a href="/admin/owner/availability">&#x1F552; Availability</a></li>
+                <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Tutors</a></li>
+                <li><a href="/admin/owner/students">&#x1F393; Students</a></li>
+                <li><a href="/admin/owner/sheets">&#x1F4CB; Session Sheets</a></li>
+                <li><a href="/admin/owner/messages" class="active">&#x1F4AC; Messages</a></li>
+                <li><a href="/admin/owner/audit-log">&#x1F4DC; Audit Log</a></li>
+                <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
+                <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
+                <li><a href="/admin/owner/settings">&#x2699;&#xFE0F; Settings</a></li>
+                <li><a href="/admin/owner/profile">&#x1F464; My Profile</a></li>
+            </ul>
+        </aside>
+        <div class="dashboard-main">
+            <h1 style="font-size:1.5rem;margin-bottom:8px;">All Messages</h1>
+            <div class="alert alert-info" style="margin-bottom:24px;">
+                <strong>Legal Notice:</strong> All tutors and students are informed upon account creation that messages may be monitored by administrators for safety, quality assurance, and to ensure a positive learning environment. This monitoring is disclosed in the Terms of Service.
+            </div>
+
+            <% if (messages.length === 0) { %>
+            <div class="card" style="padding:32px;text-align:center;"><p style="color:var(--gray-400);">No messages yet.</p></div>
+            <% } else { %>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <% messages.forEach(function(m) { %>
+                <div class="card" style="padding:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:start;gap:12px;">
+                        <div style="flex:1;">
+                            <p style="font-size:0.8rem;color:var(--gray-400);margin-bottom:4px;">
+                                <strong style="color:var(--blue-600);"><%= m.sender_first %> <%= m.sender_last %></strong>
+                                &rarr; <strong><%= m.receiver_first %> <%= m.receiver_last %></strong>
+                                &middot; <%= new Date(m.created_at).toLocaleString() %>
+                            </p>
+                            <p style="font-size:0.9rem;color:var(--gray-700);white-space:pre-wrap;"><%= m.body %></p>
+                        </div>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+            <% } %>
+        </div>
+    </div>
+</main>
+<%- include('../partials/footer') %>

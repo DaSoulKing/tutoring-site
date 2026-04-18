@@ -26,15 +26,32 @@
                 <div class="card" style="margin-bottom:12px;padding:20px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
                         <div><h4><%= s.student_first %> <%= s.student_last %></h4><p style="color:var(--gray-500);font-size:0.85rem;"><%= s.subject || 'General' %> &middot; <%= new Date(s.booking_date).toLocaleDateString() %> &middot; <%= s.start_time ? s.start_time.substring(0,5) : '' %> - <%= s.end_time ? s.end_time.substring(0,5) : '' %></p></div>
-                        <div style="display:flex;gap:8px;align-items:center;">
+                        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                             <span class="badge-status badge-<%= s.status %>"><%= s.status %></span>
+                            <% if (s.attendance) { %><span class="badge-status badge-<%= s.attendance === 'present' ? 'confirmed' : 'cancelled' %>"><%= s.attendance %></span><% } %>
                             <% if (s.status === 'pending') { %>
                             <form action="/api/bookings/<%= s.id %>/confirm" method="POST" style="display:inline;"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;">Confirm</button></form>
                             <% } %>
                             <% if (s.status === 'confirmed') { %><a href="/parent/session/<%= s.id %>" class="btn btn-primary btn-sm">Join</a><% } %>
+                            <% if (s.status === 'confirmed' && !s.attendance) { %>
+                            <form action="/admin/tutor/bookings/<%= s.id %>/attendance" method="POST" style="display:inline;"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="attendance" value="present"><button type="submit" class="btn btn-sm" style="background:#D1FAE5;color:var(--green-600);font-size:0.75rem;">Present</button></form>
+                            <form action="/admin/tutor/bookings/<%= s.id %>/attendance" method="POST" style="display:inline;"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="attendance" value="absent"><button type="submit" class="btn btn-sm" style="background:#FEE2E2;color:var(--red-600);font-size:0.75rem;">Absent</button></form>
+                            <% } %>
                             <a href="/admin/tutor/session-sheet/<%= s.id %>" class="btn btn-outline btn-sm">Sheet</a>
                         </div>
                     </div>
+                    <% if (s.status === 'confirmed' || s.status === 'pending') { %>
+                    <details style="margin-top:8px;">
+                        <summary style="cursor:pointer;font-size:0.8rem;color:var(--blue-600);font-weight:600;">Reschedule</summary>
+                        <form action="/admin/tutor/bookings/<%= s.id %>/reschedule" method="POST" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:8px;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <input type="date" name="new_date" class="form-control" style="width:auto;padding:4px 8px;font-size:0.85rem;" required>
+                            <input type="time" name="new_start" class="form-control" style="width:auto;padding:4px 8px;font-size:0.85rem;" required>
+                            <span style="color:var(--gray-400);font-size:0.85rem;">to</span>
+                            <input type="time" name="new_end" class="form-control" style="width:auto;padding:4px 8px;font-size:0.85rem;" required>
+                            <button type="submit" class="btn btn-sm btn-primary" style="font-size:0.8rem;">Confirm Reschedule</button>
+                        </form>
+                    </details>
+                    <% } %>
                 </div>
                 <% }); %>
             <% } else { %>

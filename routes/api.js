@@ -92,7 +92,7 @@ router.post('/bookings/:id/cancel', isAuthenticated, bookingLimiter, async (req,
 router.post('/bookings/:id/confirm', isAuthenticated, bookingLimiter, async (req, res) => {
     try {
         await pool.query("UPDATE bookings SET status = 'confirmed' WHERE id = $1 AND tutor_id = $2", [req.params.id, req.session.user.id]);
-        // Support both AJAX and form submission
+        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'booking_confirmed', 'Booking #' + req.params.id]); } catch(e) {}
         if (req.headers.accept && req.headers.accept.includes('application/json')) {
             return res.json({ success: true });
         }
@@ -134,6 +134,22 @@ router.post('/messages', isAuthenticated, messageLimiter, async (req, res) => {
             [senderId, receiverId, safeBody, message_type || 'general']);
         res.json({ success: true, message: result.rows[0] });
     } catch (err) { console.error(err); res.status(500).json({ success: false }); }
+});
+
+// Fetch conversation messages (for polling)
+router.get('/messages/conversation/:userId', isAuthenticated, async (req, res) => {
+    try {
+        const myId = req.session.user.id;
+        const otherId = parseInt(req.params.userId, 10);
+        if (isNaN(otherId)) return res.status(400).json([]);
+        const messages = await pool.query(
+            `SELECT * FROM messages WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1) ORDER BY created_at ASC`,
+            [myId, otherId]
+        );
+        // Mark as read
+        await pool.query('UPDATE messages SET is_read = true WHERE receiver_id = $1 AND sender_id = $2 AND is_read = false', [myId, otherId]);
+        res.json(messages.rows);
+    } catch (err) { console.error(err); res.json([]); }
 });
 
 module.exports = router;

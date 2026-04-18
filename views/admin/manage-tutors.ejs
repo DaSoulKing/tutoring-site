@@ -12,6 +12,9 @@
                 <li><a href="/admin/owner/availability">&#x1F552; Availability</a></li>
                 <li><a href="/admin/owner/tutors" class="active">&#x1F468;&#x200D;&#x1F3EB; Tutors</a></li>
                 <li><a href="/admin/owner/students">&#x1F393; Students</a></li>
+                <li><a href="/admin/owner/sheets">&#x1F4CB; Session Sheets</a></li>
+                <li><a href="/admin/owner/messages">&#x1F4AC; Messages</a></li>
+                <li><a href="/admin/owner/audit-log">&#x1F4DC; Audit Log</a></li>
                 <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
                 <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
                 <li><a href="/admin/owner/settings">&#x2699;&#xFE0F; Settings</a></li>
@@ -23,19 +26,11 @@
 
             <div class="card" style="padding:24px;margin-bottom:24px;background:var(--yellow-50);border:2px solid var(--yellow-200);">
                 <h3 style="font-size:1.1rem;margin-bottom:16px;">&#x1F517; Send Tutor Invite Link</h3>
-                <p style="color:var(--gray-600);font-size:0.9rem;margin-bottom:16px;">Generate a secret signup link. They create their own account and password. Expires in 7 days.</p>
+                <p style="color:var(--gray-600);font-size:0.9rem;margin-bottom:16px;">Generate a secret signup link. Tutors create their own account, pick their subjects, and set a password. Link expires in 7 days.</p>
                 <form action="/admin/owner/tutor-invite" method="POST" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="form-group" style="margin:0;flex:1;min-width:200px;">
                         <label>Email (optional, to auto-send)</label>
                         <input type="email" name="email" class="form-control" placeholder="tutor@email.com">
-                    </div>
-                    <div class="form-group" style="margin:0;flex:1;min-width:200px;">
-                        <label>Subjects</label>
-                        <select name="subjects_for_invite" class="form-control" multiple style="min-height:80px;">
-                            <% subjectOptions.forEach(s => { %>
-                            <option value="<%= s %>"><%= s %></option>
-                            <% }); %>
-                        </select>
                     </div>
                     <button type="submit" class="btn btn-secondary">Generate Link</button>
                 </form>
@@ -67,9 +62,10 @@
                                 <td><%= t.email %></td>
                                 <td><% (t.subjects || []).forEach(s => { %><span class="subject-tag"><%= s %></span> <% }); %></td>
                                 <td><span class="badge-status <%= t.approved ? 'badge-active' : 'badge-pending' %>"><%= t.approved ? 'Approved' : 'Pending' %></span></td>
-                                <td style="display:flex;gap:6px;flex-wrap:wrap;">
+                                <td style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
                                     <% if (!t.approved) { %><form action="/admin/owner/tutors/<%= t.id %>/approve" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;font-size:0.8rem;">Approve</button></form><% } %>
                                     <a href="/admin/owner/notes/<%= t.id %>" class="btn btn-outline btn-sm" style="font-size:0.8rem;">Notes</a>
+                                    <form action="/admin/owner/tutors/<%= t.id %>/rate" method="POST" style="display:flex;gap:4px;align-items:center;"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><span style="font-size:0.75rem;color:var(--gray-500);">$/hr:</span><input type="number" name="hourly_rate" step="0.01" min="0" value="<%= t.hourly_rate || '' %>" class="form-control" style="width:70px;padding:4px 6px;font-size:0.8rem;" placeholder="0"><button type="submit" class="btn btn-sm btn-outline" style="font-size:0.7rem;">Set</button></form>
                                     <form action="/admin/owner/users/<%= t.id %>/delete" method="POST" onsubmit="return confirm('WARNING: This will permanently delete <%= t.first_name %> <%= t.last_name %> and all their data. This cannot be undone.');"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--red-500);color:white;font-size:0.8rem;">Delete</button></form>
                                 </td>
                             </tr>

@@ -111,14 +111,12 @@ router.post('/owner/tutor-invite', isAuthenticated, isOwner, async (req, res) =>
         const inviteUrl = `${baseUrl}/tutor-signup/${token}`;
 
         if (email) {
-            const sent = await sendEmail(email, 'You are invited to join BrightMinds Tutoring!',
-                `<h2>Welcome to BrightMinds!</h2><p>You have been invited to join as a tutor.</p><p><a href="${inviteUrl}">Click here to create your account</a></p><p>This link expires in 7 days.</p>`
+            const siteName = process.env.SITE_NAME || 'BrightMinds';
+            await sendEmail(email, 'You are invited to join ' + siteName + '!',
+                '<h2>Welcome to ' + siteName + '!</h2><p>You have been invited to join as a tutor.</p><p><a href="' + inviteUrl + '">Click here to create your account</a></p><p>This link expires in 7 days.</p>'
             );
-            if (sent) {
-                req.session.success = `Invite sent to ${email}! Link: ${inviteUrl}`;
-            } else {
-                req.session.success = `Email could not be sent. Share this link manually: ${inviteUrl}`;
-            }
+            // Always show link since Resend test sender may not deliver
+            req.session.success = `Invite created for ${email}! Share this link: ${inviteUrl}`;
         } else {
             req.session.success = `Invite link created! Share it: ${inviteUrl}`;
         }
@@ -129,7 +127,9 @@ router.post('/owner/tutor-invite', isAuthenticated, isOwner, async (req, res) =>
 // Approve (verify) user account
 router.post('/owner/users/:id/verify', isAuthenticated, isOwner, async (req, res) => {
     try {
+        const target = await pool.query('SELECT first_name, last_name, email FROM users WHERE id = $1', [req.params.id]);
         await pool.query('UPDATE users SET email_verified = true, verify_token = NULL WHERE id = $1', [req.params.id]);
+        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'account_approved', target.rows[0] ? (target.rows[0].first_name + ' ' + target.rows[0].last_name + ' (' + target.rows[0].email + ')') : 'User ' + req.params.id]); } catch(e) {}
         req.session.success = 'Account approved!';
     } catch (err) { console.error(err); }
     res.redirect(req.headers.referer || '/admin/owner');
@@ -140,9 +140,10 @@ router.post('/owner/users/:id/delete', isAuthenticated, isOwner, async (req, res
     try {
         const userId = parseInt(req.params.id, 10);
         // Don't allow deleting the owner
-        const target = await pool.query('SELECT role, email_verified FROM users WHERE id = $1', [userId]);
+        const target = await pool.query('SELECT role, email_verified, first_name, last_name, email FROM users WHERE id = $1', [userId]);
         if (target.rows.length === 0) { req.session.error = 'User not found.'; return res.redirect('/admin/owner'); }
         if (target.rows[0].role === 'owner') { req.session.error = 'Cannot delete owner account.'; return res.redirect('/admin/owner'); }
+        var targetName = target.rows[0].first_name + ' ' + target.rows[0].last_name + ' (' + target.rows[0].email + ')';
 
         // Delete related data first
         await pool.query('DELETE FROM notes WHERE target_user_id = $1 OR author_id = $1', [userId]);
@@ -157,6 +158,7 @@ router.post('/owner/users/:id/delete', isAuthenticated, isOwner, async (req, res
         await pool.query('DELETE FROM session_sheets WHERE tutor_id = $1', [userId]);
         await pool.query('DELETE FROM users WHERE id = $1', [userId]);
 
+        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'account_deleted', targetName]); } catch(e) {}
         req.session.success = 'Account deleted.';
     } catch (err) { console.error(err); req.session.error = 'Failed to delete. ' + err.message; }
     res.redirect(req.headers.referer || '/admin/owner');
@@ -324,7 +326,7 @@ router.get('/owner/availability', isAuthenticated, isOwner, async (req, res) => 
 // Manage tutors
 router.get('/owner/tutors', isAuthenticated, isOwner, async (req, res) => {
     try {
-        const tutors = await pool.query(`SELECT u.*, tp.subjects, tp.approved, tp.bio, tp.experience_years, tp.tagline FROM users u JOIN tutor_profiles tp ON u.id = tp.user_id WHERE u.role = 'tutor' ORDER BY u.first_name`);
+        const tutors = await pool.query(`SELECT u.*, tp.subjects, tp.approved, tp.bio, tp.experience_years, tp.tagline, tp.hourly_rate FROM users u JOIN tutor_profiles tp ON u.id = tp.user_id WHERE u.role = 'tutor' ORDER BY u.first_name`);
         const invites = await pool.query(`SELECT * FROM tutor_invites WHERE used = false AND expires_at > NOW() ORDER BY created_at DESC`);
         res.render('admin/manage-tutors', { title: 'Manage Tutors', tutors: tutors.rows, invites: invites.rows, meta: {} });
     } catch (err) { console.error(err); res.redirect('/admin/owner'); }
@@ -335,7 +337,24 @@ router.get('/owner/students', isAuthenticated, isOwner, async (req, res) => {
     try {
         const students = await pool.query(`SELECT u.*, sp.grade_level, sp.school_name, sp.subjects_needed FROM users u LEFT JOIN student_profiles sp ON u.id = sp.user_id WHERE u.role IN ('parent', 'student') ORDER BY u.first_name`);
         const tutors = await pool.query(`SELECT u.id, u.first_name, u.last_name FROM users u JOIN tutor_profiles tp ON u.id = tp.user_id WHERE u.role = 'tutor' AND u.is_active = true AND tp.approved = true ORDER BY u.first_name`);
-        res.render('admin/manage-students', { title: 'Manage Students', students: students.rows, tutors: tutors.rows, meta: {} });
+
+        // Get session counts and subscriptions for each student
+        const sessionCounts = await pool.query(`
+            SELECT student_id, COUNT(*) as count FROM bookings
+            WHERE booking_date >= date_trunc('month', CURRENT_DATE)
+            AND booking_date < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month'
+            AND status IN ('pending','confirmed','completed')
+            GROUP BY student_id
+        `);
+        const subs = await pool.query("SELECT parent_id, plan_name, sessions_per_month, rate_total, status FROM subscriptions WHERE status = 'active'");
+
+        // Build lookup maps
+        const countMap = {};
+        sessionCounts.rows.forEach(function(r) { countMap[r.student_id] = parseInt(r.count); });
+        const subMap = {};
+        subs.rows.forEach(function(r) { subMap[r.parent_id] = r; });
+
+        res.render('admin/manage-students', { title: 'Manage Students', students: students.rows, tutors: tutors.rows, sessionCounts: countMap, subscriptions: subMap, meta: {} });
     } catch (err) { console.error(err); res.redirect('/admin/owner'); }
 });
 
@@ -508,6 +527,7 @@ router.post('/tutor/availability', isAuthenticated, isTutor, async (req, res) =>
                     [req.session.user.id, parseInt(slot.day_of_week), slot.start_time, slot.end_time]);
             }
         }
+        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'availability_updated', parsed.length + ' slots saved']); } catch(e) {}
         res.json({ success: true });
     } catch (err) { console.error(err); res.json({ success: false, message: err.message }); }
 });
@@ -566,6 +586,209 @@ router.get('/tutor/calendar', isAuthenticated, isTutor, async (req, res) => {
         const availability = await pool.query('SELECT * FROM tutor_availability WHERE tutor_id = $1 ORDER BY day_of_week, start_time', [req.session.user.id]);
         res.render('admin/calendar', { title: 'My Calendar', bookings: bookings.rows, availability: availability.rows, role: 'tutor', meta: {} });
     } catch (err) { console.error(err); res.redirect('/admin/tutor'); }
+});
+
+// ===== ADMIN-ONLY ROUTES (appended) =====
+
+// Admin: View all session sheets
+router.get('/owner/sheets', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const filter = req.query.student_id;
+        let query = `
+            SELECT ss.*, u.first_name as tutor_first, u.last_name as tutor_last,
+                   s.first_name as student_first, s.last_name as student_last
+            FROM session_sheets ss
+            JOIN users u ON ss.tutor_id = u.id
+            LEFT JOIN users s ON ss.student_id = s.id
+            ORDER BY ss.session_date DESC LIMIT 100
+        `;
+        let params = [];
+        if (filter) {
+            query = `
+                SELECT ss.*, u.first_name as tutor_first, u.last_name as tutor_last,
+                       s.first_name as student_first, s.last_name as student_last
+                FROM session_sheets ss
+                JOIN users u ON ss.tutor_id = u.id
+                LEFT JOIN users s ON ss.student_id = s.id
+                WHERE ss.student_id = $1
+                ORDER BY ss.session_date DESC LIMIT 100
+            `;
+            params = [parseInt(filter)];
+        }
+        const sheets = await pool.query(query, params);
+        const students = await pool.query("SELECT id, first_name, last_name FROM users WHERE role IN ('parent','student') AND is_active = true ORDER BY first_name");
+        res.render('admin/all-sheets', { title: 'All Session Sheets', sheets: sheets.rows, students: students.rows, currentFilter: filter || '', meta: {} });
+    } catch (err) { console.error(err); res.redirect('/admin/owner'); }
+});
+
+// Admin: View all messages between tutors and students
+router.get('/owner/messages', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const messages = await pool.query(`
+            SELECT m.*, s.first_name as sender_first, s.last_name as sender_last,
+                   r.first_name as receiver_first, r.last_name as receiver_last
+            FROM messages m
+            JOIN users s ON m.sender_id = s.id
+            JOIN users r ON m.receiver_id = r.id
+            ORDER BY m.created_at DESC LIMIT 200
+        `);
+        res.render('admin/all-messages', { title: 'All Messages', messages: messages.rows, meta: {} });
+    } catch (err) { console.error(err); res.redirect('/admin/owner'); }
+});
+
+// Admin: Audit log
+router.get('/owner/audit-log', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const logs = await pool.query(`
+            SELECT al.*, u.first_name, u.last_name
+            FROM audit_log al LEFT JOIN users u ON al.user_id = u.id
+            ORDER BY al.created_at DESC LIMIT 200
+        `);
+        res.render('admin/audit-log', { title: 'Audit Log', logs: logs.rows, meta: {} });
+    } catch (err) { console.error(err); res.redirect('/admin/owner'); }
+});
+
+// Mark attendance on a booking
+router.post('/owner/bookings/:id/attendance', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const { attendance } = req.body;
+        const validStatuses = ['present', 'absent', 'makeup_pending', 'makeup_done'];
+        if (!validStatuses.includes(attendance)) { req.session.error = 'Invalid status.'; return res.redirect(req.headers.referer || '/admin/owner'); }
+        const makeupDeadline = attendance === 'absent' ? new Date(Date.now() + 30*24*60*60*1000).toISOString().substring(0,10) : null;
+        await pool.query('UPDATE bookings SET attendance = $1, makeup_deadline = $2 WHERE id = $3', [attendance, makeupDeadline, req.params.id]);
+        // Log it
+        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'attendance_marked', 'Booking ' + req.params.id + ' marked ' + attendance]); } catch(e) {}
+        req.session.success = 'Attendance updated.';
+    } catch (err) { console.error(err); req.session.error = 'Failed.'; }
+    res.redirect(req.headers.referer || '/admin/owner');
+});
+
+// Tutor can also mark attendance
+router.post('/tutor/bookings/:id/attendance', isAuthenticated, isTutor, async (req, res) => {
+    try {
+        const { attendance } = req.body;
+        if (!['present', 'absent'].includes(attendance)) { req.session.error = 'Invalid.'; return res.redirect('/admin/tutor'); }
+        const makeupDeadline = attendance === 'absent' ? new Date(Date.now() + 30*24*60*60*1000).toISOString().substring(0,10) : null;
+        await pool.query('UPDATE bookings SET attendance = $1, makeup_deadline = $2 WHERE id = $3 AND tutor_id = $4', [attendance, makeupDeadline, req.params.id, req.session.user.id]);
+        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'attendance_marked', 'Booking ' + req.params.id + ' marked ' + attendance]); } catch(e) {}
+        req.session.success = 'Attendance marked.';
+    } catch (err) { console.error(err); }
+    res.redirect('/admin/tutor');
+});
+
+// Set student payment status
+router.post('/owner/users/:id/payment', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const status = req.body.payment_status === 'paid' ? 'paid' : 'unpaid';
+        await pool.query('UPDATE users SET payment_status = $1 WHERE id = $2', [status, req.params.id]);
+        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'payment_status_changed', 'User ' + req.params.id + ' set to ' + status]); } catch(e) {}
+        req.session.success = 'Payment status updated.';
+    } catch (err) { console.error(err); req.session.error = 'Failed.'; }
+    res.redirect(req.headers.referer || '/admin/owner/students');
+});
+
+// Set tutor hourly rate
+router.post('/owner/tutors/:id/rate', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const rate = parseFloat(req.body.hourly_rate) || 0;
+        await pool.query('UPDATE tutor_profiles SET hourly_rate = $1 WHERE user_id = $2', [rate, req.params.id]);
+        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'tutor_rate_set', 'Tutor ' + req.params.id + ' rate set to $' + rate]); } catch(e) {}
+        req.session.success = 'Rate updated.';
+    } catch (err) { console.error(err); req.session.error = 'Failed.'; }
+    res.redirect(req.headers.referer || '/admin/owner/tutors');
+});
+
+// Set student subscription plan (sessions per month + total rate)
+router.post('/owner/users/:id/plan', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const sessions = parseInt(req.body.sessions_per_month) || 4;
+        const rate = parseFloat(req.body.rate_total) || 0;
+        const planName = req.body.plan_name || 'Starter';
+
+        // Upsert subscription
+        const existing = await pool.query("SELECT id FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [req.params.id]);
+        if (existing.rows.length > 0) {
+            await pool.query('UPDATE subscriptions SET sessions_per_month = $1, rate_total = $2, plan_name = $3 WHERE id = $4', [sessions, rate, planName, existing.rows[0].id]);
+        } else {
+            await pool.query("INSERT INTO subscriptions (parent_id, plan_name, price, sessions_per_month, rate_total, start_date, next_billing_date, status) VALUES ($1, $2, $3, $4, $5, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 'active')", [req.params.id, planName, rate, sessions, rate]);
+        }
+        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'plan_updated', 'User ' + req.params.id + ': ' + planName + ' (' + sessions + ' sessions, $' + rate + ')']); } catch(e) {}
+        req.session.success = 'Plan updated.';
+    } catch (err) { console.error(err); req.session.error = 'Failed.'; }
+    res.redirect(req.headers.referer || '/admin/owner/students');
+});
+
+// Create recurring meeting
+router.post('/owner/recurring', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const { tutor_id, student_id, day_of_week, start_time, end_time, subject } = req.body;
+        const crypto = require('crypto');
+
+        // Generate 8 weeks of bookings
+        const today = new Date();
+        let generated = 0;
+        for (let w = 0; w < 8; w++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() + ((parseInt(day_of_week) - today.getDay() + 7) % 7) + (w * 7));
+            if (date <= today && w === 0) date.setDate(date.getDate() + 7);
+            const dateStr = date.toISOString().substring(0, 10);
+            const roomId = 'bm-' + crypto.randomBytes(16).toString('hex');
+
+            // Check no conflict
+            const conflict = await pool.query("SELECT id FROM bookings WHERE tutor_id = $1 AND booking_date = $2 AND start_time = $3 AND status IN ('pending','confirmed')", [tutor_id, dateStr, start_time]);
+            if (conflict.rows.length === 0) {
+                await pool.query("INSERT INTO bookings (tutor_id, student_id, parent_id, booking_date, start_time, end_time, subject, meeting_room_id, status, is_recurring_booking, recurring_day) VALUES ($1,$2,$2,$3,$4,$5,$6,$7,'confirmed',true,$8)",
+                    [tutor_id, student_id, dateStr, start_time, end_time, subject || 'General', roomId, parseInt(day_of_week)]);
+                generated++;
+            }
+        }
+        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'recurring_created', 'Tutor ' + tutor_id + ' + Student ' + student_id + ': ' + generated + ' sessions on day ' + day_of_week]); } catch(e) {}
+        req.session.success = generated + ' recurring sessions created!';
+    } catch (err) { console.error(err); req.session.error = 'Failed: ' + err.message; }
+    res.redirect(req.headers.referer || '/admin/owner/students');
+});
+
+// Tutor reschedule a booking
+router.post('/tutor/bookings/:id/reschedule', isAuthenticated, isTutor, async (req, res) => {
+    try {
+        const { new_date, new_start, new_end } = req.body;
+        if (!new_date || !new_start || !new_end) { req.session.error = 'Please fill all fields.'; return res.redirect('/admin/tutor'); }
+        // Verify tutor owns this booking
+        const booking = await pool.query('SELECT * FROM bookings WHERE id = $1 AND tutor_id = $2', [req.params.id, req.session.user.id]);
+        if (booking.rows.length === 0) { req.session.error = 'Booking not found.'; return res.redirect('/admin/tutor'); }
+        const old = booking.rows[0];
+        await pool.query('UPDATE bookings SET booking_date = $1, start_time = $2, end_time = $3, status = $4 WHERE id = $5',
+            [new_date, new_start, new_end, 'confirmed', req.params.id]);
+        try {
+            await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)',
+                [req.session.user.id, 'booking_rescheduled', 'Booking #' + req.params.id + ' moved from ' + old.booking_date.toISOString().substring(0,10) + ' to ' + new_date]);
+        } catch(e) {}
+        req.session.success = 'Session rescheduled!';
+    } catch (err) { console.error(err); req.session.error = 'Failed to reschedule.'; }
+    res.redirect('/admin/tutor');
+});
+
+// Admin: Create group session (same Jitsi room for multiple students)
+router.post('/owner/group-session', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const { tutor_id, student_ids, booking_date, start_time, end_time, subject } = req.body;
+        const cryptoMod = require('crypto');
+        const roomId = 'bm-group-' + cryptoMod.randomBytes(16).toString('hex');
+        const students = Array.isArray(student_ids) ? student_ids : [student_ids];
+
+        let created = 0;
+        for (const sid of students) {
+            if (!sid) continue;
+            await pool.query(
+                "INSERT INTO bookings (tutor_id, student_id, parent_id, booking_date, start_time, end_time, subject, meeting_room_id, status) VALUES ($1,$2,$2,$3,$4,$5,$6,$7,'confirmed')",
+                [tutor_id, sid, booking_date, start_time, end_time, subject || 'Group Session', roomId]
+            );
+            created++;
+        }
+        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'group_session_created', created + ' students, room ' + roomId.substring(0, 20)]); } catch(e) {}
+        req.session.success = 'Group session created for ' + created + ' students! They all share the same video room.';
+    } catch (err) { console.error(err); req.session.error = 'Failed: ' + err.message; }
+    res.redirect(req.headers.referer || '/admin/owner/students');
 });
 
 module.exports = router;

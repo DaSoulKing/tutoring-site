@@ -9,6 +9,10 @@
                 <a href="<%= user.role === 'tutor' ? '/admin/tutor' : user.role === 'owner' ? '/admin/owner' : '/parent/dashboard' %>" class="btn btn-outline btn-sm">&larr; Back to Dashboard</a>
             </div>
 
+            <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:0.8rem;color:var(--gray-500);">
+                &#x1F512; Messages are monitored by administrators for safety and quality assurance.
+            </div>
+
             <div class="messages-layout">
                 <div class="conversations-list">
                     <div style="padding:16px;font-weight:700;color:var(--gray-700);border-bottom:1px solid var(--gray-200);">Conversations</div>
@@ -61,8 +65,36 @@
 </main>
 
 <script>
-    const messageList = document.getElementById('message-list');
+(function() {
+    var messageList = document.getElementById('message-list');
     if (messageList) messageList.scrollTop = messageList.scrollHeight;
+
+    <% if (activeConversation) { %>
+    // Poll for new messages every 5 seconds
+    var lastCount = document.querySelectorAll('.message-bubble').length;
+    var otherId = '<%= activeConversation.id %>';
+
+    setInterval(function() {
+        fetch('/api/messages/conversation/' + otherId)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.length > lastCount) {
+                    // New messages - update the list
+                    var html = '';
+                    var myId = '<%= user.id %>';
+                    data.forEach(function(m) {
+                        var cls = String(m.sender_id) === myId ? 'sent' : 'received';
+                        html += '<div class="message-bubble ' + cls + '"><p>' + m.body.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</p><div class="message-time">' + new Date(m.created_at).toLocaleString() + '</div></div>';
+                    });
+                    messageList.innerHTML = html;
+                    messageList.scrollTop = messageList.scrollHeight;
+                    lastCount = data.length;
+                }
+            })
+            .catch(function() {});
+    }, 5000);
+    <% } %>
+})();
 </script>
 
 <%- include('../partials/footer') %>

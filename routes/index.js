@@ -166,7 +166,7 @@ router.post('/tutor-signup/:token', signupLimiter, async (req, res) => {
         const invite = await pool.query(`SELECT * FROM tutor_invites WHERE token = $1 AND used = false AND expires_at > NOW()`, [req.params.token]);
         if (invite.rows.length === 0) { req.session.error = 'This signup link is invalid or has expired.'; return res.redirect('/'); }
 
-        const { email, password, confirm_password, first_name, last_name, phone } = req.body;
+        const { email, password, confirm_password, first_name, last_name, phone, subjects, bio } = req.body;
         if (password !== confirm_password) { req.session.error = 'Passwords do not match.'; return res.redirect(`/tutor-signup/${req.params.token}`); }
         if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
             req.session.error = 'Password must be 8+ characters with uppercase, lowercase, and a number.';
@@ -180,13 +180,19 @@ router.post('/tutor-signup/:token', signupLimiter, async (req, res) => {
         const hash = await bcrypt.hash(password, 12);
         const refCode = 'BM' + crypto.randomBytes(4).toString('hex').toUpperCase();
 
+        // Parse subjects from tutor's selection
+        let subjectsArray = [];
+        if (subjects) {
+            subjectsArray = typeof subjects === 'string' ? subjects.split(',').map(s => s.trim()).filter(Boolean) : subjects;
+        }
+
         const newUser = await pool.query(`
-            INSERT INTO users (email, password_hash, role, first_name, last_name, phone, referral_code)
-            VALUES ($1, $2, 'tutor', $3, $4, $5, $6) RETURNING id, email, role, first_name, last_name, referral_code
+            INSERT INTO users (email, password_hash, role, first_name, last_name, phone, referral_code, email_verified)
+            VALUES ($1, $2, 'tutor', $3, $4, $5, $6, true) RETURNING id, email, role, first_name, last_name, referral_code
         `, [email.toLowerCase(), hash, first_name, last_name, phone || null, refCode]);
 
         const user = newUser.rows[0];
-        await pool.query(`INSERT INTO tutor_profiles (user_id, approved, subjects) VALUES ($1, true, $2)`, [user.id, invite.rows[0].subjects || []]);
+        await pool.query(`INSERT INTO tutor_profiles (user_id, approved, subjects, bio) VALUES ($1, true, $2, $3)`, [user.id, subjectsArray, (bio || '').trim().substring(0, 2000)]);
         await pool.query('UPDATE tutor_invites SET used = true, used_by = $1, used_at = NOW() WHERE token = $2', [user.id, req.params.token]);
 
         req.session.user = { id: user.id, email: user.email, role: user.role, firstName: user.first_name, lastName: user.last_name, referralCode: user.referral_code };

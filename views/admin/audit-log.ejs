@@ -1,0 +1,47 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+<main id="main-content">
+    <div class="dashboard-grid">
+        <aside class="dashboard-sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="/admin/owner">&#x1F3E0; Dashboard</a></li>
+                <li><a href="/admin/owner/calendar">&#x1F4C5; Calendar</a></li>
+                <li><a href="/admin/owner/availability">&#x1F552; Availability</a></li>
+                <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Tutors</a></li>
+                <li><a href="/admin/owner/students">&#x1F393; Students</a></li>
+                <li><a href="/admin/owner/sheets">&#x1F4CB; Session Sheets</a></li>
+                <li><a href="/admin/owner/messages">&#x1F4AC; Messages</a></li>
+                <li><a href="/admin/owner/audit-log" class="active">&#x1F4DC; Audit Log</a></li>
+                <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
+                <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
+                <li><a href="/admin/owner/settings">&#x2699;&#xFE0F; Settings</a></li>
+                <li><a href="/admin/owner/profile">&#x1F464; My Profile</a></li>
+            </ul>
+        </aside>
+        <div class="dashboard-main">
+            <h1 style="font-size:1.5rem;margin-bottom:8px;">Audit Log</h1>
+            <p style="color:var(--gray-500);margin-bottom:24px;">Every schedule change, attendance update, and account action is recorded here.</p>
+
+            <% if (logs.length === 0) { %>
+            <div class="card" style="padding:32px;text-align:center;"><p style="color:var(--gray-400);">No activity logged yet.</p></div>
+            <% } else { %>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
+                    <tbody>
+                        <% logs.forEach(function(l) { %>
+                        <tr>
+                            <td style="white-space:nowrap;font-size:0.8rem;"><%= new Date(l.created_at).toLocaleString() %></td>
+                            <td><%= l.first_name ? (l.first_name + ' ' + l.last_name) : 'System' %></td>
+                            <td><span class="badge-status badge-<%= l.action.includes('delete') ? 'cancelled' : (l.action.includes('approve') || l.action.includes('verify') ? 'confirmed' : 'pending') %>"><%= l.action.replace(/_/g, ' ') %></span></td>
+                            <td style="font-size:0.85rem;color:var(--gray-600);max-width:400px;word-break:break-word;"><%= l.details || '' %></td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+            <% } %>
+        </div>
+    </div>
+</main>
+<%- include('../partials/footer') %>

@@ -9,6 +9,9 @@
                 <li><a href="/admin/owner/availability">&#x1F552; Availability</a></li>
                 <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Tutors</a></li>
                 <li><a href="/admin/owner/students" class="active">&#x1F393; Students</a></li>
+                <li><a href="/admin/owner/sheets">&#x1F4CB; Session Sheets</a></li>
+                <li><a href="/admin/owner/messages">&#x1F4AC; Messages</a></li>
+                <li><a href="/admin/owner/audit-log">&#x1F4DC; Audit Log</a></li>
                 <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
                 <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
                 <li><a href="/admin/owner/settings">&#x2699;&#xFE0F; Settings</a></li>
@@ -16,25 +19,25 @@
             </ul>
         </aside>
         <div class="dashboard-main">
-            <h1 style="font-size:1.5rem;margin-bottom:24px;">Manage Students & Parents</h1>
+            <h1 style="font-size:1.5rem;margin-bottom:24px;">Manage Students</h1>
 
-            <!-- Assign Tutor -->
+            <!-- Assign tutor -->
             <% if (tutors && tutors.length > 0) { %>
-            <div class="card" style="padding:24px;margin-bottom:24px;background:var(--blue-50);border:2px solid var(--blue-200);">
-                <h3 style="font-size:1.1rem;margin-bottom:16px;">&#x1F517; Assign Tutor to Student</h3>
+            <div class="card" style="padding:24px;margin-bottom:24px;">
+                <h3 style="font-size:1.1rem;margin-bottom:12px;">Assign Tutor to Student</h3>
                 <form action="/admin/owner/assign-tutor" method="POST" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="form-group" style="margin:0;flex:1;min-width:200px;">
                         <label>Select Tutor</label>
                         <select name="tutor_id" class="form-control" required>
                             <option value="">Choose tutor...</option>
-                            <% tutors.forEach(t => { %><option value="<%= t.id %>"><%= t.first_name %> <%= t.last_name %></option><% }); %>
+                            <% tutors.forEach(function(t) { %><option value="<%= t.id %>"><%= t.first_name %> <%= t.last_name %></option><% }); %>
                         </select>
                     </div>
                     <div class="form-group" style="margin:0;flex:1;min-width:200px;">
-                        <label>Select Student/Parent</label>
+                        <label>Select Student</label>
                         <select name="student_id" class="form-control" required>
                             <option value="">Choose student...</option>
-                            <% students.forEach(s => { %><option value="<%= s.id %>"><%= s.first_name %> <%= s.last_name %> (<%= s.email %>)</option><% }); %>
+                            <% students.forEach(function(s) { %><option value="<%= s.id %>"><%= s.first_name %> <%= s.last_name %></option><% }); %>
                         </select>
                     </div>
                     <button type="submit" class="btn btn-primary">Assign</button>
@@ -42,32 +45,166 @@
             </div>
             <% } %>
 
-            <div class="table-wrapper">
-                <table>
-                    <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Verified</th><th>Grade</th><th>Subjects</th><th>Actions</th></tr></thead>
-                    <tbody>
-                        <% if (students && students.length > 0) { %>
-                            <% students.forEach(s => { %>
-                            <tr>
-                                <td><strong><%= s.first_name %> <%= s.last_name %></strong></td>
-                                <td><%= s.email %></td>
-                                <td><span class="badge-status badge-active"><%= s.role %></span></td>
-                                <td><span class="badge-status <%= s.email_verified ? 'badge-active' : 'badge-pending' %>"><%= s.email_verified ? 'Yes' : 'No' %></span></td>
-                                <td><%= s.grade_level || 'N/A' %></td>
-                                <td><% (s.subjects_needed || []).forEach(sub => { %><span class="subject-tag"><%= sub %></span> <% }); %></td>
-                                <td style="display:flex;gap:6px;flex-wrap:wrap;">
-                                    <% if (!s.email_verified) { %>
-                                    <form action="/admin/owner/users/<%= s.id %>/verify" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;font-size:0.75rem;">Approve</button></form>
-                                    <% } %>
-                                    <a href="/admin/owner/notes/<%= s.id %>" class="btn btn-outline btn-sm" style="font-size:0.8rem;">Notes</a>
-                                    <form action="/admin/owner/users/<%= s.id %>/delete" method="POST" onsubmit="return confirm('WARNING: This will permanently delete <%= s.first_name %> <%= s.last_name %> and all their data. This cannot be undone.');"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--red-500);color:white;font-size:0.75rem;">Delete</button></form>
-                                </td>
-                            </tr>
-                            <% }); %>
-                        <% } else { %><tr><td colspan="7" style="text-align:center;color:var(--gray-400);">No students or parents found.</td></tr><% } %>
-                    </tbody>
-                </table>
+            <!-- Create recurring meeting -->
+            <div class="card" style="padding:24px;margin-bottom:24px;">
+                <h3 style="font-size:1.1rem;margin-bottom:12px;">Create Recurring Meeting</h3>
+                <p style="color:var(--gray-500);font-size:0.85rem;margin-bottom:12px;">Generates 8 weeks of confirmed sessions for a student and tutor.</p>
+                <form action="/admin/owner/recurring" method="POST" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="form-group" style="margin:0;min-width:150px;">
+                        <label>Tutor</label>
+                        <select name="tutor_id" class="form-control" required>
+                            <option value="">Tutor...</option>
+                            <% tutors.forEach(function(t) { %><option value="<%= t.id %>"><%= t.first_name %> <%= t.last_name %></option><% }); %>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0;min-width:150px;">
+                        <label>Student</label>
+                        <select name="student_id" class="form-control" required>
+                            <option value="">Student...</option>
+                            <% students.forEach(function(s) { %><option value="<%= s.id %>"><%= s.first_name %> <%= s.last_name %></option><% }); %>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0;min-width:120px;">
+                        <label>Day</label>
+                        <select name="day_of_week" class="form-control" required>
+                            <option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0;min-width:100px;">
+                        <label>Start</label>
+                        <input type="time" name="start_time" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="margin:0;min-width:100px;">
+                        <label>End</label>
+                        <input type="time" name="end_time" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="margin:0;min-width:120px;">
+                        <label>Subject</label>
+                        <input type="text" name="subject" class="form-control" placeholder="Math" value="General">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create 8 Weeks</button>
+                </form>
             </div>
+
+            <!-- Group Session -->
+            <div class="card" style="padding:24px;margin-bottom:24px;">
+                <h3 style="font-size:1.1rem;margin-bottom:12px;">Create Group Session (up to 6 students)</h3>
+                <p style="color:var(--gray-500);font-size:0.85rem;margin-bottom:12px;">All selected students join the same video room with one tutor.</p>
+                <form action="/admin/owner/group-session" method="POST" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="form-group" style="margin:0;min-width:150px;">
+                        <label>Tutor</label>
+                        <select name="tutor_id" class="form-control" required>
+                            <option value="">Tutor...</option>
+                            <% tutors.forEach(function(t) { %><option value="<%= t.id %>"><%= t.first_name %> <%= t.last_name %></option><% }); %>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0;min-width:200px;">
+                        <label>Students (hold Ctrl to multi-select)</label>
+                        <select name="student_ids" class="form-control" multiple required style="min-height:100px;">
+                            <% students.forEach(function(s) { %><option value="<%= s.id %>"><%= s.first_name %> <%= s.last_name %></option><% }); %>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0;min-width:130px;">
+                        <label>Date</label>
+                        <input type="date" name="booking_date" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="margin:0;min-width:100px;">
+                        <label>Start</label>
+                        <input type="time" name="start_time" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="margin:0;min-width:100px;">
+                        <label>End</label>
+                        <input type="time" name="end_time" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="margin:0;min-width:100px;">
+                        <label>Subject</label>
+                        <input type="text" name="subject" class="form-control" value="Group Session">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Group</button>
+                </form>
+            </div>
+
+            <!-- Student table -->
+            <% if (students && students.length > 0) { %>
+            <% students.forEach(function(s) {
+                var sub = subscriptions[s.id];
+                var sessionsUsed = sessionCounts[s.id] || 0;
+                var sessionsAllowed = sub ? sub.sessions_per_month : 0;
+                var isOverLimit = sessionsAllowed > 0 && sessionsUsed > sessionsAllowed;
+                var perSession = (sub && sub.rate_total && sub.sessions_per_month) ? (parseFloat(sub.rate_total) / sub.sessions_per_month) : 0;
+                var extraRate = perSession > 0 ? (perSession + 5).toFixed(2) : 'N/A';
+            %>
+            <div class="card" style="margin-bottom:16px;padding:20px;<%= isOverLimit ? 'border-left:4px solid var(--red-500);' : '' %>">
+                <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <h4><%= s.first_name %> <%= s.last_name %></h4>
+                        <p style="color:var(--gray-500);font-size:0.85rem;"><%= s.email %> &middot; <%= s.role %> &middot; Grade: <%= s.grade_level || 'N/A' %></p>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        <span class="badge-status <%= s.email_verified ? 'badge-confirmed' : 'badge-pending' %>"><%= s.email_verified ? 'Approved' : 'Pending' %></span>
+                        <span class="badge-status <%= s.payment_status === 'paid' ? 'badge-confirmed' : 'badge-cancelled' %>"><%= s.payment_status || 'unpaid' %></span>
+                    </div>
+                </div>
+
+                <!-- Session count + plan -->
+                <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;">
+                    <div style="padding:8px 16px;background:var(--gray-50);border-radius:8px;font-size:0.85rem;">
+                        <strong>Sessions this month:</strong>
+                        <span style="<%= isOverLimit ? 'color:var(--red-600);font-weight:700;' : '' %>"><%= sessionsUsed %></span>
+                        / <%= sessionsAllowed || '0 (no plan)' %>
+                        <% if (isOverLimit) { %><span style="color:var(--red-500);font-weight:700;"> OVER LIMIT</span><% } %>
+                    </div>
+                    <% if (sub) { %>
+                    <div style="padding:8px 16px;background:var(--blue-50);border-radius:8px;font-size:0.85rem;">
+                        <strong>Plan:</strong> <%= sub.plan_name %> ($<%= sub.rate_total || '0' %>/mo)
+                        &middot; Extra session: $<%= extraRate %>
+                    </div>
+                    <% } %>
+                </div>
+
+                <!-- Actions -->
+                <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;">
+                    <% if (!s.email_verified) { %>
+                    <form action="/admin/owner/users/<%= s.id %>/verify" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;font-size:0.75rem;">Approve</button></form>
+                    <% } %>
+
+                    <form action="/admin/owner/users/<%= s.id %>/payment" method="POST" style="display:flex;gap:4px;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <select name="payment_status" style="padding:4px 8px;font-size:0.75rem;border-radius:6px;border:1px solid var(--gray-200);">
+                            <option value="paid" <%= s.payment_status === 'paid' ? 'selected' : '' %>>Paid</option>
+                            <option value="unpaid" <%= s.payment_status !== 'paid' ? 'selected' : '' %>>Unpaid</option>
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-outline" style="font-size:0.7rem;">Set</button>
+                    </form>
+
+                    <a href="/admin/owner/notes/<%= s.id %>" class="btn btn-outline btn-sm" style="font-size:0.75rem;">Notes</a>
+
+                    <form action="/admin/owner/users/<%= s.id %>/delete" method="POST" onsubmit="return confirm('WARNING: Permanently delete <%= s.first_name %> <%= s.last_name %> and all their data?');"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--red-500);color:white;font-size:0.75rem;">Delete</button></form>
+                </div>
+
+                <!-- Set Plan (collapsed) -->
+                <details style="margin-top:12px;">
+                    <summary style="cursor:pointer;font-size:0.85rem;color:var(--blue-600);font-weight:600;">Set/Edit Plan</summary>
+                    <form action="/admin/owner/users/<%= s.id %>/plan" method="POST" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:8px;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-size:0.8rem;">Plan Name</label>
+                            <input type="text" name="plan_name" class="form-control" style="padding:6px;font-size:0.85rem;width:120px;" value="<%= sub ? sub.plan_name : 'Starter' %>">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-size:0.8rem;">Sessions/Month</label>
+                            <input type="number" name="sessions_per_month" class="form-control" style="padding:6px;font-size:0.85rem;width:80px;" value="<%= sub ? sub.sessions_per_month : 4 %>" min="1">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-size:0.8rem;">Monthly Rate ($)</label>
+                            <input type="number" name="rate_total" class="form-control" style="padding:6px;font-size:0.85rem;width:100px;" value="<%= sub ? sub.rate_total : '' %>" step="0.01" min="0">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm" style="font-size:0.8rem;">Save Plan</button>
+                    </form>
+                </details>
+            </div>
+            <% }); %>
+            <% } else { %>
+            <div class="card" style="padding:32px;text-align:center;"><p style="color:var(--gray-400);">No students yet.</p></div>
+            <% } %>
         </div>
     </div>
 </main>

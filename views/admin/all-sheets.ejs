@@ -1,0 +1,57 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+<main id="main-content">
+    <div class="dashboard-grid">
+        <aside class="dashboard-sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="/admin/owner">&#x1F3E0; Dashboard</a></li>
+                <li><a href="/admin/owner/calendar">&#x1F4C5; Calendar</a></li>
+                <li><a href="/admin/owner/availability">&#x1F552; Availability</a></li>
+                <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Tutors</a></li>
+                <li><a href="/admin/owner/students">&#x1F393; Students</a></li>
+                <li><a href="/admin/owner/sheets" class="active">&#x1F4CB; Session Sheets</a></li>
+                <li><a href="/admin/owner/messages">&#x1F4AC; Messages</a></li>
+                <li><a href="/admin/owner/audit-log">&#x1F4DC; Audit Log</a></li>
+                <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
+                <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
+                <li><a href="/admin/owner/settings">&#x2699;&#xFE0F; Settings</a></li>
+                <li><a href="/admin/owner/profile">&#x1F464; My Profile</a></li>
+            </ul>
+        </aside>
+        <div class="dashboard-main">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+                <h1 style="font-size:1.5rem;">All Session Sheets</h1>
+                <form style="display:flex;gap:8px;align-items:center;">
+                    <select name="student_id" class="form-control" style="width:auto;min-width:200px;padding:8px 12px;" onchange="this.form.submit()">
+                        <option value="">All Students</option>
+                        <% students.forEach(function(s) { %>
+                        <option value="<%= s.id %>" <%= currentFilter == s.id ? 'selected' : '' %>><%= s.first_name %> <%= s.last_name %></option>
+                        <% }); %>
+                    </select>
+                </form>
+            </div>
+
+            <% if (sheets.length === 0) { %>
+            <div class="card" style="padding:32px;text-align:center;"><p style="color:var(--gray-400);">No session sheets yet.</p></div>
+            <% } else { %>
+            <% sheets.forEach(function(ss) { %>
+            <div class="card" style="margin-bottom:12px;padding:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <h4 style="font-size:1rem;"><%= ss.student_first || 'Unknown' %> <%= ss.student_last || '' %></h4>
+                        <p style="color:var(--gray-500);font-size:0.85rem;">Tutor: <%= ss.tutor_first %> <%= ss.tutor_last %> &middot; <%= ss.session_date ? new Date(ss.session_date).toLocaleDateString() : 'N/A' %></p>
+                    </div>
+                    <% if (ss.overall_rating) { %>
+                    <span style="background:var(--blue-100);color:var(--blue-700);padding:4px 12px;border-radius:20px;font-weight:700;font-size:0.85rem;"><%= ss.overall_rating %>/5</span>
+                    <% } %>
+                </div>
+                <% if (ss.topics_covered) { %><p style="margin-top:8px;font-size:0.9rem;"><strong>Topics:</strong> <%= ss.topics_covered %></p><% } %>
+                <% if (ss.homework_assigned) { %><p style="font-size:0.9rem;color:var(--gray-600);"><strong>Homework:</strong> <%= ss.homework_assigned %></p><% } %>
+                <% if (ss.notes) { %><p style="font-size:0.9rem;color:var(--gray-600);"><strong>Notes:</strong> <%= ss.notes %></p><% } %>
+            </div>
+            <% }); %>
+            <% } %>
+        </div>
+    </div>
+</main>
+<%- include('../partials/footer') %>
