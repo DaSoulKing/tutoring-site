@@ -15,6 +15,9 @@ function csrfInject(req, res, next) {
 function csrfProtect(req, res, next) {
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
 
+    // Stripe webhook - exempt from CSRF (verified by Stripe signature instead)
+    if (req.path === '/webhook' && req.baseUrl === '/payment') return next();
+
     // For multipart/form-data (file uploads), body isn't parsed yet when this runs.
     // Check query string param as fallback, or skip for multipart and validate in route.
     const contentType = req.headers['content-type'] || '';

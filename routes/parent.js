@@ -31,11 +31,15 @@ router.get('/dashboard', isAuthenticated, isParent, async (req, res) => {
             WHERE (b.student_id = $1 OR b.parent_id = $1) AND b.status IN ('pending','confirmed','completed')
         `, [userId]);
 
+        const payInfo = await pool.query('SELECT payment_status FROM users WHERE id = $1', [userId]);
+
         res.render('parent/dashboard', {
-            title: 'My Dashboard - BrightMinds', bookings: bookings.rows,
+            title: 'My Dashboard', bookings: bookings.rows,
             subscription: subscription.rows[0] || null,
             unreadCount: parseInt(unread.rows[0].count),
-            reportCards: reportCards.rows, assignedTutors: assignedTutors.rows, meta: {}
+            reportCards: reportCards.rows, assignedTutors: assignedTutors.rows,
+            paymentStatus: payInfo.rows[0] ? payInfo.rows[0].payment_status : 'unpaid',
+            meta: {}
         });
     } catch (err) { console.error(err); req.session.error = 'Failed to load dashboard.'; res.redirect('/'); }
 });

@@ -1,0 +1,85 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+
+<main id="main-content">
+    <section class="section" style="padding-top:32px;">
+        <div class="container" style="max-width:700px;width:100%;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <h1 style="font-size:1.5rem;">Payment</h1>
+                <a href="/parent/dashboard" class="btn btn-outline btn-sm">&larr; Dashboard</a>
+            </div>
+
+            <% if (!subscription) { %>
+            <div class="card" style="padding:32px;text-align:center;">
+                <p style="color:var(--gray-400);">No active plan. Please <a href="/consultation">contact us</a> to set up your plan first.</p>
+            </div>
+            <% } else { %>
+
+            <!-- Current Plan -->
+            <div class="card" style="padding:24px;margin-bottom:24px;border-left:4px solid var(--blue-500);">
+                <h3 style="font-size:1.1rem;margin-bottom:8px;">Your Plan: <%= subscription.plan_name %></h3>
+                <p style="color:var(--gray-500);">
+                    <%= subscription.sessions_per_month %> sessions/month
+                    <% if (subscription.rate_total) { %> &middot; $<%= parseFloat(subscription.rate_total).toFixed(2) %>/month<% } %>
+                </p>
+                <p style="margin-top:8px;">
+                    <span class="badge-status <%= paymentStatus === 'paid' ? 'badge-confirmed' : 'badge-cancelled' %>"><%= paymentStatus === 'paid' ? 'Paid' : 'Payment Due' %></span>
+                    <% if (subscription.next_billing_date) { %>
+                    <span style="color:var(--gray-400);font-size:0.85rem;margin-left:8px;">Next billing: <%= new Date(subscription.next_billing_date).toLocaleDateString() %></span>
+                    <% } %>
+                </p>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="card" style="padding:24px;margin-bottom:24px;">
+                <h3 style="font-size:1.1rem;margin-bottom:16px;">Monthly Payment</h3>
+
+                <% if (stripeEnabled && subscription.rate_total) { %>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+                    <form action="/payment/pay/monthly" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button type="submit" class="btn btn-primary">Pay $<%= (parseFloat(subscription.rate_total) * 1.03).toFixed(2) %> with Card</button>
+                    </form>
+                </div>
+                <p style="color:var(--gray-400);font-size:0.8rem;margin-bottom:16px;">Card payments include a 3% processing fee. Amount shown includes the fee.</p>
+                <% } %>
+
+                <div style="padding:16px;background:var(--gray-50);border-radius:8px;">
+                    <h4 style="font-size:0.95rem;margin-bottom:8px;">Pay via Zelle (no service fee)</h4>
+                    <p style="color:var(--gray-600);font-size:0.9rem;">Send $<%= subscription.rate_total ? parseFloat(subscription.rate_total).toFixed(2) : '0.00' %> to:</p>
+                    <p style="font-weight:700;color:var(--blue-600);font-size:1.1rem;margin:8px 0;"><%= process.env.OWNER_EMAIL || 'Contact us for payment details' %></p>
+                    <p style="color:var(--gray-400);font-size:0.8rem;">Include your name and "Monthly Payment" in the Zelle memo. We will mark your account as paid once received.</p>
+                </div>
+            </div>
+
+            <!-- Extra Session Payment -->
+            <div class="card" style="padding:24px;">
+                <h3 style="font-size:1.1rem;margin-bottom:8px;">Need an Extra Session?</h3>
+                <% if (subscription.rate_total && subscription.sessions_per_month) { %>
+                <%
+                    var perSession = parseFloat(subscription.rate_total) / subscription.sessions_per_month;
+                    var extraRate = perSession + 5;
+                    var extraWithFee = extraRate * 1.03;
+                %>
+                <p style="color:var(--gray-500);margin-bottom:16px;">
+                    Your per-session rate is $<%= perSession.toFixed(2) %> + $5.00 convenience fee = <strong>$<%= extraRate.toFixed(2) %></strong> per extra session.
+                </p>
+
+                <% if (stripeEnabled) { %>
+                <form action="/payment/pay/extra-session" method="POST" style="margin-bottom:12px;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-secondary">Pay $<%= extraWithFee.toFixed(2) %> for Extra Session (Card)</button>
+                </form>
+                <p style="color:var(--gray-400);font-size:0.8rem;">Includes 3% processing fee. Once paid, you can book an additional session.</p>
+                <% } %>
+
+                <p style="color:var(--gray-500);font-size:0.9rem;margin-top:12px;">Or send $<%= extraRate.toFixed(2) %> via Zelle (no fee) to <strong><%= process.env.OWNER_EMAIL || 'us' %></strong> with memo "Extra Session".</p>
+                <% } else { %>
+                <p style="color:var(--gray-400);">Contact us to set up your plan rates first.</p>
+                <% } %>
+            </div>
+
+            <% } %>
+        </div>
+    </section>
+</main>
+
+<%- include('../partials/footer') %>

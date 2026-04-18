@@ -10,6 +10,7 @@
                 <li><a href="/parent/contact">&#x1F4E7; Contact/Inquiries</a></li>
                 <li><a href="/tutors">&#x1F50D; Find Tutors</a></li>
                 <li><a href="/checkout">&#x1F4B3; Plans & Pricing</a></li>
+                <li><a href="/payment/pay">&#x1F4B0; Make Payment</a></li>
             </ul>
         </aside>
         <div class="dashboard-main">
@@ -18,6 +19,12 @@
             <% if (user.verified === false) { %>
             <div class="alert alert-warning" style="margin-bottom:24px;">
                 <strong>Account pending approval.</strong> An admin will review and activate your account shortly. You can explore your dashboard in the meantime.
+            </div>
+            <% } %>
+
+            <% if (typeof paymentStatus !== 'undefined' && paymentStatus !== 'paid' && subscription) { %>
+            <div class="alert alert-warning" style="margin-bottom:24px;border-left:4px solid var(--red-500);">
+                <strong>Payment due.</strong> Your monthly payment is outstanding. <a href="/payment/pay" style="font-weight:700;">Make a payment</a> to continue booking sessions.
             </div>
             <% } %>
 
