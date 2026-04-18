@@ -39,7 +39,7 @@ router.post('/pay/monthly', isAuthenticated, async (req, res) => {
         }
 
         const amount = Math.round(parseFloat(sub.rows[0].rate_total) * 100); // cents
-        const serviceFee = Math.round(amount * 0.03); // 3% service fee for Stripe
+        const serviceFee = Math.round(amount * 0.029) + 30; // 2.9% + 30¢
         const total = amount + serviceFee;
 
         const session = await stripe.checkout.sessions.create({
@@ -90,7 +90,7 @@ router.post('/pay/extra-session', isAuthenticated, async (req, res) => {
         const perSession = parseFloat(sub.rows[0].rate_total) / sub.rows[0].sessions_per_month;
         const extraRate = perSession + 5; // $5 inconvenience fee
         const amount = Math.round(extraRate * 100); // cents
-        const serviceFee = Math.round(amount * 0.03); // 3% service fee
+        const serviceFee = Math.round(amount * 0.029) + 30; // 2.9% + 30¢
         const total = amount + serviceFee;
 
         const session = await stripe.checkout.sessions.create({
@@ -100,7 +100,7 @@ router.post('/pay/extra-session', isAuthenticated, async (req, res) => {
                     currency: 'usd',
                     product_data: {
                         name: 'Extra Tutoring Session',
-                        description: 'Per-session rate ($' + perSession.toFixed(2) + ') + $5.00 convenience fee + 3% processing fee',
+                        description: 'Per-session rate ($' + perSession.toFixed(2) + ') + $5.00 convenience fee + 2.9% + 30¢ processing fee',
                     },
                     unit_amount: total,
                 },
