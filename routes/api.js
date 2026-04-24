@@ -127,8 +127,21 @@ router.post('/messages', isAuthenticated, messageLimiter, async (req, res) => {
         `, [senderId, receiverId]);
         if (rel.rows.length === 0) return res.status(403).json({ success: false, message: 'Not authorized to message this user.' });
 
-        const safeBody = (body || '').trim().substring(0, 5000);
-        if (!safeBody) return res.status(400).json({ success: false, message: 'Message cannot be empty.' });
+        const safeBody = (body || '').trim().substring(0, 5000)
+            .replace(/[\u{1F600}-\u{1F64F}]/gu, '')  // emoticons
+            .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')  // misc symbols
+            .replace(/[\u{1F680}-\u{1F6FF}]/gu, '')  // transport
+            .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '')  // flags
+            .replace(/[\u{2600}-\u{26FF}]/gu, '')     // misc symbols
+            .replace(/[\u{2700}-\u{27BF}]/gu, '')     // dingbats
+            .replace(/[\u{FE00}-\u{FE0F}]/gu, '')     // variation selectors
+            .replace(/[\u{1F900}-\u{1F9FF}]/gu, '')   // supplemental
+            .replace(/[\u{1FA00}-\u{1FA6F}]/gu, '')   // chess symbols
+            .replace(/[\u{1FA70}-\u{1FAFF}]/gu, '')   // symbols extended
+            .replace(/[\u{200D}]/gu, '')               // zero width joiner
+            .replace(/\s{2,}/g, ' ')                   // collapse double spaces from removed emojis
+            .trim();
+        if (!safeBody) return res.status(400).json({ success: false, message: 'Message cannot be empty (emojis are not allowed).' });
 
         const result = await pool.query(`INSERT INTO messages (sender_id, receiver_id, body, message_type) VALUES ($1,$2,$3,$4) RETURNING *`,
             [senderId, receiverId, safeBody, message_type || 'general']);

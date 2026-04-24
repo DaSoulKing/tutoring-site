@@ -14,7 +14,7 @@
                 <% if (posts && posts.length > 0) { %>
                     <% posts.forEach(post => { %>
                     <a href="/blog/<%= post.slug %>" class="blog-card" style="color:inherit;">
-                        <div class="blog-card-image" style="background:linear-gradient(135deg,var(--blue-100),var(--yellow-100));display:flex;align-items:center;justify-content:center;color:var(--blue-400);font-family:var(--font-display);font-weight:800;font-size:1.2rem;">Blog</div>
+                        <div class="blog-card-image"><div class="blog-card-image" style="background:linear-gradient(135deg,var(--blue-100),var(--yellow-100));display:flex;align-items:center;justify-content:center;color:var(--blue-400);font-family:var(--font-display);font-weight:800;font-size:1.2rem;">Blog</div>#x1F4DD;</div>
                         <div class="blog-card-body">
                             <h3><%= post.title %></h3>
                             <p><%= post.excerpt || post.content.substring(0, 150) + '...' %></p>

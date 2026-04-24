@@ -4,17 +4,17 @@
     <div class="dashboard-grid">
         <aside class="dashboard-sidebar">
             <ul class="sidebar-menu">
-                <li><a href="/admin/owner" class="active">Dashboard</a></li>
-                <li><a href="/admin/owner/calendar">Calendar</a></li>
-                <li><a href="/admin/owner/tutors">Tutors</a></li>
-                <li><a href="/admin/owner/students">Students</a></li>
-                <li><a href="/admin/owner/sheets">Session Sheets</a></li>
-                <li><a href="/admin/owner/messages">Messages</a></li>
-                <li><a href="/admin/owner/audit-log">Audit Log</a></li>
-                <li><a href="/admin/owner/blog">Blog</a></li>
-                <li><a href="/admin/owner/referrals">Referrals</a></li>
-                <li><a href="/admin/owner/settings">Settings</a></li>
-                <li><a href="/admin/owner/profile">My Profile</a></li>
+                <li><a href="/admin/owner" class="active">>Dashboard</a>#x1F3E0; Dashboard</a></li>
+                <li><a href="/admin/owner/calendar">>Calendar</a>#x1F4C5; Calendar</a></li>
+                <li><a href="/admin/owner/tutors">>Tutors</a>#x1F468;>Tutors</a>#x200D;>Tutors</a>#x1F3EB; Tutors</a></li>
+                <li><a href="/admin/owner/students">>Students</a>#x1F393; Students</a></li>
+                <li><a href="/admin/owner/sheets">>Session Sheets</a>#x1F4CB; Session Sheets</a></li>
+                <li><a href="/admin/owner/messages">>Messages</a>#x1F4AC; Messages</a></li>
+                <li><a href="/admin/owner/audit-log">>Audit Log</a>#x1F4DC; Audit Log</a></li>
+                <li><a href="/admin/owner/blog">>Blog</a>#x1F4DD; Blog</a></li>
+                <li><a href="/admin/owner/referrals">>Referrals</a>#x1F381; Referrals</a></li>
+                <li><a href="/admin/owner/settings">>Settings</a>#x2699;>Settings</a>#xFE0F; Settings</a></li>
+                <li><a href="/admin/owner/profile">>My Profile</a>#x1F464; My Profile</a></li>
             </ul>
         </aside>
         <div class="dashboard-main">
@@ -68,7 +68,7 @@
 
             <!-- Pending Tutor Approvals -->
             <% if (pendingTutors && pendingTutors.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin-bottom:16px;">Tutors Pending Approval</h2>
+            <h2 style="font-size:1.25rem;margin-bottom:16px;">>Tutors Pending Approval</h2>#x23F3; Tutors Pending Approval</h2>
             <% pendingTutors.forEach(t => { %>
             <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--yellow-500);">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -86,7 +86,7 @@
 
             <!-- Unverified Accounts -->
             <% if (typeof unverifiedAccounts !== 'undefined' && unverifiedAccounts && unverifiedAccounts.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:24px 0 16px;">Accounts Pending Approval (<%= unverifiedAccounts.length %>)</h2>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">>Accounts Pending Approval#x1F4CB; Accounts Pending Approval (<%= unverifiedAccounts.length %>)</h2>
             <% unverifiedAccounts.forEach(function(u) { %>
             <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--blue-400);">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -109,7 +109,7 @@
 
             <!-- Check-in Alerts -->
             <% if (checkins && checkins.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:24px 0 16px;">3-Month Check-ins Due</h2>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">>3-Month Check-ins Due</h2>#x1F514; 3-Month Check-ins Due</h2>
             <% checkins.forEach(c => { %>
             <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--orange-500);">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -163,7 +163,7 @@
 
             <!-- Inquiries - expandable -->
             <% if (inquiries && inquiries.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:24px 0 16px;">Open Inquiries/Consultations (<%= stats.openInquiries %>)</h2>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">>Open Inquiries/Consultations#x1F4E8; Open Inquiries/Consultations (<%= stats.openInquiries %>)</h2>
             <% inquiries.forEach(inq => { %>
             <details class="card" style="margin-bottom:12px;padding:20px;cursor:pointer;">
                 <summary style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">

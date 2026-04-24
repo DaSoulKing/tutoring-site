@@ -1,5 +1,5 @@
     <div class="charity-top-bar" style="background:var(--blue-700);color:white;text-align:center;padding:6px 16px;font-size:0.8rem;">
-        A portion of every payment supports <a href="/charity" style="color:var(--yellow-300);font-weight:700;text-decoration:underline;"><%= charityName %></a>
+        A portion of every payment supports#x1F49A; A portion of every payment supports <a href="/charity" style="color:var(--yellow-300);font-weight:700;text-decoration:underline;"><%= charityName %></a>
     </div>
 
     <% if (user && user.verified !== undefined && !user.verified) { %>
@@ -58,5 +58,5 @@
     <div class="alert alert-success" role="alert" style="border-radius:0;margin:0;"><span aria-hidden="true"></span> <%= success %></div>
     <% } %>
     <% if (typeof error !== 'undefined' && error) { %>
-    <div class="alert alert-error" role="alert" style="border-radius:0;margin:0;"><%= error %> <% if (typeof resendEmail !== 'undefined' && resendEmail) { %> <a href="/auth/resend-verification?email=<%= encodeURIComponent(resendEmail) %>">Click here to resend</a><% } %></div>
+    <div class="alert alert-error" role="alert" style="border-radius:0;margin:0;"><span aria-hidden="true"><%= error %>#x26A0;<%= error %>#xFE0F;</span> <%= error %> <% if (typeof resendEmail !== 'undefined' && resendEmail) { %> <a href="/auth/resend-verification?email=<%= encodeURIComponent(resendEmail) %>">Click here to resend</a><% } %></div>
     <% } %>

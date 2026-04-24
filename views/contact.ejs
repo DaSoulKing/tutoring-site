@@ -55,17 +55,32 @@
                 </div>
 
                 <div>
-                    <div class="card" style="margin-bottom:24px;border-left:4px solid var(--blue-500);padding:20px;">
-                        <h3 style="font-size:1.1rem;">Email Us</h3>
-                        <p style="color:var(--gray-500);"><%= process.env.OWNER_EMAIL || 'Contact us via the form' %></p>
+                    <div class="card" style="margin-bottom:24px;">
+                        <div class="card-header">
+                            <div class="card-icon blue" aria-hidden="true">&#x1F4E7;</div>
+                            <div>
+                                <h3 style="font-size:1.1rem;">Email Us</h3>
+                                <p style="color:var(--gray-500);"><%= process.env.OWNER_EMAIL || 'Contact us via the form' %></p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card" style="margin-bottom:24px;border-left:4px solid var(--yellow-400);padding:20px;">
-                        <h3 style="font-size:1.1rem;">Call Us</h3>
-                        <p style="color:var(--gray-500);"><%= process.env.BUSINESS_PHONE || "Contact us" %></p>
+                    <div class="card" style="margin-bottom:24px;">
+                        <div class="card-header">
+                            <div class="card-icon yellow" aria-hidden="true">&#x1F4DE;</div>
+                            <div>
+                                <h3 style="font-size:1.1rem;">Call Us</h3>
+                                <p style="color:var(--gray-500);"><%= process.env.BUSINESS_PHONE || "Contact us" %></p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card" style="margin-bottom:24px;border-left:4px solid var(--blue-400);padding:20px;">
-                        <h3 style="font-size:1.1rem;">Response Time</h3>
-                        <p style="color:var(--gray-500);">Within 24 hours</p>
+                    <div class="card" style="margin-bottom:24px;">
+                        <div class="card-header">
+                            <div class="card-icon blue" aria-hidden="true">&#x23F0;</div>
+                            <div>
+                                <h3 style="font-size:1.1rem;">Response Time</h3>
+                                <p style="color:var(--gray-500);">Within 24 hours</p>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="card" style="background:var(--blue-50);border:2px solid var(--blue-200);">
