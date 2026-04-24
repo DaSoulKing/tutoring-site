@@ -38,13 +38,13 @@ router.get('/', async (req, res) => {
         } catch(e) { /* table might not exist yet */ }
 
         res.render('home', {
-            title: (process.env.SITE_NAME || 'BrightMinds Tutoring') + ' - Where Learning Comes Alive',
+            title: (process.env.SITE_NAME || 'BrainBridge') + ' - Where Learning Comes Alive',
             tutors: tutorsResult.rows, stats,
-            meta: { description: (process.env.SITE_NAME || 'BrightMinds Tutoring') + ' offers personalized, engaging tutoring for students of all ages. Part of every payment goes to charity.', keywords: 'tutoring, education, kids tutoring, online tutoring' }
+            meta: { description: (process.env.SITE_NAME || 'BrainBridge') + ' offers personalized, engaging tutoring for students of all ages. Part of every payment goes to charity.', keywords: 'tutoring, education, kids tutoring, online tutoring' }
         });
     } catch (err) {
         console.error(err);
-        res.render('home', { title: process.env.SITE_NAME || 'BrightMinds Tutoring', tutors: [], stats: {}, meta: {} });
+        res.render('home', { title: process.env.SITE_NAME || 'BrainBridge', tutors: [], stats: {}, meta: {} });
     }
 });
 
@@ -57,7 +57,7 @@ router.get('/about', async (req, res) => {
             FROM users u JOIN tutor_profiles tp ON u.id = tp.user_id
             WHERE u.is_active = true AND tp.approved = true ORDER BY tp.is_featured DESC, u.first_name
         `);
-        res.render('about', { title: 'About Us - BrightMinds Tutoring', owners: owners.rows, tutors: tutors.rows, meta: { description: 'Meet the passionate team behind BrightMinds Tutoring.' } });
+        res.render('about', { title: 'About Us - BrainBridge', owners: owners.rows, tutors: tutors.rows, meta: { description: 'Meet the passionate team behind BrainBridge.' } });
     } catch (err) {
         console.error(err);
         res.render('about', { title: 'About Us', owners: [], tutors: [], meta: {} });
@@ -66,7 +66,7 @@ router.get('/about', async (req, res) => {
 
 // Contact
 router.get('/contact', (req, res) => {
-    res.render('contact', { title: 'Contact Us - BrightMinds Tutoring', meta: { description: 'Get in touch with BrightMinds Tutoring.' } });
+    res.render('contact', { title: 'Contact Us - BrainBridge', meta: { description: 'Get in touch with BrainBridge.' } });
 });
 router.post('/contact', verifyRecaptcha, async (req, res) => {
     try {
@@ -80,12 +80,12 @@ router.post('/contact', verifyRecaptcha, async (req, res) => {
 
 // Services
 router.get('/services', (req, res) => {
-    res.render('services', { title: 'Our Services - BrightMinds Tutoring', meta: { description: 'Explore our tutoring services.' } });
+    res.render('services', { title: 'Our Services - BrainBridge', meta: { description: 'Explore our tutoring services.' } });
 });
 
 // Consultation
 router.get('/consultation', (req, res) => {
-    res.render('consultation', { title: 'Book a Free Consultation - BrightMinds Tutoring', meta: { description: 'Book a free consultation call.' } });
+    res.render('consultation', { title: 'Book a Free Consultation - BrainBridge', meta: { description: 'Book a free consultation call.' } });
 });
 router.post('/consultation', verifyRecaptcha, async (req, res) => {
     try {
@@ -99,7 +99,7 @@ router.post('/consultation', verifyRecaptcha, async (req, res) => {
 
 // Employment
 router.get('/employment', (req, res) => {
-    res.render('employment', { title: 'Join Our Team - BrightMinds Tutoring', meta: { description: 'Apply to become a tutor.' } });
+    res.render('employment', { title: 'Join Our Team - BrainBridge', meta: { description: 'Apply to become a tutor.' } });
 });
 router.post('/employment', upload.single('resume'), verifyRecaptcha, async (req, res) => {
     try {
@@ -115,17 +115,17 @@ router.post('/employment', upload.single('resume'), verifyRecaptcha, async (req,
 
 // Terms
 router.get('/terms', (req, res) => {
-    res.render('terms', { title: 'Terms & Conditions - BrightMinds Tutoring', meta: { description: 'Read our terms of service.' } });
+    res.render('terms', { title: 'Terms & Conditions - BrainBridge', meta: { description: 'Read our terms of service.' } });
 });
 
 // Charity
 router.get('/charity', (req, res) => {
-    res.render('charity', { title: 'Our Charity Mission - BrightMinds Tutoring', meta: { description: '3% of every payment goes to the Kids Education Fund.' } });
+    res.render('charity', { title: 'Our Charity Mission - BrainBridge', meta: { description: '3% of every payment goes to the Kids Education Fund.' } });
 });
 
 // Checkout/Pricing - info page, book consultation to start
 router.get('/checkout', (req, res) => {
-    res.render('checkout', { title: 'Pricing - BrightMinds Tutoring', meta: { description: 'Our tutoring plans and pricing.' } });
+    res.render('checkout', { title: 'Pricing - BrainBridge', meta: { description: 'Our tutoring plans and pricing.' } });
 });
 
 // Referral code check (one-time use, owner-assigned)
@@ -157,7 +157,7 @@ router.get('/tutor-signup/:token', async (req, res) => {
         if (invite.rows.length === 0) {
             return res.render('error', { title: 'Invalid Link', message: 'This signup link is invalid or has expired. Please contact the admin for a new one.', code: 403 });
         }
-        res.render('auth/tutor-signup', { title: 'Tutor Sign Up - BrightMinds', invite: invite.rows[0], token: req.params.token, meta: {} });
+        res.render('auth/tutor-signup', { title: 'Tutor Sign Up - BrainBridge', invite: invite.rows[0], token: req.params.token, meta: {} });
     } catch (err) { console.error(err); res.render('error', { title: 'Error', message: 'Something went wrong.', code: 500 }); }
 });
 
@@ -166,7 +166,7 @@ router.post('/tutor-signup/:token', signupLimiter, async (req, res) => {
         const invite = await pool.query(`SELECT * FROM tutor_invites WHERE token = $1 AND used = false AND expires_at > NOW()`, [req.params.token]);
         if (invite.rows.length === 0) { req.session.error = 'This signup link is invalid or has expired.'; return res.redirect('/'); }
 
-        const { email, password, confirm_password, first_name, last_name, phone, subjects, bio } = req.body;
+        const { email, password, confirm_password, first_name, last_name, phone, subjects, grade_levels, bio } = req.body;
         if (password !== confirm_password) { req.session.error = 'Passwords do not match.'; return res.redirect(`/tutor-signup/${req.params.token}`); }
         if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
             req.session.error = 'Password must be 8+ characters with uppercase, lowercase, and a number.';
@@ -192,11 +192,11 @@ router.post('/tutor-signup/:token', signupLimiter, async (req, res) => {
         `, [email.toLowerCase(), hash, first_name, last_name, phone || null, refCode]);
 
         const user = newUser.rows[0];
-        await pool.query(`INSERT INTO tutor_profiles (user_id, approved, subjects, bio) VALUES ($1, true, $2, $3)`, [user.id, subjectsArray, (bio || '').trim().substring(0, 2000)]);
+        await pool.query(`INSERT INTO tutor_profiles (user_id, approved, subjects, bio, grade_levels) VALUES ($1, true, $2, $3, $4)`, [user.id, subjectsArray, (bio || '').trim().substring(0, 2000), (grade_levels || '').trim().substring(0, 500)]);
         await pool.query('UPDATE tutor_invites SET used = true, used_by = $1, used_at = NOW() WHERE token = $2', [user.id, req.params.token]);
 
         req.session.user = { id: user.id, email: user.email, role: user.role, firstName: user.first_name, lastName: user.last_name, referralCode: user.referral_code };
-        req.session.success = 'Welcome to BrightMinds! Your tutor account is ready.';
+        req.session.success = 'Welcome to BrainBridge! Your tutor account is ready.';
         res.redirect('/admin/tutor');
     } catch (err) { console.error(err); req.session.error = 'Something went wrong.'; res.redirect(`/tutor-signup/${req.params.token}`); }
 });

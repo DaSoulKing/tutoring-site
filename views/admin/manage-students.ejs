@@ -4,18 +4,18 @@
     <div class="dashboard-grid">
         <aside class="dashboard-sidebar">
             <ul class="sidebar-menu">
-                <li><a href="/admin/owner">&#x1F3E0; Dashboard</a></li>
-                <li><a href="/admin/owner/calendar">&#x1F4C5; Calendar</a></li>
-                <li><a href="/admin/owner/availability">&#x1F552; Availability</a></li>
-                <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Tutors</a></li>
-                <li><a href="/admin/owner/students" class="active">&#x1F393; Students</a></li>
-                <li><a href="/admin/owner/sheets">&#x1F4CB; Session Sheets</a></li>
-                <li><a href="/admin/owner/messages">&#x1F4AC; Messages</a></li>
-                <li><a href="/admin/owner/audit-log">&#x1F4DC; Audit Log</a></li>
-                <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
-                <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
-                <li><a href="/admin/owner/settings">&#x2699;&#xFE0F; Settings</a></li>
-                <li><a href="/admin/owner/profile">&#x1F464; My Profile</a></li>
+                <li><a href="/admin/owner">Dashboard</a></li>
+                <li><a href="/admin/owner/calendar">Calendar</a></li>
+                <li><a href="/admin/owner/availability">Availability</a></li>
+                <li><a href="/admin/owner/tutors">Tutors</a></li>
+                <li><a href="/admin/owner/students" class="active">Students</a></li>
+                <li><a href="/admin/owner/sheets">Session Sheets</a></li>
+                <li><a href="/admin/owner/messages">Messages</a></li>
+                <li><a href="/admin/owner/audit-log">Audit Log</a></li>
+                <li><a href="/admin/owner/blog">Blog</a></li>
+                <li><a href="/admin/owner/referrals">Referrals</a></li>
+                <li><a href="/admin/owner/settings">Settings</a></li>
+                <li><a href="/admin/owner/profile">My Profile</a></li>
             </ul>
         </aside>
         <div class="dashboard-main">
@@ -48,7 +48,7 @@
             <!-- Create recurring meeting -->
             <div class="card" style="padding:24px;margin-bottom:24px;">
                 <h3 style="font-size:1.1rem;margin-bottom:12px;">Create Recurring Meeting</h3>
-                <p style="color:var(--gray-500);font-size:0.85rem;margin-bottom:12px;">Generates 8 weeks of confirmed sessions for a student and tutor.</p>
+                <p style="color:var(--gray-500);font-size:0.85rem;margin-bottom:12px;">Generate confirmed weekly sessions for a student and tutor.</p>
                 <form action="/admin/owner/recurring" method="POST" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="form-group" style="margin:0;min-width:150px;">
                         <label>Tutor</label>
@@ -82,7 +82,11 @@
                         <label>Subject</label>
                         <input type="text" name="subject" class="form-control" placeholder="Math" value="General">
                     </div>
-                    <button type="submit" class="btn btn-primary">Create 8 Weeks</button>
+                    <div class="form-group" style="margin:0;min-width:80px;">
+                        <label>Weeks</label>
+                        <input type="number" name="weeks" class="form-control" value="8" min="1" max="52">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Schedule</button>
                 </form>
             </div>
 
@@ -184,18 +188,26 @@
                 <!-- Set Plan (collapsed) -->
                 <details style="margin-top:12px;">
                     <summary style="cursor:pointer;font-size:0.85rem;color:var(--blue-600);font-weight:600;">Set/Edit Plan</summary>
-                    <form action="/admin/owner/users/<%= s.id %>/plan" method="POST" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:8px;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <form action="/admin/owner/users/<%= s.id %>/plan" method="POST" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:8px;" class="plan-form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <div class="form-group" style="margin:0;">
                             <label style="font-size:0.8rem;">Plan Name</label>
                             <input type="text" name="plan_name" class="form-control" style="padding:6px;font-size:0.85rem;width:120px;" value="<%= sub ? sub.plan_name : 'Starter' %>">
                         </div>
                         <div class="form-group" style="margin:0;">
                             <label style="font-size:0.8rem;">Sessions/Month</label>
-                            <input type="number" name="sessions_per_month" class="form-control" style="padding:6px;font-size:0.85rem;width:80px;" value="<%= sub ? sub.sessions_per_month : 4 %>" min="1">
+                            <input type="number" name="sessions_per_month" class="form-control plan-sessions" style="padding:6px;font-size:0.85rem;width:80px;" value="<%= sub ? sub.sessions_per_month : 4 %>" min="1">
                         </div>
                         <div class="form-group" style="margin:0;">
-                            <label style="font-size:0.8rem;">Monthly Rate ($)</label>
-                            <input type="number" name="rate_total" class="form-control" style="padding:6px;font-size:0.85rem;width:100px;" value="<%= sub ? sub.rate_total : '' %>" step="0.01" min="0">
+                            <label style="font-size:0.8rem;">Per Session Rate ($)</label>
+                            <input type="number" name="session_rate" class="form-control plan-session-rate" style="padding:6px;font-size:0.85rem;width:100px;" value="<%= (sub && sub.rate_total && sub.sessions_per_month) ? (parseFloat(sub.rate_total) / sub.sessions_per_month).toFixed(2) : '' %>" step="0.01" min="0">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-size:0.8rem;">Total/Month ($)</label>
+                            <input type="number" name="rate_total" class="form-control plan-total" style="padding:6px;font-size:0.85rem;width:100px;background:var(--gray-50);" value="<%= sub ? sub.rate_total : '' %>" step="0.01" min="0" readonly>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-size:0.8rem;">Extra Session ($)</label>
+                            <input type="number" name="extra_session_rate" class="form-control" style="padding:6px;font-size:0.85rem;width:100px;" value="<%= sub ? (sub.extra_session_rate || '') : '' %>" step="0.01" min="0" placeholder="Suggested: auto">
                         </div>
                         <button type="submit" class="btn btn-primary btn-sm" style="font-size:0.8rem;">Save Plan</button>
                     </form>
@@ -209,3 +221,19 @@
     </div>
 </main>
 <%- include('../partials/footer') %>
+
+<script>
+// Auto-calculate total from session rate * sessions
+document.querySelectorAll('.plan-form').forEach(function(form) {
+    var sessions = form.querySelector('.plan-sessions');
+    var rate = form.querySelector('.plan-session-rate');
+    var total = form.querySelector('.plan-total');
+    function calc() {
+        var s = parseFloat(sessions.value) || 0;
+        var r = parseFloat(rate.value) || 0;
+        total.value = (s * r).toFixed(2);
+    }
+    sessions.addEventListener('input', calc);
+    rate.addEventListener('input', calc);
+});
+</script>

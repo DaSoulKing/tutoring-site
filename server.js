@@ -25,8 +25,8 @@ app.use(helmet({
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "https:"],
-            frameSrc: ["https://www.google.com", "https://meet.jit.si", "https://8x8.vc"],
-            connectSrc: ["'self'", "https://meet.jit.si", "https://api.resend.com"],
+            frameSrc: ["https://www.google.com", "https://meet.jit.si", "https://8x8.vc", "https://checkout.stripe.com", "https://js.stripe.com"],
+            connectSrc: ["'self'", "https://meet.jit.si", "https://api.resend.com", "https://api.stripe.com"],
         },
     },
     frameguard: { action: 'deny' },
@@ -103,8 +103,15 @@ app.use(csrfInject);
 app.use(csrfProtect);
 
 // Globals for views
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
     res.locals.user = req.session.user || null;
+    // Pass payment status for nav alert
+    if (req.session.user && req.session.user.id) {
+        try {
+            const ps = await pool.query('SELECT payment_status FROM users WHERE id = $1', [req.session.user.id]);
+            res.locals.paymentStatus = ps.rows[0] ? ps.rows[0].payment_status : null;
+        } catch(e) { res.locals.paymentStatus = null; }
+    }
     res.locals.currentPath = req.path;
     res.locals.siteName = process.env.SITE_NAME || 'BrightMinds Tutoring';
     res.locals.siteUrl = process.env.SITE_URL || `http://localhost:${PORT}`;

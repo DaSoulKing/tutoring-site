@@ -34,6 +34,7 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display);font-weight:700;line-height:1.
 .nav-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:72px}
 .nav-logo{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:1.5rem;font-weight:800;color:var(--blue-700)}
 .nav-brand-text{white-space:nowrap}
+.nav-login-mobile{display:none}
 .nav-logo .logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--blue-500),var(--blue-700));border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:white;font-size:0.85rem;font-weight:800;font-family:var(--font-display);box-shadow:0 2px 8px rgba(37,99,235,0.3)}
 .nav-logo span.highlight{color:var(--yellow-500)}
 .nav-logo-img{height:46px;width:auto;max-height:46px;border-radius:6px;object-fit:contain;flex-shrink:0;position:relative;top:-5px;}
@@ -260,8 +261,9 @@ details.card summary{list-style:none}details.card summary::-webkit-details-marke
 @media(max-width:1451px){
     .nav-links{display:none}
     .nav-hamburger{display:block}
+    .nav-login-mobile{display:inline-block;margin-right:12px}
 
-    /* Nav brand: fill space between logo and hamburger, center text */
+    /* Nav brand */: fill space between logo and hamburger, center text */
     .nav-logo{flex:1;font-size:1.15rem;margin:0 12px;justify-content:center}
     .nav-brand-text{white-space:normal;text-align:center;line-height:1.2}
 

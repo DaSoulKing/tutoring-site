@@ -174,7 +174,7 @@ router.get('/resend-verification', async (req, res) => {
 
             const verifyUrl = `${process.env.SITE_URL || 'http://localhost:3000'}/auth/verify/${token}`;
             const sent = await sendEmail(email,
-                'Verify your BrightMinds account',
+                'Verify your BrainBridge account',
                 `<h2>Email Verification</h2><p>Click to verify: <a href="${verifyUrl}">${verifyUrl}</a></p>`
             );
             if (!sent) {
@@ -218,7 +218,7 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
 
             const resetUrl = `${process.env.SITE_URL || 'http://localhost:3000'}/auth/reset-password/${token}`;
             await sendEmail(email,
-                'Reset your BrightMinds password',
+                'Reset your BrainBridge password',
                 `<h2>Password Reset</h2><p>Click to reset: <a href="${resetUrl}">${resetUrl}</a></p><p>Expires in 1 hour.</p>`
             );
         }

@@ -111,7 +111,7 @@ router.post('/owner/tutor-invite', isAuthenticated, isOwner, async (req, res) =>
         const inviteUrl = `${baseUrl}/tutor-signup/${token}`;
 
         if (email) {
-            const siteName = process.env.SITE_NAME || 'BrightMinds';
+            const siteName = process.env.SITE_NAME || 'BrainBridge';
             await sendEmail(email, 'You are invited to join ' + siteName + '!',
                 '<h2>Welcome to ' + siteName + '!</h2><p>You have been invited to join as a tutor.</p><p><a href="' + inviteUrl + '">Click here to create your account</a></p><p>This link expires in 7 days.</p>'
             );
@@ -535,7 +535,13 @@ router.post('/tutor/availability', isAuthenticated, isTutor, async (req, res) =>
 // Session sheet
 router.get('/tutor/session-sheet/:bookingId', isAuthenticated, isTutor, async (req, res) => {
     try {
-        const booking = await pool.query(`SELECT b.*, s.first_name as student_first, s.last_name as student_last FROM bookings b JOIN users s ON b.student_id = s.id WHERE b.id = $1 AND b.tutor_id = $2`, [req.params.bookingId, req.session.user.id]);
+        let booking;
+        if (req.session.user.role === 'owner') {
+            booking = await pool.query(`SELECT b.*, s.first_name as student_first, s.last_name as student_last FROM bookings b JOIN users s ON b.student_id = s.id WHERE b.id = $1`, [req.params.bookingId]);
+        } else {
+            booking = await pool.query(`SELECT b.*, s.first_name as student_first, s.last_name as student_last FROM bookings b JOIN users s ON b.student_id = s.id WHERE b.id = $1 AND b.tutor_id = $2`, [req.params.bookingId, req.session.user.id]);
+        }
+        if (booking.rows.length === 0) { req.session.error = 'Booking not found.'; return res.redirect(req.session.user.role === 'owner' ? '/admin/owner' : '/admin/tutor'); }
         const existing = await pool.query('SELECT * FROM session_sheets WHERE booking_id = $1', [req.params.bookingId]);
         res.render('admin/session-sheet', { title: 'Session Sheet', booking: booking.rows[0], sheet: existing.rows[0] || null, meta: {} });
     } catch (err) { console.error(err); res.redirect('/admin/tutor'); }
@@ -624,15 +630,43 @@ router.get('/owner/sheets', isAuthenticated, isOwner, async (req, res) => {
 // Admin: View all messages between tutors and students
 router.get('/owner/messages', isAuthenticated, isOwner, async (req, res) => {
     try {
-        const messages = await pool.query(`
-            SELECT m.*, s.first_name as sender_first, s.last_name as sender_last,
-                   r.first_name as receiver_first, r.last_name as receiver_last
-            FROM messages m
-            JOIN users s ON m.sender_id = s.id
-            JOIN users r ON m.receiver_id = r.id
-            ORDER BY m.created_at DESC LIMIT 200
+        const search = req.query.search || '';
+        const personId = req.query.person || '';
+
+        // Get all unique people who have messaged
+        const people = await pool.query(`
+            SELECT DISTINCT u.id, u.first_name, u.last_name, u.role
+            FROM users u WHERE u.id IN (SELECT sender_id FROM messages UNION SELECT receiver_id FROM messages)
+            ORDER BY u.first_name
         `);
-        res.render('admin/all-messages', { title: 'All Messages', messages: messages.rows, meta: {} });
+
+        let messages = [];
+        if (personId) {
+            const q = `SELECT m.*, s.first_name as sender_first, s.last_name as sender_last, s.role as sender_role,
+                   r.first_name as receiver_first, r.last_name as receiver_last, r.role as receiver_role
+                   FROM messages m JOIN users s ON m.sender_id = s.id JOIN users r ON m.receiver_id = r.id
+                   WHERE (m.sender_id = $1 OR m.receiver_id = $1) ORDER BY m.created_at DESC LIMIT 200`;
+            const result = await pool.query(q, [parseInt(personId)]);
+            messages = result.rows;
+        } else if (search) {
+            const result = await pool.query(`
+                SELECT m.*, s.first_name as sender_first, s.last_name as sender_last, s.role as sender_role,
+                       r.first_name as receiver_first, r.last_name as receiver_last, r.role as receiver_role
+                FROM messages m JOIN users s ON m.sender_id = s.id JOIN users r ON m.receiver_id = r.id
+                WHERE m.body ILIKE $1 ORDER BY m.created_at DESC LIMIT 200
+            `, ['%' + search.substring(0, 100) + '%']);
+            messages = result.rows;
+        } else {
+            const result = await pool.query(`
+                SELECT m.*, s.first_name as sender_first, s.last_name as sender_last, s.role as sender_role,
+                       r.first_name as receiver_first, r.last_name as receiver_last, r.role as receiver_role
+                FROM messages m JOIN users s ON m.sender_id = s.id JOIN users r ON m.receiver_id = r.id
+                ORDER BY m.created_at DESC LIMIT 200
+            `);
+            messages = result.rows;
+        }
+
+        res.render('admin/all-messages', { title: 'All Messages', messages, people: people.rows, currentPerson: personId, currentSearch: search, meta: {} });
     } catch (err) { console.error(err); res.redirect('/admin/owner'); }
 });
 
@@ -703,16 +737,17 @@ router.post('/owner/users/:id/plan', isAuthenticated, isOwner, async (req, res) 
     try {
         const sessions = parseInt(req.body.sessions_per_month) || 4;
         const rate = parseFloat(req.body.rate_total) || 0;
+        const extraRate = req.body.extra_session_rate ? parseFloat(req.body.extra_session_rate) : null;
         const planName = req.body.plan_name || 'Starter';
 
         // Upsert subscription
         const existing = await pool.query("SELECT id FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [req.params.id]);
         if (existing.rows.length > 0) {
-            await pool.query('UPDATE subscriptions SET sessions_per_month = $1, rate_total = $2, plan_name = $3 WHERE id = $4', [sessions, rate, planName, existing.rows[0].id]);
+            await pool.query('UPDATE subscriptions SET sessions_per_month = $1, rate_total = $2, plan_name = $3, extra_session_rate = $4 WHERE id = $5', [sessions, rate, planName, extraRate, existing.rows[0].id]);
         } else {
-            await pool.query("INSERT INTO subscriptions (parent_id, plan_name, price, sessions_per_month, rate_total, start_date, next_billing_date, status) VALUES ($1, $2, $3, $4, $5, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 'active')", [req.params.id, planName, rate, sessions, rate]);
+            await pool.query("INSERT INTO subscriptions (parent_id, plan_name, price, sessions_per_month, rate_total, extra_session_rate, start_date, next_billing_date, status) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 'active')", [req.params.id, planName, rate, sessions, rate, extraRate]);
         }
-        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'plan_updated', 'User ' + req.params.id + ': ' + planName + ' (' + sessions + ' sessions, $' + rate + ')']); } catch(e) {}
+        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'plan_updated', 'User ' + req.params.id + ': ' + planName + ' (' + sessions + ' sessions, $' + rate + '/mo, extra: $' + (extraRate || 'auto') + ')']); } catch(e) {}
         req.session.success = 'Plan updated.';
     } catch (err) { console.error(err); req.session.error = 'Failed.'; }
     res.redirect(req.headers.referer || '/admin/owner/students');
@@ -721,13 +756,14 @@ router.post('/owner/users/:id/plan', isAuthenticated, isOwner, async (req, res) 
 // Create recurring meeting
 router.post('/owner/recurring', isAuthenticated, isOwner, async (req, res) => {
     try {
-        const { tutor_id, student_id, day_of_week, start_time, end_time, subject } = req.body;
+        const { tutor_id, student_id, day_of_week, start_time, end_time, subject, weeks } = req.body;
         const crypto = require('crypto');
+        const numWeeks = Math.min(Math.max(parseInt(weeks) || 8, 1), 52);
 
-        // Generate 8 weeks of bookings
+        // Generate N weeks of bookings
         const today = new Date();
         let generated = 0;
-        for (let w = 0; w < 8; w++) {
+        for (let w = 0; w < numWeeks; w++) {
             const date = new Date(today);
             date.setDate(today.getDate() + ((parseInt(day_of_week) - today.getDay() + 7) % 7) + (w * 7));
             if (date <= today && w === 0) date.setDate(date.getDate() + 7);

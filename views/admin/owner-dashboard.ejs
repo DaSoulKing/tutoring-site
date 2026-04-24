@@ -4,17 +4,17 @@
     <div class="dashboard-grid">
         <aside class="dashboard-sidebar">
             <ul class="sidebar-menu">
-                <li><a href="/admin/owner" class="active">&#x1F3E0; Dashboard</a></li>
-                <li><a href="/admin/owner/calendar">&#x1F4C5; Calendar</a></li>
-                <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Tutors</a></li>
-                <li><a href="/admin/owner/students">&#x1F393; Students</a></li>
-                <li><a href="/admin/owner/sheets">&#x1F4CB; Session Sheets</a></li>
-                <li><a href="/admin/owner/messages">&#x1F4AC; Messages</a></li>
-                <li><a href="/admin/owner/audit-log">&#x1F4DC; Audit Log</a></li>
-                <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
-                <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
-                <li><a href="/admin/owner/settings">&#x2699;&#xFE0F; Settings</a></li>
-                <li><a href="/admin/owner/profile">&#x1F464; My Profile</a></li>
+                <li><a href="/admin/owner" class="active">Dashboard</a></li>
+                <li><a href="/admin/owner/calendar">Calendar</a></li>
+                <li><a href="/admin/owner/tutors">Tutors</a></li>
+                <li><a href="/admin/owner/students">Students</a></li>
+                <li><a href="/admin/owner/sheets">Session Sheets</a></li>
+                <li><a href="/admin/owner/messages">Messages</a></li>
+                <li><a href="/admin/owner/audit-log">Audit Log</a></li>
+                <li><a href="/admin/owner/blog">Blog</a></li>
+                <li><a href="/admin/owner/referrals">Referrals</a></li>
+                <li><a href="/admin/owner/settings">Settings</a></li>
+                <li><a href="/admin/owner/profile">My Profile</a></li>
             </ul>
         </aside>
         <div class="dashboard-main">
@@ -68,7 +68,7 @@
 
             <!-- Pending Tutor Approvals -->
             <% if (pendingTutors && pendingTutors.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin-bottom:16px;">&#x23F3; Tutors Pending Approval</h2>
+            <h2 style="font-size:1.25rem;margin-bottom:16px;">Tutors Pending Approval</h2>
             <% pendingTutors.forEach(t => { %>
             <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--yellow-500);">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -86,7 +86,7 @@
 
             <!-- Unverified Accounts -->
             <% if (typeof unverifiedAccounts !== 'undefined' && unverifiedAccounts && unverifiedAccounts.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F4CB; Accounts Pending Approval (<%= unverifiedAccounts.length %>)</h2>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">Accounts Pending Approval (<%= unverifiedAccounts.length %>)</h2>
             <% unverifiedAccounts.forEach(function(u) { %>
             <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--blue-400);">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -109,7 +109,7 @@
 
             <!-- Check-in Alerts -->
             <% if (checkins && checkins.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F514; 3-Month Check-ins Due</h2>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">3-Month Check-ins Due</h2>
             <% checkins.forEach(c => { %>
             <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--orange-500);">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -125,7 +125,7 @@
 
             <!-- Payment Reminders -->
             <% if (payments && payments.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F4B0; Payment Reminders</h2>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">Payment Reminders</h2>
             <div class="table-wrapper"><table><thead><tr><th>Client</th><th>Email</th><th>Phone</th><th>Plan</th><th>Billing Date</th><th>Amount</th></tr></thead><tbody>
                 <% payments.forEach(p => { %>
                 <tr><td><strong><%= p.first_name %> <%= p.last_name %></strong></td><td><%= p.email %></td><td><%= p.phone || 'N/A' %></td><td><%= p.plan_name %></td><td><%= new Date(p.next_billing_date).toLocaleDateString() %></td><td>$<%= parseFloat(p.price).toFixed(2) %></td></tr>
@@ -135,7 +135,7 @@
 
             <!-- Applications - expandable -->
             <% if (applications && applications.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F4CB; Pending Applications (<%= stats.pendingApplications %>)</h2>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">Pending Applications (<%= stats.pendingApplications %>)</h2>
             <% applications.forEach(app => { %>
             <details class="card" style="margin-bottom:12px;padding:20px;cursor:pointer;">
                 <summary style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -163,7 +163,7 @@
 
             <!-- Inquiries - expandable -->
             <% if (inquiries && inquiries.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F4E8; Open Inquiries/Consultations (<%= stats.openInquiries %>)</h2>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">Open Inquiries/Consultations (<%= stats.openInquiries %>)</h2>
             <% inquiries.forEach(inq => { %>
             <details class="card" style="margin-bottom:12px;padding:20px;cursor:pointer;">
                 <summary style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -172,7 +172,7 @@
                         <p style="color:var(--blue-500);font-size:0.85rem;font-weight:600;"><%= inq.subject %></p>
                         <p style="color:var(--gray-400);font-size:0.8rem;"><%= inq.email %> &middot; <%= inq.phone || 'No phone' %> &middot; <%= new Date(inq.created_at).toLocaleDateString() %></p>
                     </div>
-                    <form action="/admin/owner/inquiries/<%= inq.id %>/status" method="POST" onclick="event.stopPropagation();"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <form action="/admin/owner/inquiries/<%= inq.id %>/status" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <input type="hidden" name="status" value="resolved">
                         <button type="submit" class="btn btn-sm btn-outline">Resolve</button>
                     </form>

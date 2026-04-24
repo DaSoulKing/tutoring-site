@@ -88,7 +88,7 @@ router.post('/pay/extra-session', isAuthenticated, async (req, res) => {
         }
 
         const perSession = parseFloat(sub.rows[0].rate_total) / sub.rows[0].sessions_per_month;
-        const extraRate = perSession + 5; // $5 inconvenience fee
+        const extraRate = sub.rows[0].extra_session_rate ? parseFloat(sub.rows[0].extra_session_rate) : (perSession + 5);
         const amount = Math.round(extraRate * 100); // cents
         const serviceFee = Math.round(amount * 0.029) + 30; // 2.9% + 30¢
         const total = amount + serviceFee;
@@ -100,7 +100,7 @@ router.post('/pay/extra-session', isAuthenticated, async (req, res) => {
                     currency: 'usd',
                     product_data: {
                         name: 'Extra Tutoring Session',
-                        description: 'Per-session rate ($' + perSession.toFixed(2) + ') + $5.00 convenience fee + 2.9% + 30¢ processing fee',
+                        description: 'Extra session rate: $' + extraRate.toFixed(2) + ' + 2.9% + 30c processing fee',
                     },
                     unit_amount: total,
                 },

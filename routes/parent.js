@@ -97,7 +97,7 @@ router.get('/messages/:userId', isAuthenticated, async (req, res) => {
             ) sub ORDER BY other_id, created_at DESC
         `, [req.session.user.id]);
         res.render('parent/messages', {
-            title: `Chat - BrightMinds`, conversations: conversations.rows,
+            title: `Chat - BrainBridge`, conversations: conversations.rows,
             activeConversation: otherUser.rows[0] || null, messages: messages.rows, meta: {}
         });
     } catch (err) { console.error(err); res.redirect('/parent/messages'); }

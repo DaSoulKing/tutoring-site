@@ -57,7 +57,7 @@
                 <div>
                     <div class="card" style="margin-bottom:24px;">
                         <div class="card-header">
-                            <div class="card-icon blue" aria-hidden="true">&#x1F4E7;</div>
+                            <div class="card-icon blue" aria-hidden="true"></div>
                             <div>
                                 <h3 style="font-size:1.1rem;">Email Us</h3>
                                 <p style="color:var(--gray-500);">contact@brightminds.com</p>
@@ -66,16 +66,16 @@
                     </div>
                     <div class="card" style="margin-bottom:24px;">
                         <div class="card-header">
-                            <div class="card-icon yellow" aria-hidden="true">&#x1F4DE;</div>
+                            <div class="card-icon yellow" aria-hidden="true"></div>
                             <div>
                                 <h3 style="font-size:1.1rem;">Call Us</h3>
-                                <p style="color:var(--gray-500);">(555) 123-MIND</p>
+                                <p style="color:var(--gray-500);"><%= process.env.BUSINESS_PHONE || "Contact us" %></p>
                             </div>
                         </div>
                     </div>
                     <div class="card" style="margin-bottom:24px;">
                         <div class="card-header">
-                            <div class="card-icon green" aria-hidden="true">&#x23F0;</div>
+                            <div class="card-icon green" aria-hidden="true"></div>
                             <div>
                                 <h3 style="font-size:1.1rem;">Response Time</h3>
                                 <p style="color:var(--gray-500);">Within 24 hours</p>
@@ -85,7 +85,7 @@
 
                     <div class="card" style="background:var(--blue-50);border:2px solid var(--blue-200);">
                         <h3 style="font-size:1.1rem;margin-bottom:12px;">For Parents & Students</h3>
-                        <p style="color:var(--gray-600);line-height:1.7;margin-bottom:16px;">Already a BrightMinds member? You can message your tutor directly or submit inquiries through your dashboard for faster responses.</p>
+                        <p style="color:var(--gray-600);line-height:1.7;margin-bottom:16px;">Already a <%= siteName %> member? You can message your tutor directly or submit inquiries through your dashboard for faster responses.</p>
                         <a href="/auth/login" class="btn btn-primary btn-sm">Go to Dashboard</a>
                     </div>
                 </div>

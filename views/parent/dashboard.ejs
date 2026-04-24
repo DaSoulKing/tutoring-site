@@ -4,13 +4,13 @@
     <div class="dashboard-grid">
         <aside class="dashboard-sidebar">
             <ul class="sidebar-menu">
-                <li><a href="/parent/dashboard" class="active">&#x1F3E0; Dashboard</a></li>
-                <li><a href="/parent/calendar">&#x1F4C5; Calendar &amp; Book</a></li>
-                <li><a href="/parent/messages">&#x1F4AC; Messages <% if (unreadCount > 0) { %><span class="badge message-badge"><%= unreadCount %></span><% } %></a></li>
-                <li><a href="/parent/contact">&#x1F4E7; Contact/Inquiries</a></li>
-                <li><a href="/tutors">&#x1F50D; Find Tutors</a></li>
-                <li><a href="/checkout">&#x1F4B3; Plans & Pricing</a></li>
-                <li><a href="/payment/pay">&#x1F4B0; Make Payment</a></li>
+                <li><a href="/parent/dashboard" class="active">Dashboard</a></li>
+                <li><a href="/parent/calendar">Calendar &amp; Book</a></li>
+                <li><a href="/parent/messages">Messages <% if (unreadCount > 0) { %><span class="badge message-badge"><%= unreadCount %></span><% } %></a></li>
+                <li><a href="/parent/contact">Contact/Inquiries</a></li>
+                <li><a href="/tutors">Find Tutors</a></li>
+                <li><a href="/checkout">Plans & Pricing</a></li>
+                <li><a href="/payment/pay">Make Payment</a></li>
             </ul>
         </aside>
         <div class="dashboard-main">
@@ -38,10 +38,10 @@
                     </div>
                     <div style="display:flex;gap:8px;">
                         <span class="badge-status badge-active">Active</span>
-                        <button id="cancel-subscription-btn" class="btn btn-sm" style="background:var(--gray-100);color:var(--gray-600);font-size:0.8rem;">Cancel</button>
                     </div>
                 </div>
             </div>
+            <p style="text-align:right;margin-top:4px;"><a href="#" id="cancel-subscription-btn" style="font-size:0.7rem;color:var(--gray-400);text-decoration:none;">Need to cancel?</a></p>
             <% } %>
 
             <!-- Assigned Tutors -->
@@ -75,7 +75,7 @@
                 <div class="card" style="margin-bottom:12px;padding:20px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
                         <div style="display:flex;align-items:center;gap:12px;">
-                            <div style="width:48px;height:48px;border-radius:50%;background:var(--blue-100);display:flex;align-items:center;justify-content:center;font-size:1.2rem;" aria-hidden="true">&#x1F468;&#x200D;&#x1F3EB;</div>
+                            <div style="width:48px;height:48px;border-radius:50%;background:var(--blue-100);display:flex;align-items:center;justify-content:center;font-size:1.2rem;" aria-hidden="true"></div>
                             <div><h4 style="font-size:1rem;"><%= b.tutor_first %> <%= b.tutor_last %></h4><p style="color:var(--gray-500);font-size:0.85rem;"><%= b.subject || 'General Session' %></p></div>
                         </div>
                         <div style="text-align:right;">

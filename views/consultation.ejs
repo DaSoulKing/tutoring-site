@@ -7,7 +7,7 @@
             <div class="section-header">
                 <span class="section-badge">No Cost, No Obligation</span>
                 <h2>Book a Free Consultation</h2>
-                <p>Let us learn about your child's needs and show you how BrightMinds can help. It takes just 15 minutes.</p>
+                <p>Let us learn about your child's needs and show you how <%= siteName %> can help. It takes just 15 minutes.</p>
             </div>
 
             <div class="two-col-layout" style="display:grid;grid-template-columns:1fr 1fr;gap:48px;max-width:1000px;margin:0 auto;">
@@ -70,16 +70,16 @@
                 <div>
                     <div class="card" style="background:var(--blue-50);border:2px solid var(--blue-200);padding:32px;margin-bottom:24px;">
                         <h3 style="font-size:1.2rem;margin-bottom:16px;">What to Expect</h3>
-                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;">&#x2705; A friendly 15-minute call with our team</p>
-                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;">&#x2705; Discussion of your child's academic needs</p>
-                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;">&#x2705; Personalized tutor recommendations</p>
-                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;">&#x2705; Overview of our programs and pricing</p>
-                        <p style="color:var(--gray-600);line-height:1.8;">&#x2705; No pressure, no commitment</p>
+                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;"> A friendly 15-minute call with our team</p>
+                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;"> Discussion of your child's academic needs</p>
+                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;"> Personalized tutor recommendations</p>
+                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;"> Overview of our programs and pricing</p>
+                        <p style="color:var(--gray-600);line-height:1.8;"> No pressure, no commitment</p>
                     </div>
                     <div class="card" style="text-align:center;padding:32px;">
-                        <p style="font-size:3rem;margin-bottom:8px;" aria-hidden="true">&#x1F4DE;</p>
+                        <p style="font-size:3rem;margin-bottom:8px;" aria-hidden="true"></p>
                         <h3 style="font-size:1.1rem;">Prefer to call directly?</h3>
-                        <p style="color:var(--gray-500);margin-top:8px;">(555) 123-MIND</p>
+                        <p style="color:var(--gray-500);margin-top:8px;"><%= process.env.BUSINESS_PHONE || 'Contact us for our phone number' %></p>
                     </div>
                 </div>
             </div>

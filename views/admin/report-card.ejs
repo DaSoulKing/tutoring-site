@@ -71,7 +71,7 @@
             <% reportCards.forEach(rc => { %>
             <div class="report-card" style="margin-bottom:32px;">
                 <div class="report-card-header">
-                    <p style="font-size:0.85rem;opacity:0.8;">BrightMinds Tutoring</p>
+                    <p style="font-size:0.85rem;opacity:0.8;"><%= siteName %></p>
                     <h2>Student Report Card</h2>
                     <p><%= rc.term %> &middot; <%= new Date(rc.report_date).toLocaleDateString() %></p>
                 </div>

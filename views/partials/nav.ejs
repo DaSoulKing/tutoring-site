@@ -1,3 +1,18 @@
+    <div class="charity-top-bar" style="background:var(--blue-700);color:white;text-align:center;padding:6px 16px;font-size:0.8rem;">
+        A portion of every payment supports <a href="/charity" style="color:var(--yellow-300);font-weight:700;text-decoration:underline;"><%= charityName %></a>
+    </div>
+
+    <% if (user && user.verified !== undefined && !user.verified) { %>
+    <% } %>
+    <% if (user && user.role !== 'owner' && user.role !== 'tutor') { %>
+    <% var _payStatus = (typeof paymentStatus !== 'undefined') ? paymentStatus : null; %>
+    <% if (_payStatus && _payStatus !== 'paid') { %>
+    <div style="background:var(--red-500);color:white;text-align:center;padding:10px 16px;font-size:0.9rem;font-weight:600;">
+        Payment is due on your account. <a href="/payment/pay" style="color:white;text-decoration:underline;font-weight:700;">Make a payment now</a>
+    </div>
+    <% } %>
+    <% } %>
+
     <nav class="nav" role="navigation" aria-label="Main navigation">
         <div class="nav-inner">
             <a href="/" class="nav-logo" aria-label="<%= siteName %> Home">
@@ -5,6 +20,10 @@
                 <div class="logo-icon" aria-hidden="true" style="display:none;"><%= (process.env.SITE_INITIALS || siteName.substring(0,2).toUpperCase()) %></div>
                 <span class="nav-brand-text"><%= siteName %></span>
             </a>
+
+            <% if (!user) { %>
+            <a href="/auth/login" class="nav-login-mobile btn btn-outline btn-sm">Log In</a>
+            <% } %>
 
             <ul class="nav-links" id="nav-links">
                 <li><a href="/" class="<%= currentPath === '/' ? 'active' : '' %>">Home</a></li>
@@ -36,8 +55,8 @@
     </nav>
 
     <% if (typeof success !== 'undefined' && success) { %>
-    <div class="alert alert-success" role="alert" style="border-radius:0;margin:0;"><span aria-hidden="true">&#x2705;</span> <%= success %></div>
+    <div class="alert alert-success" role="alert" style="border-radius:0;margin:0;"><span aria-hidden="true"></span> <%= success %></div>
     <% } %>
     <% if (typeof error !== 'undefined' && error) { %>
-    <div class="alert alert-error" role="alert" style="border-radius:0;margin:0;"><span aria-hidden="true">&#x26A0;&#xFE0F;</span> <%= error %> <% if (typeof resendEmail !== 'undefined' && resendEmail) { %> <a href="/auth/resend-verification?email=<%= encodeURIComponent(resendEmail) %>">Click here to resend</a><% } %></div>
+    <div class="alert alert-error" role="alert" style="border-radius:0;margin:0;"><%= error %> <% if (typeof resendEmail !== 'undefined' && resendEmail) { %> <a href="/auth/resend-verification?email=<%= encodeURIComponent(resendEmail) %>">Click here to resend</a><% } %></div>
     <% } %>

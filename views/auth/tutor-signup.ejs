@@ -27,9 +27,28 @@
                         <input type="hidden" name="subjects" id="subjects-hidden" value="">
                         <p style="font-size:0.8rem;color:var(--gray-400);margin-top:4px;">Hold Ctrl/Cmd to select multiple</p>
                     </div>
+                    <div class="form-group">
+                        <label>Grade Levels You're Comfortable Teaching <span class="required">*</span></label>
+                        <select id="grades-select" class="form-control" multiple style="min-height:100px;">
+                            <option value="K-2">K-2 (Ages 5-8)</option>
+                            <option value="3-5">3-5 (Ages 8-11)</option>
+                            <option value="6-8">6-8 (Middle School)</option>
+                            <option value="9-12">9-12 (High School)</option>
+                            <option value="College">College</option>
+                            <option value="Adult">Adult</option>
+                        </select>
+                        <input type="hidden" name="grade_levels" id="grades-hidden" value="">
+                        <p style="font-size:0.8rem;color:var(--gray-400);margin-top:4px;">Hold Ctrl/Cmd to select multiple</p>
+                    </div>
                     <div class="form-group"><label for="bio">Short Bio</label><textarea id="bio" name="bio" class="form-control" rows="3" placeholder="Tell students about yourself..."></textarea></div>
-                    <button type="submit" class="btn btn-primary btn-block btn-lg" onclick="document.getElementById('subjects-hidden').value=Array.from(document.getElementById('subjects-select').selectedOptions).map(o=>o.value).join(', ');">Create Tutor Account</button>
+                    <button type="submit" class="btn btn-primary btn-block btn-lg" id="tutor-signup-btn">Create Tutor Account</button>
                 </form>
+                <script>
+                document.querySelector('form').addEventListener('submit', function() {
+                    document.getElementById('subjects-hidden').value = Array.from(document.getElementById('subjects-select').selectedOptions).map(function(o){return o.value}).join(', ');
+                    document.getElementById('grades-hidden').value = Array.from(document.getElementById('grades-select').selectedOptions).map(function(o){return o.value}).join(', ');
+                });
+                </script>
             </div>
         </div>
     </section>

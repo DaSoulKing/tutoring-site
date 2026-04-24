@@ -62,10 +62,13 @@
                 <% if (subscription.rate_total && subscription.sessions_per_month) { %>
                 <%
                     var perSession = parseFloat(subscription.rate_total) / subscription.sessions_per_month;
-                    var extraRate = perSession + 5;
+                    var extraRate = subscription.extra_session_rate ? parseFloat(subscription.extra_session_rate) : (perSession + 5);
+                    var extraBase = extraRate * 100;
+                    var extraFee = Math.round(extraBase * 0.029) + 30;
+                    var extraTotal = ((extraBase + extraFee) / 100).toFixed(2);
                 %>
                 <p style="color:var(--gray-500);margin-bottom:16px;">
-                    Your per-session rate is $<%= perSession.toFixed(2) %> + $5.00 convenience fee = <strong>$<%= extraRate.toFixed(2) %></strong> per extra session.
+                    Extra session rate: <strong>$<%= extraRate.toFixed(2) %></strong> per session.
                 </p>
 
                 <%
