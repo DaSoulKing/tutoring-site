@@ -14,7 +14,7 @@
                 <% if (posts && posts.length > 0) { %>
                     <% posts.forEach(post => { %>
                     <a href="/blog/<%= post.slug %>" class="blog-card" style="color:inherit;">
-                        <div class="blog-card-image"></div>
+                        <div class="blog-card-image" style="background:linear-gradient(135deg,var(--blue-100),var(--yellow-100));display:flex;align-items:center;justify-content:center;color:var(--blue-400);font-family:var(--font-display);font-weight:800;font-size:1.2rem;">Blog</div>
                         <div class="blog-card-body">
                             <h3><%= post.title %></h3>
                             <p><%= post.excerpt || post.content.substring(0, 150) + '...' %></p>
@@ -27,7 +27,6 @@
                     <% }); %>
                 <% } else { %>
                     <div style="grid-column:1/-1;text-align:center;padding:60px 20px;">
-                        <p style="font-size:3rem;margin-bottom:16px;" aria-hidden="true"></p>
                         <h3>Blog posts coming soon!</h3>
                         <p style="color:var(--gray-500);margin-top:8px;">We are working on great content for parents and students. Check back soon!</p>
                     </div>
