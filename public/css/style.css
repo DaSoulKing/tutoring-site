@@ -38,15 +38,14 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display);font-weight:700;line-height:1.
 .nav-logo span.highlight{color:var(--yellow-500)}
 .nav-logo-img{height:64px;width:auto;max-height:64px;border-radius:6px;object-fit:contain;flex-shrink:0;}
 
-.nav-links{display:flex;align-items:center;gap:4px;list-style:none;flex:1;justify-content:flex-end}
+.nav-links{display:flex;align-items:center;gap:4px;list-style:none;flex:1;justify-content:space-between;margin-left:16px}
 .nav-links a:not(.btn){display:block;padding:8px 16px;font-weight:600;font-size:0.95rem;color:var(--gray-600);border-radius:var(--radius-sm);transition:all var(--transition)}
 .nav-links a:not(.btn):hover,.nav-links a:not(.btn).active{color:var(--blue-600);background:var(--blue-50)}
 
-/* Auth items sit at the end of the nav, pushed right */
-.nav-auth-item{margin-left:auto;display:flex;align-items:center}
+/* Auth items flow naturally with the rest */
+.nav-auth-item{display:flex;align-items:center}
 .nav-auth-item + .nav-auth-item{margin-left:8px}
 .nav-greeting{font-weight:600;color:var(--gray-600);font-size:0.9rem;padding:0 8px}
-/* The btn styles inside nav keep their styled look */
 .nav-links .btn{padding:8px 16px}
 
 .nav-hamburger{display:none;background:none;border:none;cursor:pointer;padding:8px;border-radius:var(--radius-sm)}
