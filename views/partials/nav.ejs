@@ -18,7 +18,7 @@
             <a href="/" class="nav-logo" aria-label="<%= siteName %> Home">
                 <img src="/uploads/logo.png" alt="" class="nav-logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                 <div class="logo-icon" aria-hidden="true" style="display:none;"><%= (process.env.SITE_INITIALS || siteName.substring(0,2).toUpperCase()) %></div>
-                <span class="nav-brand-text"><%= siteName %></span>
+
             </a>
 
             <% if (!user) { %>
