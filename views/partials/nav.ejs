@@ -18,12 +18,7 @@
             <a href="/" class="nav-logo" aria-label="<%= siteName %> Home">
                 <img src="/uploads/logo.png" alt="" class="nav-logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                 <div class="logo-icon" aria-hidden="true" style="display:none;"><%= (process.env.SITE_INITIALS || siteName.substring(0,2).toUpperCase()) %></div>
-
             </a>
-
-            <% if (!user) { %>
-            <a href="/auth/login" class="nav-login-mobile btn btn-outline btn-sm">Log In</a>
-            <% } %>
 
             <ul class="nav-links" id="nav-links">
                 <li><a href="/" class="<%= currentPath === '/' ? 'active' : '' %>">Home</a></li>
