@@ -32,6 +32,26 @@
 
             <!-- Payment Methods -->
             <div class="card" style="padding:24px;margin-bottom:24px;">
+                <% if (paymentStatus === 'paid') { %>
+                <h3 style="font-size:1.1rem;margin-bottom:12px;">You're All Paid Up</h3>
+                <p style="color:var(--gray-500);margin-bottom:16px;">Your current month is paid. You can pay ahead for next month if you'd like.</p>
+                <details>
+                    <summary style="cursor:pointer;font-size:0.9rem;color:var(--blue-600);font-weight:600;">Pay for next month early</summary>
+                    <div style="margin-top:12px;">
+                        <% if (stripeEnabled && subscription.rate_total) { %>
+                        <%
+                            var monthlyBase2 = parseFloat(subscription.rate_total) * 100;
+                            var monthlyFee2 = Math.round(monthlyBase2 * 0.029) + 30;
+                            var monthlyTotal2 = ((monthlyBase2 + monthlyFee2) / 100).toFixed(2);
+                        %>
+                        <form action="/payment/pay/monthly" method="POST" style="margin-bottom:12px;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <button type="submit" class="btn btn-outline">Pay $<%= monthlyTotal2 %> with Card (next month)</button>
+                        </form>
+                        <% } %>
+                        <p style="color:var(--gray-500);font-size:0.9rem;">Or send $<%= subscription.rate_total ? parseFloat(subscription.rate_total).toFixed(2) : '0.00' %> via Zelle to <strong><%= process.env.ZELLE_EMAIL || process.env.OWNER_EMAIL || 'Contact us' %></strong> with memo "Next Month".</p>
+                    </div>
+                </details>
+                <% } else { %>
                 <h3 style="font-size:1.1rem;margin-bottom:16px;">Monthly Payment</h3>
 
                 <% if (stripeEnabled && subscription.rate_total) { %>
@@ -54,6 +74,7 @@
                     <p style="font-weight:700;color:var(--blue-600);font-size:1.1rem;margin:8px 0;"><%= process.env.ZELLE_EMAIL || process.env.OWNER_EMAIL || 'Contact us for payment details' %></p>
                     <p style="color:var(--gray-400);font-size:0.8rem;">Include your name and "Monthly Payment" in the Zelle memo. We will mark your account as paid once received.</p>
                 </div>
+                <% } %>
             </div>
 
             <!-- Extra Session Payment -->
