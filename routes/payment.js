@@ -76,8 +76,8 @@ router.post('/pay/monthly', isAuthenticated, async (req, res) => {
             },
         });
 
-        console.log('Stripe session created:', session.id, 'URL:', session.url ? 'yes' : 'no');
-        res.redirect(303, session.url);
+        console.log('Stripe session created:', session.id, 'URL:', session.url);
+        return res.redirect(session.url);
     } catch (err) {
         console.error('Stripe error:', err.message);
         req.session.error = 'Payment failed: ' + err.message;
@@ -128,7 +128,7 @@ router.post('/pay/extra-session', isAuthenticated, async (req, res) => {
             },
         });
 
-        res.redirect(303, session.url);
+        return res.redirect(session.url);
     } catch (err) {
         console.error('Stripe error:', err.message);
         req.session.error = 'Payment failed: ' + err.message;

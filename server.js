@@ -115,7 +115,7 @@ app.use(async (req, res, next) => {
     }
     res.locals.currentPath = req.path;
     res.locals.siteName = process.env.SITE_NAME || 'BrightMinds Tutoring';
-    res.locals.siteUrl = process.env.SITE_URL || `http://localhost:${PORT}`;
+    res.locals.siteUrl = (process.env.SITE_URL || `http://localhost:${PORT}`).replace(/\/+$/, '');
     res.locals.recaptchaSiteKey = process.env.RECAPTCHA_SITE_KEY || '';
     res.locals.charityName = process.env.CHARITY_NAME || 'Kids Education Fund';
     res.locals.success = req.session.success; delete req.session.success;
