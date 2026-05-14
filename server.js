@@ -111,7 +111,9 @@ app.use(async (req, res, next) => {
         try {
             const ps = await pool.query('SELECT payment_status FROM users WHERE id = $1', [req.session.user.id]);
             const hasSub = await pool.query("SELECT id FROM subscriptions WHERE parent_id = $1 AND status = 'active' LIMIT 1", [req.session.user.id]);
-            res.locals.paymentStatus = (ps.rows[0] && hasSub.rows.length > 0) ? ps.rows[0].payment_status : null;
+            const status = (ps.rows[0] && hasSub.rows.length > 0) ? ps.rows[0].payment_status : null;
+            res.locals.paymentStatus = status;
+            if (status && status !== 'paid') console.log('PAYMENT BAR SHOWN for user', req.session.user.id, 'status:', status, 'hasSub:', hasSub.rows.length);
         } catch(e) { res.locals.paymentStatus = null; }
     }
     res.locals.currentPath = req.path;

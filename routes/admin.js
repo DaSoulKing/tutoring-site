@@ -794,6 +794,15 @@ router.post('/owner/recurring', isAuthenticated, isOwner, async (req, res) => {
     res.redirect(req.headers.referer || '/admin/owner/students');
 });
 
+// Delete tutor invite
+router.post('/owner/invites/:id/delete', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM tutor_invites WHERE id = $1', [req.params.id]);
+        req.session.success = 'Invite deleted.';
+    } catch (err) { console.error(err); req.session.error = 'Failed to delete invite.'; }
+    res.redirect('/admin/owner/tutors');
+});
+
 // Tutor reschedule a booking
 router.post('/tutor/bookings/:id/reschedule', isAuthenticated, isTutor, async (req, res) => {
     try {

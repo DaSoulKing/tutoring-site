@@ -45,7 +45,10 @@
                         <p class="invite-link-text" style="font-family:monospace;font-size:0.85rem;color:var(--blue-600);word-break:break-all;"><%= siteUrl %>/tutor-signup/<%= inv.token %></p>
                         <p style="font-size:0.8rem;color:var(--gray-400);"><%= inv.email || 'No email' %> &middot; Expires: <%= new Date(inv.expires_at).toLocaleDateString() %></p>
                     </div>
-                    <button class="btn btn-outline btn-sm copy-link-btn" data-link="<%= siteUrl %>/tutor-signup/<%= inv.token %>">Copy Link</button>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-outline btn-sm copy-link-btn" data-link="<%= siteUrl %>/tutor-signup/<%= inv.token %>">Copy Link</button>
+                        <form action="/admin/owner/invites/<%= inv.id %>/delete" method="POST" style="display:inline;"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--red-500);color:white;font-size:0.75rem;">Delete</button></form>
+                    </div>
                 </div>
                 <% }); %>
             </div>
