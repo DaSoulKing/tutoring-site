@@ -28,20 +28,31 @@ router.get('/pay', isAuthenticated, async (req, res) => {
 // Create Stripe Checkout session for monthly payment
 router.post('/pay/monthly', isAuthenticated, async (req, res) => {
     try {
+        console.log('=== STRIPE PAY MONTHLY ===');
+        console.log('User:', req.session.user.id, 'CSRF body:', !!req.body._csrf);
+        
         const stripe = getStripe();
-        if (!stripe) { req.session.error = 'Online payments are not configured yet. Please pay via Zelle.'; return res.redirect('/payment/pay'); }
+        if (!stripe) {
+            console.log('Stripe not configured - no STRIPE_SECRET_KEY');
+            req.session.error = 'Online payments are not configured yet. Please pay via Zelle.';
+            return res.redirect('/payment/pay');
+        }
 
         const userId = req.session.user.id;
         const sub = await pool.query("SELECT * FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [userId]);
+        console.log('Subscription found:', sub.rows.length > 0, 'rate_total:', sub.rows[0] ? sub.rows[0].rate_total : 'none');
+        
         if (!sub.rows[0] || !sub.rows[0].rate_total) {
             req.session.error = 'No active plan found. Contact us to set up your plan.';
             return res.redirect('/payment/pay');
         }
 
-        const amount = Math.round(parseFloat(sub.rows[0].rate_total) * 100); // cents
-        const serviceFee = Math.round(amount * 0.029) + 30; // 2.9% + 30¢
+        const amount = Math.round(parseFloat(sub.rows[0].rate_total) * 100);
+        const serviceFee = Math.round(amount * 0.029) + 30;
         const total = amount + serviceFee;
+        console.log('Amount cents:', amount, 'Fee:', serviceFee, 'Total:', total);
 
+        const siteUrl = process.env.SITE_URL || 'http://localhost:3000';
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [{
@@ -56,8 +67,8 @@ router.post('/pay/monthly', isAuthenticated, async (req, res) => {
                 quantity: 1,
             }],
             mode: 'payment',
-            success_url: (process.env.SITE_URL || 'http://localhost:3000') + '/payment/success?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url: (process.env.SITE_URL || 'http://localhost:3000') + '/payment/pay',
+            success_url: siteUrl + '/payment/success?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url: siteUrl + '/payment/pay',
             metadata: {
                 user_id: String(userId),
                 payment_type: 'monthly',
@@ -65,6 +76,7 @@ router.post('/pay/monthly', isAuthenticated, async (req, res) => {
             },
         });
 
+        console.log('Stripe session created:', session.id, 'URL:', session.url ? 'yes' : 'no');
         res.redirect(303, session.url);
     } catch (err) {
         console.error('Stripe error:', err.message);

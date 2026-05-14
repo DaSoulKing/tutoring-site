@@ -387,10 +387,11 @@ router.get('/owner/inquiries/:id', isAuthenticated, isOwner, async (req, res) =>
 
 router.post('/owner/inquiries/:id/status', isAuthenticated, isOwner, async (req, res) => {
     try {
-        const result = await pool.query("UPDATE inquiries SET status = $1, resolved_at = CASE WHEN $1 = 'resolved' THEN NOW() ELSE resolved_at END WHERE id = $2 RETURNING id", [req.body.status, req.params.id]);
-        console.log('Resolve inquiry:', req.params.id, 'status:', req.body.status, 'rows affected:', result.rowCount);
+        console.log('RESOLVE:', req.params.id, 'body:', req.body);
+        const result = await pool.query("UPDATE inquiries SET status = $1 WHERE id = $2 RETURNING id", [req.body.status || 'resolved', req.params.id]);
+        console.log('Resolve result rows:', result.rowCount);
         req.session.success = result.rowCount > 0 ? 'Inquiry resolved.' : 'Inquiry not found.';
-    } catch (err) { console.error('Resolve error:', err.message); req.session.error = 'Failed to resolve.'; }
+    } catch (err) { console.error('Resolve error:', err.message); req.session.error = 'Failed to resolve: ' + err.message; }
     res.redirect('/admin/owner');
 });
 

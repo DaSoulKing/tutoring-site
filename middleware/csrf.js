@@ -48,6 +48,7 @@ function csrfProtect(req, res, next) {
 }
 
 function csrfFail(req, res) {
+    console.log('CSRF FAILED:', req.method, req.originalUrl, 'token:', !!req.body?._csrf, 'session:', !!req.session?._csrf);
     const wantsJson = req.xhr
         || (req.headers.accept && req.headers.accept.includes('application/json'))
         || (req.headers['content-type'] && req.headers['content-type'].includes('application/json'))

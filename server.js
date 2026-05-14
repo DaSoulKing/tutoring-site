@@ -105,11 +105,12 @@ app.use(csrfProtect);
 // Globals for views
 app.use(async (req, res, next) => {
     res.locals.user = req.session.user || null;
-    // Pass payment status for nav alert
+    // Pass payment status for nav alert - only flag if they have an active plan
     if (req.session.user && req.session.user.id) {
         try {
             const ps = await pool.query('SELECT payment_status FROM users WHERE id = $1', [req.session.user.id]);
-            res.locals.paymentStatus = ps.rows[0] ? ps.rows[0].payment_status : null;
+            const hasSub = await pool.query("SELECT id FROM subscriptions WHERE parent_id = $1 AND status = 'active' LIMIT 1", [req.session.user.id]);
+            res.locals.paymentStatus = (ps.rows[0] && hasSub.rows.length > 0) ? ps.rows[0].payment_status : null;
         } catch(e) { res.locals.paymentStatus = null; }
     }
     res.locals.currentPath = req.path;

@@ -250,37 +250,24 @@ router.post('/book/:tutorId', isAuthenticated, async (req, res) => {
             return res.redirect('/parent/book/' + tutorId);
         }
 
-        // Check payment status - block if over plan limit and extras not paid
-        const sub = await pool.query("SELECT sessions_per_month, extra_sessions_paid FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
+        // Check plan limits and payment status
+        const sub = await pool.query("SELECT sessions_per_month FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
         const sessionCount = await pool.query("SELECT COUNT(*) FROM bookings WHERE student_id = $1 AND booking_date >= date_trunc('month', CURRENT_DATE) AND status IN ('pending','confirmed')", [req.session.user.id]);
         const used = parseInt(sessionCount.rows[0].count);
-        const allowed = sub.rows[0] ? (sub.rows[0].sessions_per_month + (sub.rows[0].extra_sessions_paid || 0)) : 0;
+        const allowed = sub.rows[0] ? sub.rows[0].sessions_per_month : 0;
         const payCheck = await pool.query('SELECT payment_status FROM users WHERE id = $1', [req.session.user.id]);
+        const isPaid = payCheck.rows[0] && payCheck.rows[0].payment_status === 'paid';
 
-        if (payCheck.rows[0] && payCheck.rows[0].payment_status === 'unpaid') {
-            if (allowed === 0 || used >= allowed) {
-                req.session.error = 'Your account has an outstanding balance. Please make a payment before booking additional sessions.';
-                return res.redirect('/parent/book/' + tutorId);
-            }
+        // Block if unpaid and has a plan
+        if (!isPaid && sub.rows[0] && used >= allowed) {
+            req.session.error = 'Your account has an outstanding balance. Please contact us to arrange payment before booking additional sessions.';
+            return res.redirect('/parent/book/' + tutorId);
         }
-        if (sub.rows[0] && used >= allowed && payCheck.rows[0].payment_status === 'paid') {
-            req.session.error = 'You have used all your sessions this month (including extras). Please pay for an additional session first.';
+
+        // Block if at or over plan limit - must pay for extra session first
+        if (sub.rows[0] && used >= allowed) {
+            req.session.error = 'You have reached your ' + allowed + '-session plan limit this month. Please pay for an extra session before booking more.';
             return res.redirect('/payment/pay');
-        }
-
-        // Check payment status
-        const userCheck = await pool.query('SELECT payment_status FROM users WHERE id = $1', [req.session.user.id]);
-        if (userCheck.rows[0] && userCheck.rows[0].payment_status === 'unpaid') {
-            // Check if they have an active subscription with remaining sessions
-            const sub = await pool.query("SELECT sessions_per_month FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
-            const sessionsThisMonth = await pool.query("SELECT COUNT(*) FROM bookings WHERE (student_id = $1 OR parent_id = $1) AND booking_date >= date_trunc('month', CURRENT_DATE) AND booking_date < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month' AND status IN ('pending','confirmed','completed')", [req.session.user.id]);
-            const limit = sub.rows[0] ? sub.rows[0].sessions_per_month : 0;
-            const used = parseInt(sessionsThisMonth.rows[0].count);
-
-            if (limit === 0 || used >= limit) {
-                req.session.error = 'Your payment is outstanding or you have used all your sessions for this month. Please contact the admin to resolve.';
-                return res.redirect('/parent/book/' + tutorId);
-            }
         }
 
         // Check for conflicts
