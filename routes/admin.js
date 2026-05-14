@@ -387,9 +387,10 @@ router.get('/owner/inquiries/:id', isAuthenticated, isOwner, async (req, res) =>
 
 router.post('/owner/inquiries/:id/status', isAuthenticated, isOwner, async (req, res) => {
     try {
-        await pool.query("UPDATE inquiries SET status = $1, resolved_at = CASE WHEN $1 = 'resolved' THEN NOW() ELSE NULL END WHERE id = $2", [req.body.status, req.params.id]);
-        req.session.success = 'Inquiry updated.';
-    } catch (err) { console.error(err); }
+        const result = await pool.query("UPDATE inquiries SET status = $1, resolved_at = CASE WHEN $1 = 'resolved' THEN NOW() ELSE resolved_at END WHERE id = $2 RETURNING id", [req.body.status, req.params.id]);
+        console.log('Resolve inquiry:', req.params.id, 'status:', req.body.status, 'rows affected:', result.rowCount);
+        req.session.success = result.rowCount > 0 ? 'Inquiry resolved.' : 'Inquiry not found.';
+    } catch (err) { console.error('Resolve error:', err.message); req.session.error = 'Failed to resolve.'; }
     res.redirect('/admin/owner');
 });
 
@@ -686,10 +687,14 @@ router.get('/owner/audit-log', isAuthenticated, isOwner, async (req, res) => {
 router.post('/owner/bookings/:id/attendance', isAuthenticated, isOwner, async (req, res) => {
     try {
         const { attendance } = req.body;
-        const validStatuses = ['present', 'absent', 'makeup_pending', 'makeup_done'];
+        const validStatuses = ['present', 'absent', 'makeup_pending', 'makeup_done', 'reset'];
         if (!validStatuses.includes(attendance)) { req.session.error = 'Invalid status.'; return res.redirect(req.headers.referer || '/admin/owner'); }
-        const makeupDeadline = attendance === 'absent' ? new Date(Date.now() + 30*24*60*60*1000).toISOString().substring(0,10) : null;
-        await pool.query('UPDATE bookings SET attendance = $1, makeup_deadline = $2 WHERE id = $3', [attendance, makeupDeadline, req.params.id]);
+        if (attendance === 'reset') {
+            await pool.query('UPDATE bookings SET attendance = NULL, makeup_deadline = NULL WHERE id = $1', [req.params.id]);
+        } else {
+            const makeupDeadline = attendance === 'absent' ? new Date(Date.now() + 30*24*60*60*1000).toISOString().substring(0,10) : null;
+            await pool.query('UPDATE bookings SET attendance = $1, makeup_deadline = $2 WHERE id = $3', [attendance, makeupDeadline, req.params.id]);
+        }
         // Log it
         try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'attendance_marked', 'Booking ' + req.params.id + ' marked ' + attendance]); } catch(e) {}
         req.session.success = 'Attendance updated.';
@@ -701,9 +706,13 @@ router.post('/owner/bookings/:id/attendance', isAuthenticated, isOwner, async (r
 router.post('/tutor/bookings/:id/attendance', isAuthenticated, isTutor, async (req, res) => {
     try {
         const { attendance } = req.body;
-        if (!['present', 'absent'].includes(attendance)) { req.session.error = 'Invalid.'; return res.redirect('/admin/tutor'); }
-        const makeupDeadline = attendance === 'absent' ? new Date(Date.now() + 30*24*60*60*1000).toISOString().substring(0,10) : null;
-        await pool.query('UPDATE bookings SET attendance = $1, makeup_deadline = $2 WHERE id = $3 AND tutor_id = $4', [attendance, makeupDeadline, req.params.id, req.session.user.id]);
+        if (!['present', 'absent', 'reset'].includes(attendance)) { req.session.error = 'Invalid.'; return res.redirect('/admin/tutor'); }
+        if (attendance === 'reset') {
+            await pool.query('UPDATE bookings SET attendance = NULL, makeup_deadline = NULL WHERE id = $1 AND tutor_id = $2', [req.params.id, req.session.user.id]);
+        } else {
+            const makeupDeadline = attendance === 'absent' ? new Date(Date.now() + 30*24*60*60*1000).toISOString().substring(0,10) : null;
+            await pool.query('UPDATE bookings SET attendance = $1, makeup_deadline = $2 WHERE id = $3 AND tutor_id = $4', [attendance, makeupDeadline, req.params.id, req.session.user.id]);
+        }
         try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'attendance_marked', 'Booking ' + req.params.id + ' marked ' + attendance]); } catch(e) {}
         req.session.success = 'Attendance marked.';
     } catch (err) { console.error(err); }

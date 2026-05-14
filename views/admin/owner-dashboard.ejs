@@ -69,7 +69,7 @@
 
             <!-- Pending Tutor Approvals -->
             <% if (pendingTutors && pendingTutors.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin-bottom:16px;">>&#x23F3; Tutors Pending Approval</h2>
+            <h2 style="font-size:1.25rem;margin-bottom:16px;">&#x23F3; Tutors Pending Approval</h2>
             <% pendingTutors.forEach(t => { %>
             <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--yellow-500);">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -87,7 +87,7 @@
 
             <!-- Unverified Accounts -->
             <% if (typeof unverifiedAccounts !== 'undefined' && unverifiedAccounts && unverifiedAccounts.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:24px 0 16px;">>&#x1F4CB; Accounts Pending Approval (<%= unverifiedAccounts.length %>)</h2>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F4CB; Accounts Pending Approval (<%= unverifiedAccounts.length %>)</h2>
             <% unverifiedAccounts.forEach(function(u) { %>
             <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--blue-400);">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -110,7 +110,7 @@
 
             <!-- Check-in Alerts -->
             <% if (checkins && checkins.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:24px 0 16px;">>&#x1F514; 3-Month Check-ins Due</h2>
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F514; 3-Month Check-ins Due</h2>
             <% checkins.forEach(c => { %>
             <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--orange-500);">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -162,12 +162,12 @@
             <% }); %>
             <% } %>
 
-            <!-- Inquiries - expandable -->
+            <!-- Inquiries -->
             <% if (inquiries && inquiries.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:24px 0 16px;">>&#x1F4E8; Open Inquiries/Consultations (<%= stats.openInquiries %>)</h2>
-            <% inquiries.forEach(inq => { %>
-            <details class="card" style="margin-bottom:12px;padding:20px;cursor:pointer;">
-                <summary style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F4E8; Open Inquiries/Consultations (<%= stats.openInquiries %>)</h2>
+            <% inquiries.forEach(function(inq) { %>
+            <div class="card" style="margin-bottom:12px;padding:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:8px;">
                     <div>
                         <h4><%= inq.name %> <span class="badge-status badge-pending"><%= inq.inquiry_type %></span></h4>
                         <p style="color:var(--blue-500);font-size:0.85rem;font-weight:600;"><%= inq.subject %></p>
@@ -177,11 +177,9 @@
                         <input type="hidden" name="status" value="resolved">
                         <button type="submit" class="btn btn-sm btn-outline">Resolve</button>
                     </form>
-                </summary>
-                <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--gray-100);">
-                    <p style="color:var(--gray-700);line-height:1.8;white-space:pre-wrap;"><%= inq.message %></p>
                 </div>
-            </details>
+                <% if (inq.message) { %><p style="color:var(--gray-700);font-size:0.9rem;white-space:pre-wrap;border-top:1px solid var(--gray-100);padding-top:12px;"><%= inq.message %></p><% } %>
+            </div>
             <% }); %>
             <% } %>
         </div>

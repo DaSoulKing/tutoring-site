@@ -29,13 +29,13 @@ router.get('/pay', isAuthenticated, async (req, res) => {
 router.post('/pay/monthly', isAuthenticated, async (req, res) => {
     try {
         const stripe = getStripe();
-        if (!stripe) { req.session.error = 'Online payments are not configured yet. Please pay via Zelle.'; return res.redirect('/parent/pay'); }
+        if (!stripe) { req.session.error = 'Online payments are not configured yet. Please pay via Zelle.'; return res.redirect('/payment/pay'); }
 
         const userId = req.session.user.id;
         const sub = await pool.query("SELECT * FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [userId]);
         if (!sub.rows[0] || !sub.rows[0].rate_total) {
             req.session.error = 'No active plan found. Contact us to set up your plan.';
-            return res.redirect('/parent/pay');
+            return res.redirect('/payment/pay');
         }
 
         const amount = Math.round(parseFloat(sub.rows[0].rate_total) * 100); // cents
@@ -69,7 +69,7 @@ router.post('/pay/monthly', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error('Stripe error:', err.message);
         req.session.error = 'Payment failed: ' + err.message;
-        res.redirect('/parent/pay');
+        res.redirect('/payment/pay');
     }
 });
 
@@ -77,14 +77,14 @@ router.post('/pay/monthly', isAuthenticated, async (req, res) => {
 router.post('/pay/extra-session', isAuthenticated, async (req, res) => {
     try {
         const stripe = getStripe();
-        if (!stripe) { req.session.error = 'Online payments not configured. Please pay via Zelle.'; return res.redirect('/parent/pay'); }
+        if (!stripe) { req.session.error = 'Online payments not configured. Please pay via Zelle.'; return res.redirect('/payment/pay'); }
 
         const userId = req.session.user.id;
         const sub = await pool.query("SELECT * FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [userId]);
 
         if (!sub.rows[0] || !sub.rows[0].rate_total || !sub.rows[0].sessions_per_month) {
             req.session.error = 'No plan configured. Contact us first.';
-            return res.redirect('/parent/pay');
+            return res.redirect('/payment/pay');
         }
 
         const perSession = parseFloat(sub.rows[0].rate_total) / sub.rows[0].sessions_per_month;
@@ -120,7 +120,7 @@ router.post('/pay/extra-session', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error('Stripe error:', err.message);
         req.session.error = 'Payment failed: ' + err.message;
-        res.redirect('/parent/pay');
+        res.redirect('/payment/pay');
     }
 });
 
@@ -147,6 +147,14 @@ router.get('/success', isAuthenticated, async (req, res) => {
                     // Update subscription billing date
                     await pool.query(
                         "UPDATE subscriptions SET next_billing_date = CURRENT_DATE + INTERVAL '1 month', paid_through = CURRENT_DATE + INTERVAL '1 month' WHERE parent_id = $1 AND status = 'active'",
+                        [parseInt(userId)]
+                    );
+                }
+
+                if (paymentType === 'extra_session') {
+                    // Increment extra sessions paid counter
+                    await pool.query(
+                        "UPDATE subscriptions SET extra_sessions_paid = COALESCE(extra_sessions_paid, 0) + 1 WHERE parent_id = $1 AND status = 'active'",
                         [parseInt(userId)]
                     );
                 }

@@ -67,15 +67,34 @@ router.get('/calendar', isAuthenticated, isParent, async (req, res) => {
 // Messages
 router.get('/messages', isAuthenticated, async (req, res) => {
     try {
-        const conversations = await pool.query(`
-            SELECT DISTINCT ON (other_id) * FROM (
-                SELECT m.*, CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END as other_id,
-                    u.first_name, u.last_name, u.role, u.profile_picture
-                FROM messages m JOIN users u ON u.id = CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END
-                WHERE m.sender_id = $1 OR m.receiver_id = $1 ORDER BY other_id, m.created_at DESC
-            ) sub ORDER BY other_id, created_at DESC
-        `, [req.session.user.id]);
-        res.render('parent/messages', { title: 'Messages', conversations: conversations.rows, activeConversation: null, messages: [], meta: {} });
+        const userId = req.session.user.id;
+        const role = req.session.user.role;
+        // Get all possible contacts: from messages + from bookings + owner sees everyone
+        let contactQuery;
+        if (role === 'owner') {
+            contactQuery = await pool.query(`
+                SELECT id as other_id, first_name, last_name, role, profile_picture, 'Click to message' as last_msg, created_at as last_time
+                FROM users WHERE id != $1 AND is_active = true AND role != 'owner' ORDER BY first_name
+            `, [userId]);
+        } else {
+            contactQuery = await pool.query(`
+                SELECT DISTINCT ON (other_id) other_id, first_name, last_name, role, profile_picture, last_msg, last_time FROM (
+                    SELECT CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END as other_id,
+                        u.first_name, u.last_name, u.role, u.profile_picture, m.body as last_msg, m.created_at as last_time
+                    FROM messages m JOIN users u ON u.id = CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END
+                    WHERE m.sender_id = $1 OR m.receiver_id = $1
+                    UNION ALL
+                    SELECT DISTINCT b.tutor_id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'No messages yet' as last_msg, b.created_at as last_time
+                    FROM bookings b JOIN users u ON b.tutor_id = u.id
+                    WHERE (b.student_id = $1 OR b.parent_id = $1) AND b.tutor_id != $1 AND b.status IN ('pending','confirmed','completed')
+                    UNION ALL
+                    SELECT DISTINCT b.student_id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'No messages yet' as last_msg, b.created_at as last_time
+                    FROM bookings b JOIN users u ON b.student_id = u.id
+                    WHERE b.tutor_id = $1 AND b.student_id != $1 AND b.status IN ('pending','confirmed','completed')
+                ) sub ORDER BY other_id, last_time DESC
+            `, [userId]);
+        }
+        res.render('parent/messages', { title: 'Messages', conversations: contactQuery.rows, activeConversation: null, messages: [], meta: {} });
     } catch (err) { console.error(err); res.redirect('/parent/dashboard'); }
 });
 
@@ -231,18 +250,22 @@ router.post('/book/:tutorId', isAuthenticated, async (req, res) => {
             return res.redirect('/parent/book/' + tutorId);
         }
 
-        // Check payment status - block if unpaid
+        // Check payment status - block if over plan limit and extras not paid
+        const sub = await pool.query("SELECT sessions_per_month, extra_sessions_paid FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
+        const sessionCount = await pool.query("SELECT COUNT(*) FROM bookings WHERE student_id = $1 AND booking_date >= date_trunc('month', CURRENT_DATE) AND status IN ('pending','confirmed')", [req.session.user.id]);
+        const used = parseInt(sessionCount.rows[0].count);
+        const allowed = sub.rows[0] ? (sub.rows[0].sessions_per_month + (sub.rows[0].extra_sessions_paid || 0)) : 0;
         const payCheck = await pool.query('SELECT payment_status FROM users WHERE id = $1', [req.session.user.id]);
+
         if (payCheck.rows[0] && payCheck.rows[0].payment_status === 'unpaid') {
-            // Check if they have a subscription and are within their session limit
-            const sub = await pool.query("SELECT sessions_per_month FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
-            const sessionCount = await pool.query("SELECT COUNT(*) FROM bookings WHERE student_id = $1 AND booking_date >= date_trunc('month', CURRENT_DATE) AND status IN ('pending','confirmed')", [req.session.user.id]);
-            const used = parseInt(sessionCount.rows[0].count);
-            const allowed = sub.rows[0] ? sub.rows[0].sessions_per_month : 0;
             if (allowed === 0 || used >= allowed) {
-                req.session.error = 'Your account has an outstanding balance. Please contact us to arrange payment before booking additional sessions.';
+                req.session.error = 'Your account has an outstanding balance. Please make a payment before booking additional sessions.';
                 return res.redirect('/parent/book/' + tutorId);
             }
+        }
+        if (sub.rows[0] && used >= allowed && payCheck.rows[0].payment_status === 'paid') {
+            req.session.error = 'You have used all your sessions this month (including extras). Please pay for an additional session first.';
+            return res.redirect('/payment/pay');
         }
 
         // Check payment status
