@@ -27,6 +27,7 @@ app.use(helmet({
             imgSrc: ["'self'", "data:", "https:"],
             frameSrc: ["https://www.google.com", "https://meet.jit.si", "https://8x8.vc", "https://checkout.stripe.com", "https://js.stripe.com"],
             connectSrc: ["'self'", "https://meet.jit.si", "https://api.resend.com", "https://api.stripe.com"],
+            formAction: ["'self'", "https://checkout.stripe.com"],
         },
     },
     frameguard: { action: 'deny' },
