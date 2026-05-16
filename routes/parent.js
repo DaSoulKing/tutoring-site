@@ -252,27 +252,27 @@ router.post('/book/:tutorId', isAuthenticated, async (req, res) => {
 
         // Check plan limits and payment status
         const sub = await pool.query("SELECT sessions_per_month, extra_session_credits FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
-        const sessionCount = await pool.query("SELECT COUNT(*) FROM bookings WHERE student_id = $1 AND booking_date >= date_trunc('month', CURRENT_DATE) AND status IN ('pending','confirmed')", [req.session.user.id]);
+        const sessionCount = await pool.query("SELECT COUNT(*) FROM bookings WHERE student_id = $1 AND booking_date >= date_trunc('month', CURRENT_DATE) AND booking_date < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month' AND status IN ('pending','confirmed')", [req.session.user.id]);
         const used = parseInt(sessionCount.rows[0].count);
         const allowed = sub.rows[0] ? sub.rows[0].sessions_per_month : 0;
         const credits = sub.rows[0] ? (parseInt(sub.rows[0].extra_session_credits) || 0) : 0;
         const payCheck = await pool.query('SELECT payment_status FROM users WHERE id = $1', [req.session.user.id]);
         const isPaid = payCheck.rows[0] && payCheck.rows[0].payment_status === 'paid';
 
-        // Block completely if unpaid (must pay before any bookings)
+        console.log('BOOKING CHECK: user', req.session.user.id, 'used:', used, 'allowed:', allowed, 'credits:', credits, 'isPaid:', isPaid);
+
+        // Block completely if unpaid and has a plan (must pay before any bookings)
         if (!isPaid && sub.rows[0]) {
-            req.session.error = 'Your account has an outstanding balance. Please make a payment before booking sessions.';
+            req.session.error = 'Please make your payment before booking sessions.';
             return res.redirect('/payment/pay');
         }
 
-        // Block if at plan limit and no extra credits
+        // Block if over plan limit and no extra credits
         if (sub.rows[0] && used >= allowed) {
             if (credits > 0) {
-                // Deduct one credit - allow the booking
-                await pool.query("UPDATE subscriptions SET extra_session_credits = extra_session_credits - 1 WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
-                console.log('Extra credit used for user', req.session.user.id, 'remaining:', credits - 1);
+                // Will deduct credit after successful booking below
             } else {
-                req.session.error = 'You have reached your ' + allowed + '-session plan limit this month. Please purchase an extra session credit first.';
+                req.session.error = 'You have used all ' + allowed + ' sessions this month. Purchase an extra session credit to book more.';
                 return res.redirect('/payment/pay');
             }
         }
@@ -296,6 +296,12 @@ router.post('/book/:tutorId', isAuthenticated, async (req, res) => {
             INSERT INTO bookings (tutor_id, student_id, parent_id, booking_date, start_time, end_time, subject, meeting_room_id, status)
             VALUES ($1, $2, $2, $3, $4, $5, $6, $7, 'pending')
         `, [tutorId, req.session.user.id, booking_date, start_time, end_time, subject || 'General', roomId]);
+
+        // Deduct extra session credit if booking was over plan limit
+        if (sub.rows[0] && used >= allowed && credits > 0) {
+            await pool.query("UPDATE subscriptions SET extra_session_credits = extra_session_credits - 1 WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
+            console.log('Extra credit used for user', req.session.user.id, 'remaining:', credits - 1);
+        }
 
         req.session.success = 'Session requested! The tutor will confirm shortly.';
         res.redirect('/parent/dashboard');

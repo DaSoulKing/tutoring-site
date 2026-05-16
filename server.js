@@ -107,14 +107,16 @@ app.use(csrfProtect);
 app.use(async (req, res, next) => {
     res.locals.user = req.session.user || null;
     // Pass payment status for nav alert - only flag if they have an active plan
-    if (req.session.user && req.session.user.id) {
+    if (req.session.user && req.session.user.id && req.session.user.role !== 'owner' && req.session.user.role !== 'tutor') {
         try {
             const ps = await pool.query('SELECT payment_status FROM users WHERE id = $1', [req.session.user.id]);
             const hasSub = await pool.query("SELECT id FROM subscriptions WHERE parent_id = $1 AND status = 'active' LIMIT 1", [req.session.user.id]);
             const status = (ps.rows[0] && hasSub.rows.length > 0) ? ps.rows[0].payment_status : null;
             res.locals.paymentStatus = status;
-            if (status && status !== 'paid') console.log('PAYMENT BAR SHOWN for user', req.session.user.id, 'status:', status, 'hasSub:', hasSub.rows.length);
-        } catch(e) { res.locals.paymentStatus = null; }
+            if (status && status !== 'paid') console.log('PAYMENT BAR:', req.session.user.id, 'ps:', ps.rows[0]?.payment_status, 'hasSub:', hasSub.rows.length, 'showing:', status);
+        } catch(e) { console.error('Payment middleware error:', e.message); res.locals.paymentStatus = null; }
+    } else {
+        res.locals.paymentStatus = null;
     }
     res.locals.currentPath = req.path;
     res.locals.siteName = process.env.SITE_NAME || 'BrightMinds Tutoring';

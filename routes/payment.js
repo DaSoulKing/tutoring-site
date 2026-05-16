@@ -208,8 +208,15 @@ router.post('/webhook', async (req, res) => {
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object;
             if (session.payment_status === 'paid' && session.metadata && session.metadata.user_id) {
-                await pool.query("UPDATE users SET payment_status = 'paid' WHERE id = $1", [parseInt(session.metadata.user_id)]);
-                console.log('Webhook: payment confirmed for user', session.metadata.user_id);
+                const uid = parseInt(session.metadata.user_id);
+                await pool.query("UPDATE users SET payment_status = 'paid' WHERE id = $1", [uid]);
+                if (session.metadata.payment_type === 'extra_session') {
+                    await pool.query("UPDATE subscriptions SET extra_session_credits = COALESCE(extra_session_credits, 0) + 1 WHERE parent_id = $1 AND status = 'active'", [uid]);
+                }
+                if (session.metadata.payment_type === 'monthly') {
+                    await pool.query("UPDATE subscriptions SET next_billing_date = CURRENT_DATE + INTERVAL '1 month', paid_through = CURRENT_DATE + INTERVAL '1 month' WHERE parent_id = $1 AND status = 'active'", [uid]);
+                }
+                console.log('Webhook: payment confirmed for user', uid, 'type:', session.metadata.payment_type);
             }
         }
 
