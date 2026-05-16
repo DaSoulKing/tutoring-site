@@ -344,6 +344,7 @@ router.get('/owner/students', isAuthenticated, isOwner, async (req, res) => {
             WHERE booking_date >= date_trunc('month', CURRENT_DATE)
             AND booking_date < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month'
             AND status IN ('pending','confirmed','completed')
+            AND subject != 'Assigned by Admin'
             GROUP BY student_id
         `);
         const subs = await pool.query("SELECT parent_id, plan_name, sessions_per_month, rate_total, status FROM subscriptions WHERE status = 'active'");

@@ -252,7 +252,7 @@ router.post('/book/:tutorId', isAuthenticated, async (req, res) => {
 
         // Check plan limits and payment status
         const sub = await pool.query("SELECT sessions_per_month, extra_session_credits FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
-        const sessionCount = await pool.query("SELECT COUNT(*) FROM bookings WHERE student_id = $1 AND booking_date >= date_trunc('month', CURRENT_DATE) AND booking_date < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month' AND status IN ('pending','confirmed')", [req.session.user.id]);
+        const sessionCount = await pool.query("SELECT COUNT(*) FROM bookings WHERE student_id = $1 AND booking_date >= date_trunc('month', CURRENT_DATE) AND booking_date < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month' AND status IN ('pending','confirmed') AND subject != 'Assigned by Admin'", [req.session.user.id]);
         const used = parseInt(sessionCount.rows[0].count);
         const allowed = sub.rows[0] ? sub.rows[0].sessions_per_month : 0;
         const credits = sub.rows[0] ? (parseInt(sub.rows[0].extra_session_credits) || 0) : 0;
