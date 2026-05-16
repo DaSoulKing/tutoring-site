@@ -8,7 +8,6 @@
                 
                 <div style="font-size:4rem;margin-bottom:16px;">&#x2705;</div>
                 <h2 style="margin-bottom:12px;">Payment Successful!</h2>
-                <h2 style="margin-bottom:12px;">Payment Successful!</h2>
                 <p style="color:var(--gray-500);margin-bottom:32px;">Thank you for your payment. Your account has been updated and you can now book sessions.</p>
                 <div style="display:flex;gap:12px;justify-content:center;">
                     <a href="<%= user.role === 'owner' ? '/admin/owner' : user.role === 'tutor' ? '/admin/tutor' : '/parent/dashboard' %>" class="btn btn-primary">Go to Dashboard</a>

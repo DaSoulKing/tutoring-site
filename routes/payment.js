@@ -156,11 +156,17 @@ router.get('/success', isAuthenticated, async (req, res) => {
                 } catch(e) {}
 
                 if (paymentType === 'monthly') {
-                    // Update subscription billing date
                     await pool.query(
                         "UPDATE subscriptions SET next_billing_date = CURRENT_DATE + INTERVAL '1 month', paid_through = CURRENT_DATE + INTERVAL '1 month' WHERE parent_id = $1 AND status = 'active'",
                         [parseInt(userId)]
                     );
+                } else if (paymentType === 'extra_session') {
+                    // Add one extra session credit
+                    await pool.query(
+                        "UPDATE subscriptions SET extra_session_credits = COALESCE(extra_session_credits, 0) + 1 WHERE parent_id = $1 AND status = 'active'",
+                        [parseInt(userId)]
+                    );
+                    console.log('Extra session credit added for user', userId);
                 }
 
                 if (paymentType === 'extra_session') {

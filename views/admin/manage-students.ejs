@@ -139,6 +139,7 @@
                 var perSession = (sub && sub.rate_total && sub.sessions_per_month) ? (parseFloat(sub.rate_total) / sub.sessions_per_month) : 0;
                 var extraRate = (sub && sub.extra_session_rate) ? parseFloat(sub.extra_session_rate) : (perSession > 0 ? perSession + 5 : 0);
                 var extrasTotal = extrasOwed * extraRate;
+                var credits = sub ? (parseInt(sub.extra_session_credits) || 0) : 0;
             %>
             <div class="card" style="margin-bottom:16px;padding:20px;<%= isOverLimit ? 'border-left:4px solid var(--red-500);' : '' %>">
                 <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:12px;">
@@ -168,6 +169,11 @@
                     <% if (extrasOwed > 0) { %>
                     <div style="padding:8px 16px;background:#FEE2E2;border-radius:8px;font-size:0.85rem;color:var(--red-600);font-weight:700;">
                         Extras owed: <%= extrasOwed %> x $<%= extraRate.toFixed(2) %> = $<%= extrasTotal.toFixed(2) %>
+                    </div>
+                    <% } %>
+                    <% if (credits > 0) { %>
+                    <div style="padding:8px 16px;background:#D1FAE5;border-radius:8px;font-size:0.85rem;color:var(--green-600);font-weight:700;">
+                        Extra credits: <%= credits %>
                     </div>
                     <% } %>
                     <% } %>

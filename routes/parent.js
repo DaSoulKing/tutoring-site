@@ -251,23 +251,30 @@ router.post('/book/:tutorId', isAuthenticated, async (req, res) => {
         }
 
         // Check plan limits and payment status
-        const sub = await pool.query("SELECT sessions_per_month FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
+        const sub = await pool.query("SELECT sessions_per_month, extra_session_credits FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
         const sessionCount = await pool.query("SELECT COUNT(*) FROM bookings WHERE student_id = $1 AND booking_date >= date_trunc('month', CURRENT_DATE) AND status IN ('pending','confirmed')", [req.session.user.id]);
         const used = parseInt(sessionCount.rows[0].count);
         const allowed = sub.rows[0] ? sub.rows[0].sessions_per_month : 0;
+        const credits = sub.rows[0] ? (parseInt(sub.rows[0].extra_session_credits) || 0) : 0;
         const payCheck = await pool.query('SELECT payment_status FROM users WHERE id = $1', [req.session.user.id]);
         const isPaid = payCheck.rows[0] && payCheck.rows[0].payment_status === 'paid';
 
-        // Block if unpaid and has a plan
-        if (!isPaid && sub.rows[0] && used >= allowed) {
-            req.session.error = 'Your account has an outstanding balance. Please contact us to arrange payment before booking additional sessions.';
-            return res.redirect('/parent/book/' + tutorId);
+        // Block completely if unpaid (must pay before any bookings)
+        if (!isPaid && sub.rows[0]) {
+            req.session.error = 'Your account has an outstanding balance. Please make a payment before booking sessions.';
+            return res.redirect('/payment/pay');
         }
 
-        // Block if at or over plan limit - must pay for extra session first
+        // Block if at plan limit and no extra credits
         if (sub.rows[0] && used >= allowed) {
-            req.session.error = 'You have reached your ' + allowed + '-session plan limit this month. Please pay for an extra session before booking more.';
-            return res.redirect('/payment/pay');
+            if (credits > 0) {
+                // Deduct one credit - allow the booking
+                await pool.query("UPDATE subscriptions SET extra_session_credits = extra_session_credits - 1 WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
+                console.log('Extra credit used for user', req.session.user.id, 'remaining:', credits - 1);
+            } else {
+                req.session.error = 'You have reached your ' + allowed + '-session plan limit this month. Please purchase an extra session credit first.';
+                return res.redirect('/payment/pay');
+            }
         }
 
         // Check for conflicts

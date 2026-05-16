@@ -79,7 +79,7 @@
 
             <!-- Extra Session Payment -->
             <div class="card" style="padding:24px;">
-                <h3 style="font-size:1.1rem;margin-bottom:8px;">Need an Extra Session?</h3>
+                <h3 style="font-size:1.1rem;margin-bottom:8px;">Extra Sessions</h3>
                 <% if (subscription.rate_total && subscription.sessions_per_month) { %>
                 <%
                     var perSession = parseFloat(subscription.rate_total) / subscription.sessions_per_month;
@@ -87,7 +87,17 @@
                     var extraBase = extraRate * 100;
                     var extraFee = Math.round(extraBase * 0.029) + 30;
                     var extraTotal = ((extraBase + extraFee) / 100).toFixed(2);
+                    var credits = parseInt(subscription.extra_session_credits) || 0;
                 %>
+
+                <% if (credits > 0) { %>
+                <div style="padding:12px 16px;background:#D1FAE5;border-radius:8px;margin-bottom:16px;">
+                    <p style="color:var(--green-600);font-weight:700;">You have <strong><%= credits %></strong> extra session credit<%= credits > 1 ? 's' : '' %>. You can book beyond your plan limit.</p>
+                </div>
+                <% } else { %>
+                <p style="color:var(--gray-500);margin-bottom:12px;">No extra session credits. Purchase one to book beyond your <%= subscription.sessions_per_month %>-session plan.</p>
+                <% } %>
+
                 <p style="color:var(--gray-500);margin-bottom:16px;">
                     Extra session rate: <strong>$<%= extraRate.toFixed(2) %></strong> per session.
                 </p>
