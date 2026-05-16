@@ -347,7 +347,7 @@ router.get('/owner/students', isAuthenticated, isOwner, async (req, res) => {
             AND subject != 'Assigned by Admin'
             GROUP BY student_id
         `);
-        const subs = await pool.query("SELECT parent_id, plan_name, sessions_per_month, rate_total, status FROM subscriptions WHERE status = 'active'");
+        const subs = await pool.query("SELECT * FROM subscriptions WHERE status = 'active'");
 
         // Build lookup maps
         const countMap = {};
