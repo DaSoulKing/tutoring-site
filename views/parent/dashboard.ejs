@@ -9,8 +9,7 @@
                 <li><a href="/parent/messages">&#x1F4AC; Messages <% if (unreadCount > 0) { %><span class="badge message-badge"><%= unreadCount %></span><% } %></a></li>
                 <li><a href="/parent/contact">&#x1F4E7; Contact/Inquiries</a></li>
                 <li><a href="/tutors">&#x1F50D; Find Tutors</a></li>
-                <li><a href="/checkout">&#x1F4B3; Plans &amp; Pricing</a></li>
-                <li><a href="/payment/pay">&#x1F4B0; Make Payment</a></li>
+                                <li><a href="/payment/pay">&#x1F4B0; Make Payment</a></li>
             </ul>
         </aside>
         <div class="dashboard-main">
@@ -41,7 +40,7 @@
                     </div>
                 </div>
             </div>
-            <p style="text-align:right;margin-top:4px;"><a href="#" id="cancel-subscription-btn" style="font-size:0.7rem;color:var(--gray-400);text-decoration:none;">Need to cancel?</a></p>
+            
             <% } %>
 
             <!-- Assigned Tutors -->
@@ -110,20 +109,7 @@
             <% } %>
 
             <!-- Cancel Modal -->
-            <div id="cancel-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
-                <div class="card" style="max-width:440px;padding:32px;">
-                    <h3 style="margin-bottom:16px;">Cancel Subscription</h3>
-                    <p style="color:var(--gray-500);margin-bottom:20px;">Cancellation takes effect at the end of your current billing cycle.</p>
-                    <form action="/parent/cancel-subscription" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                        <div class="form-group"><label for="cancel_reason">Why are you cancelling?</label><textarea id="cancel_reason" name="cancel_reason" class="form-control"></textarea></div>
-                        <div style="display:flex;gap:12px;">
-                            <button type="submit" class="btn btn-danger">Confirm</button>
-                            <button type="button" id="cancel-modal-close" class="btn btn-outline">Keep Plan</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+            
     </div>
 </main>
 <%- include('../partials/footer') %>
