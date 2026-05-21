@@ -25,8 +25,9 @@ app.use(helmet({
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "https:"],
-            frameSrc: ["https://www.google.com", "https://meet.jit.si", "https://8x8.vc"],
-            connectSrc: ["'self'", "https://meet.jit.si", "https://api.resend.com"],
+            frameSrc: ["https://www.google.com", "https://meet.jit.si", "https://8x8.vc", "https://checkout.stripe.com", "https://js.stripe.com"],
+            connectSrc: ["'self'", "https://meet.jit.si", "https://api.resend.com", "https://api.stripe.com"],
+            formAction: ["'self'", "https://checkout.stripe.com"],
         },
     },
     frameguard: { action: 'deny' },
@@ -52,6 +53,9 @@ app.use(rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 }));
+
+// Stripe webhook needs raw body for signature verification - must be before JSON parser
+app.use('/payment/webhook', express.raw({ type: 'application/json' }));
 
 // Body parsing with size limits to prevent abuse
 app.use(express.json({ limit: '1mb' }));
@@ -100,11 +104,23 @@ app.use(csrfInject);
 app.use(csrfProtect);
 
 // Globals for views
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
     res.locals.user = req.session.user || null;
+    // Pass payment status for nav alert - only flag if they have an active plan
+    if (req.session.user && req.session.user.id && req.session.user.role !== 'owner' && req.session.user.role !== 'tutor') {
+        try {
+            const ps = await pool.query('SELECT payment_status FROM users WHERE id = $1', [req.session.user.id]);
+            const hasSub = await pool.query("SELECT id FROM subscriptions WHERE parent_id = $1 AND status = 'active' LIMIT 1", [req.session.user.id]);
+            const status = (ps.rows[0] && hasSub.rows.length > 0) ? ps.rows[0].payment_status : null;
+            res.locals.paymentStatus = status;
+            if (status && status !== 'paid') console.log('PAYMENT BAR:', req.session.user.id, 'ps:', ps.rows[0]?.payment_status, 'hasSub:', hasSub.rows.length, 'showing:', status);
+        } catch(e) { console.error('Payment middleware error:', e.message); res.locals.paymentStatus = null; }
+    } else {
+        res.locals.paymentStatus = null;
+    }
     res.locals.currentPath = req.path;
     res.locals.siteName = process.env.SITE_NAME || 'BrightMinds Tutoring';
-    res.locals.siteUrl = process.env.SITE_URL || `http://localhost:${PORT}`;
+    res.locals.siteUrl = (process.env.SITE_URL || `http://localhost:${PORT}`).replace(/\/+$/, '');
     res.locals.recaptchaSiteKey = process.env.RECAPTCHA_SITE_KEY || '';
     res.locals.charityName = process.env.CHARITY_NAME || 'Kids Education Fund';
     res.locals.success = req.session.success; delete req.session.success;
@@ -121,6 +137,7 @@ app.use('/admin', require('./routes/admin'));
 app.use('/parent', require('./routes/parent'));
 app.use('/api', require('./routes/api'));
 app.use('/blog', require('./routes/blog'));
+app.use('/payment', require('./routes/payment'));
 
 // 404
 app.use((req, res) => {

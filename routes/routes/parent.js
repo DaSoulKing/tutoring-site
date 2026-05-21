@@ -31,11 +31,15 @@ router.get('/dashboard', isAuthenticated, isParent, async (req, res) => {
             WHERE (b.student_id = $1 OR b.parent_id = $1) AND b.status IN ('pending','confirmed','completed')
         `, [userId]);
 
+        const payInfo = await pool.query('SELECT payment_status FROM users WHERE id = $1', [userId]);
+
         res.render('parent/dashboard', {
-            title: 'My Dashboard - BrightMinds', bookings: bookings.rows,
+            title: 'My Dashboard', bookings: bookings.rows,
             subscription: subscription.rows[0] || null,
             unreadCount: parseInt(unread.rows[0].count),
-            reportCards: reportCards.rows, assignedTutors: assignedTutors.rows, meta: {}
+            reportCards: reportCards.rows, assignedTutors: assignedTutors.rows,
+            paymentStatus: payInfo.rows[0] ? payInfo.rows[0].payment_status : 'unpaid',
+            meta: {}
         });
     } catch (err) { console.error(err); req.session.error = 'Failed to load dashboard.'; res.redirect('/'); }
 });
@@ -63,15 +67,37 @@ router.get('/calendar', isAuthenticated, isParent, async (req, res) => {
 // Messages
 router.get('/messages', isAuthenticated, async (req, res) => {
     try {
-        const conversations = await pool.query(`
-            SELECT DISTINCT ON (other_id) * FROM (
-                SELECT m.*, CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END as other_id,
-                    u.first_name, u.last_name, u.role, u.profile_picture
-                FROM messages m JOIN users u ON u.id = CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END
-                WHERE m.sender_id = $1 OR m.receiver_id = $1 ORDER BY other_id, m.created_at DESC
-            ) sub ORDER BY other_id, created_at DESC
-        `, [req.session.user.id]);
-        res.render('parent/messages', { title: 'Messages', conversations: conversations.rows, activeConversation: null, messages: [], meta: {} });
+        const userId = req.session.user.id;
+        const role = req.session.user.role;
+        let contactQuery;
+        if (role === 'owner') {
+            // Owner sees everyone
+            contactQuery = await pool.query(`
+                SELECT id as other_id, first_name, last_name, role, profile_picture, 'Click to message' as last_msg, created_at as last_time
+                FROM users WHERE id != $1 AND is_active = true ORDER BY first_name
+            `, [userId]);
+        } else {
+            // Students/tutors see: people they've messaged, their assigned tutors/students, ALL tutors, ALL owners
+            contactQuery = await pool.query(`
+                SELECT DISTINCT ON (other_id) other_id, first_name, last_name, role, profile_picture, last_msg, last_time FROM (
+                    SELECT CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END as other_id,
+                        u.first_name, u.last_name, u.role, u.profile_picture, m.body as last_msg, m.created_at as last_time
+                    FROM messages m JOIN users u ON u.id = CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END
+                    WHERE m.sender_id = $1 OR m.receiver_id = $1
+                    UNION ALL
+                    SELECT u.id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Click to message' as last_msg, u.created_at as last_time
+                    FROM users u WHERE u.role = 'tutor' AND u.is_active = true AND u.id != $1
+                    UNION ALL
+                    SELECT u.id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Founder' as last_msg, u.created_at as last_time
+                    FROM users u WHERE u.role = 'owner' AND u.id != $1
+                    UNION ALL
+                    SELECT DISTINCT b.student_id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Your student' as last_msg, b.created_at as last_time
+                    FROM bookings b JOIN users u ON b.student_id = u.id
+                    WHERE b.tutor_id = $1 AND b.student_id != $1
+                ) sub ORDER BY other_id, last_time DESC
+            `, [userId]);
+        }
+        res.render('parent/messages', { title: 'Messages', conversations: contactQuery.rows, activeConversation: null, messages: [], meta: {} });
     } catch (err) { console.error(err); res.redirect('/parent/dashboard'); }
 });
 
@@ -93,7 +119,7 @@ router.get('/messages/:userId', isAuthenticated, async (req, res) => {
             ) sub ORDER BY other_id, created_at DESC
         `, [req.session.user.id]);
         res.render('parent/messages', {
-            title: `Chat - BrightMinds`, conversations: conversations.rows,
+            title: `Chat - BrainBridge`, conversations: conversations.rows,
             activeConversation: otherUser.rows[0] || null, messages: messages.rows, meta: {}
         });
     } catch (err) { console.error(err); res.redirect('/parent/messages'); }
@@ -220,6 +246,50 @@ router.post('/book/:tutorId', isAuthenticated, async (req, res) => {
             return res.redirect('/parent/book/' + tutorId);
         }
 
+        // Block bookings in the past
+        const bookingDateTime = new Date(booking_date + 'T' + start_time);
+        if (bookingDateTime < new Date()) {
+            req.session.error = 'Cannot book a session in the past. Please select a future date and time.';
+            return res.redirect('/parent/book/' + tutorId);
+        }
+
+        // Check plan limits and payment status
+        const sub = await pool.query("SELECT sessions_per_month, extra_session_credits FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
+        const sessionCount = await pool.query("SELECT COUNT(*) FROM bookings WHERE student_id = $1 AND booking_date >= date_trunc('month', CURRENT_DATE) AND booking_date < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month' AND status IN ('pending','confirmed') AND subject != 'Assigned by Admin'", [req.session.user.id]);
+        const used = parseInt(sessionCount.rows[0].count);
+        const allowed = sub.rows[0] ? sub.rows[0].sessions_per_month : 0;
+        const credits = sub.rows[0] ? (parseInt(sub.rows[0].extra_session_credits) || 0) : 0;
+        const payCheck = await pool.query('SELECT payment_status FROM users WHERE id = $1', [req.session.user.id]);
+        const isPaid = payCheck.rows[0] && payCheck.rows[0].payment_status === 'paid';
+
+        console.log('BOOKING CHECK: user', req.session.user.id, 'used:', used, 'allowed:', allowed, 'credits:', credits, 'isPaid:', isPaid);
+
+        // Block completely if unpaid and has a plan (must pay before any bookings)
+        if (!isPaid && sub.rows[0]) {
+            req.session.error = 'Please make your payment before booking sessions.';
+            return res.redirect('/payment/pay');
+        }
+
+        // Block if over plan limit and no extra credits
+        if (sub.rows[0] && used >= allowed) {
+            if (credits > 0) {
+                // Will deduct credit after successful booking below
+            } else {
+                req.session.error = 'You have used all ' + allowed + ' sessions this month. Purchase an extra session credit to book more.';
+                return res.redirect('/payment/pay');
+            }
+        }
+
+        // Check group session limit - max 4 students per tutor per time block
+        const concurrentBookings = await pool.query(
+            "SELECT COUNT(*) FROM bookings WHERE tutor_id = $1 AND booking_date = $2 AND start_time = $3 AND status IN ('pending','confirmed')",
+            [tutorId, booking_date, start_time]
+        );
+        if (parseInt(concurrentBookings.rows[0].count) >= 4) {
+            req.session.error = 'This tutor already has 4 students booked for this time slot. Please choose a different time.';
+            return res.redirect('/parent/book/' + tutorId);
+        }
+
         // Check for conflicts
         const conflict = await pool.query(`
             SELECT id FROM bookings WHERE tutor_id = $1 AND booking_date = $2
@@ -239,6 +309,30 @@ router.post('/book/:tutorId', isAuthenticated, async (req, res) => {
             INSERT INTO bookings (tutor_id, student_id, parent_id, booking_date, start_time, end_time, subject, meeting_room_id, status)
             VALUES ($1, $2, $2, $3, $4, $5, $6, $7, 'pending')
         `, [tutorId, req.session.user.id, booking_date, start_time, end_time, subject || 'General', roomId]);
+
+        // Deduct extra session credit if booking was over plan limit
+        if (sub.rows[0] && used >= allowed && credits > 0) {
+            await pool.query("UPDATE subscriptions SET extra_session_credits = extra_session_credits - 1 WHERE parent_id = $1 AND status = 'active'", [req.session.user.id]);
+            console.log('Extra credit used for user', req.session.user.id, 'remaining:', credits - 1);
+        }
+
+        // Notify tutor and admin via email
+        try {
+            const { sendEmail } = require('../utils/email');
+            const tutorInfo = await pool.query('SELECT email, first_name FROM users WHERE id = $1', [tutorId]);
+            const studentInfo = await pool.query('SELECT first_name, last_name FROM users WHERE id = $1', [req.session.user.id]);
+            const studentName = studentInfo.rows[0] ? (studentInfo.rows[0].first_name + ' ' + studentInfo.rows[0].last_name) : 'A student';
+            const dateStr = new Date(booking_date).toLocaleDateString();
+
+            // Email tutor
+            if (tutorInfo.rows[0]) {
+                await sendEmail(tutorInfo.rows[0].email, 'New Session Request', '<h2>New Session Request</h2><p>' + studentName + ' has requested a session with you on ' + dateStr + ' from ' + start_time + ' to ' + end_time + '.</p><p>Please log in to confirm or decline.</p>');
+            }
+            // Email admin
+            if (process.env.OWNER_EMAIL) {
+                await sendEmail(process.env.OWNER_EMAIL, 'New Booking Alert', '<h2>New Booking</h2><p>' + studentName + ' booked a session with ' + (tutorInfo.rows[0] ? tutorInfo.rows[0].first_name : 'a tutor') + ' on ' + dateStr + ' (' + start_time + '-' + end_time + ').</p>');
+            }
+        } catch(emailErr) { console.error('Booking notification email error:', emailErr.message); }
 
         req.session.success = 'Session requested! The tutor will confirm shortly.';
         res.redirect('/parent/dashboard');

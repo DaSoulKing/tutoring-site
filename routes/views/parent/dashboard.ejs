@@ -3,17 +3,29 @@
 <main id="main-content">
     <div class="dashboard-grid">
         <aside class="dashboard-sidebar">
-            <ul class="sidebar-menu">
+                        <ul class="sidebar-menu">
                 <li><a href="/parent/dashboard" class="active">&#x1F3E0; Dashboard</a></li>
                 <li><a href="/parent/calendar">&#x1F4C5; Calendar &amp; Book</a></li>
                 <li><a href="/parent/messages">&#x1F4AC; Messages <% if (unreadCount > 0) { %><span class="badge message-badge"><%= unreadCount %></span><% } %></a></li>
                 <li><a href="/parent/contact">&#x1F4E7; Contact/Inquiries</a></li>
                 <li><a href="/tutors">&#x1F50D; Find Tutors</a></li>
-                <li><a href="/checkout">&#x1F4B3; Plans & Pricing</a></li>
+                                <li><a href="/payment/pay">&#x1F4B0; Make Payment</a></li>
             </ul>
         </aside>
         <div class="dashboard-main">
             <div class="dashboard-welcome"><h1>Welcome, <%= user.firstName %>!</h1><p>Here is your learning dashboard.</p></div>
+
+            <% if (user.verified === false) { %>
+            <div class="alert alert-warning" style="margin-bottom:24px;">
+                <strong>Account pending approval.</strong> An admin will review and activate your account shortly. You can explore your dashboard in the meantime.
+            </div>
+            <% } %>
+
+            <% if (typeof paymentStatus !== 'undefined' && paymentStatus !== 'paid' && subscription) { %>
+            <div class="alert alert-warning" style="margin-bottom:24px;border-left:4px solid var(--red-500);">
+                <strong>Payment due.</strong> Your monthly payment is outstanding. <a href="/payment/pay" style="font-weight:700;">Make a payment</a> to continue booking sessions.
+            </div>
+            <% } %>
 
             <!-- Subscription -->
             <% if (subscription) { %>
@@ -25,10 +37,10 @@
                     </div>
                     <div style="display:flex;gap:8px;">
                         <span class="badge-status badge-active">Active</span>
-                        <button id="cancel-subscription-btn" class="btn btn-sm" style="background:var(--gray-100);color:var(--gray-600);font-size:0.8rem;">Cancel</button>
                     </div>
                 </div>
             </div>
+            
             <% } %>
 
             <!-- Assigned Tutors -->
@@ -62,7 +74,7 @@
                 <div class="card" style="margin-bottom:12px;padding:20px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
                         <div style="display:flex;align-items:center;gap:12px;">
-                            <div style="width:48px;height:48px;border-radius:50%;background:var(--blue-100);display:flex;align-items:center;justify-content:center;font-size:1.2rem;" aria-hidden="true">&#x1F468;&#x200D;&#x1F3EB;</div>
+                            <div style="width:48px;height:48px;border-radius:50%;background:var(--blue-100);display:flex;align-items:center;justify-content:center;font-size:1.2rem;" aria-hidden="true"></div>
                             <div><h4 style="font-size:1rem;"><%= b.tutor_first %> <%= b.tutor_last %></h4><p style="color:var(--gray-500);font-size:0.85rem;"><%= b.subject || 'General Session' %></p></div>
                         </div>
                         <div style="text-align:right;">
@@ -97,20 +109,7 @@
             <% } %>
 
             <!-- Cancel Modal -->
-            <div id="cancel-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
-                <div class="card" style="max-width:440px;padding:32px;">
-                    <h3 style="margin-bottom:16px;">Cancel Subscription</h3>
-                    <p style="color:var(--gray-500);margin-bottom:20px;">Cancellation takes effect at the end of your current billing cycle.</p>
-                    <form action="/parent/cancel-subscription" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                        <div class="form-group"><label for="cancel_reason">Why are you cancelling?</label><textarea id="cancel_reason" name="cancel_reason" class="form-control"></textarea></div>
-                        <div style="display:flex;gap:12px;">
-                            <button type="submit" class="btn btn-danger">Confirm</button>
-                            <button type="button" id="cancel-modal-close" class="btn btn-outline">Keep Plan</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+            
     </div>
 </main>
 <%- include('../partials/footer') %>

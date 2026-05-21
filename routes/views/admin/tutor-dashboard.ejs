@@ -6,7 +6,7 @@
 <main id="main-content">
     <div class="dashboard-grid">
         <aside class="dashboard-sidebar">
-            <ul class="sidebar-menu">
+                        <ul class="sidebar-menu">
                 <li><a href="/admin/tutor" class="active">&#x1F3E0; Dashboard</a></li>
                 <li><a href="/admin/tutor/calendar">&#x1F4C5; My Calendar</a></li>
                 <li><a href="/parent/messages">&#x1F4AC; Messages <% if (unreadCount > 0) { %><span class="badge message-badge"><%= unreadCount %></span><% } %></a></li>
@@ -26,15 +26,35 @@
                 <div class="card" style="margin-bottom:12px;padding:20px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
                         <div><h4><%= s.student_first %> <%= s.student_last %></h4><p style="color:var(--gray-500);font-size:0.85rem;"><%= s.subject || 'General' %> &middot; <%= new Date(s.booking_date).toLocaleDateString() %> &middot; <%= s.start_time ? s.start_time.substring(0,5) : '' %> - <%= s.end_time ? s.end_time.substring(0,5) : '' %></p></div>
-                        <div style="display:flex;gap:8px;align-items:center;">
+                        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                             <span class="badge-status badge-<%= s.status %>"><%= s.status %></span>
+                            <% if (s.attendance) { %><span class="badge-status badge-<%= s.attendance === 'present' ? 'confirmed' : 'cancelled' %>"><%= s.attendance %></span><% } %>
                             <% if (s.status === 'pending') { %>
                             <form action="/api/bookings/<%= s.id %>/confirm" method="POST" style="display:inline;"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;">Confirm</button></form>
                             <% } %>
                             <% if (s.status === 'confirmed') { %><a href="/parent/session/<%= s.id %>" class="btn btn-primary btn-sm">Join</a><% } %>
+                            <% if (s.status === 'confirmed') { %>
+                            <form action="/admin/tutor/bookings/<%= s.id %>/attendance" method="POST" style="display:inline;"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="attendance" value="present"><button type="submit" class="btn btn-sm" style="background:#D1FAE5;color:var(--green-600);font-size:0.75rem;"><%= s.attendance === 'present' ? '(Present)' : 'Present' %></button></form>
+                            <form action="/admin/tutor/bookings/<%= s.id %>/attendance" method="POST" style="display:inline;"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="attendance" value="absent"><button type="submit" class="btn btn-sm" style="background:#FEE2E2;color:var(--red-600);font-size:0.75rem;"><%= s.attendance === 'absent' ? '(Absent)' : 'Absent' %></button></form>
+                            <% } %>
+                            <% if (s.attendance) { %>
+                            <form action="/admin/tutor/bookings/<%= s.id %>/attendance" method="POST" style="display:inline;"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="attendance" value="reset"><button type="submit" class="btn btn-sm" style="background:var(--gray-100);color:var(--gray-500);font-size:0.7rem;">Undo</button></form>
+                            <% } %>
                             <a href="/admin/tutor/session-sheet/<%= s.id %>" class="btn btn-outline btn-sm">Sheet</a>
                         </div>
                     </div>
+                    <% if (s.status === 'confirmed' || s.status === 'pending') { %>
+                    <details style="margin-top:8px;">
+                        <summary style="cursor:pointer;font-size:0.8rem;color:var(--blue-600);font-weight:600;">Reschedule</summary>
+                        <form action="/admin/tutor/bookings/<%= s.id %>/reschedule" method="POST" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:8px;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <input type="date" name="new_date" class="form-control" style="width:auto;padding:4px 8px;font-size:0.85rem;" required>
+                            <input type="time" name="new_start" class="form-control" style="width:auto;padding:4px 8px;font-size:0.85rem;" required>
+                            <span style="color:var(--gray-400);font-size:0.85rem;">to</span>
+                            <input type="time" name="new_end" class="form-control" style="width:auto;padding:4px 8px;font-size:0.85rem;" required>
+                            <button type="submit" class="btn btn-sm btn-primary" style="font-size:0.8rem;">Confirm Reschedule</button>
+                        </form>
+                    </details>
+                    <% } %>
                 </div>
                 <% }); %>
             <% } else { %>
@@ -115,6 +135,33 @@ document.getElementById('tutor-profile-form').addEventListener('submit', functio
 // Wire save availability button
 document.getElementById('save-avail-btn').addEventListener('click', function() {
     if (typeof saveAvailability === 'function') saveAvailability();
+});
+</script>
+
+<!-- Student Homework -->
+<div style="padding:0 32px 32px;">
+    <h2 style="font-size:1.25rem;margin:24px 0 16px;">Student Homework</h2>
+    <div class="card" style="padding:20px;" id="tutor-hw">
+        <p style="color:var(--gray-400);">Loading homework...</p>
+    </div>
+</div>
+<script>
+fetch('/api/homework',{headers:{'Accept':'application/json'}})
+.then(function(r){return r.json()}).then(function(data){
+    var el=document.getElementById('tutor-hw');
+    if(!data.success||!data.homework.length){el.innerHTML='<p style="color:var(--gray-400);text-align:center;">No homework from your students yet.</p>';return;}
+    var html='';
+    data.homework.forEach(function(h){
+        var due=h.due_date?new Date(h.due_date).toLocaleDateString():'No due date';
+        var done=h.completed?'style="text-decoration:line-through;opacity:0.5;"':'';
+        html+='<div '+done+' style="padding:10px 0;border-bottom:1px solid var(--gray-100);display:flex;gap:12px;align-items:center;">';
+        html+='<div style="flex:1;"><strong>'+(h.first_name||'')+' '+(h.last_name||'')+'</strong> &middot; '+(h.subject||'General');
+        html+='<br><span style="color:var(--gray-600);">'+h.description+'</span>';
+        html+='<span style="font-size:0.75rem;color:var(--gray-400);margin-left:8px;">Due: '+due+'</span></div>';
+        html+='<span class="badge-status '+(h.completed?'badge-confirmed':'badge-pending')+'">'+(h.completed?'Done':'Pending')+'</span>';
+        html+='</div>';
+    });
+    el.innerHTML=html;
 });
 </script>
 

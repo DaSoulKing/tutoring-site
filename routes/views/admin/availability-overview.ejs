@@ -3,12 +3,16 @@
 <main id="main-content">
     <div class="dashboard-grid">
         <aside class="dashboard-sidebar">
-            <ul class="sidebar-menu">
+                        <ul class="sidebar-menu">
                 <li><a href="/admin/owner">&#x1F3E0; Dashboard</a></li>
                 <li><a href="/admin/owner/calendar">&#x1F4C5; Calendar</a></li>
-                <li><a href="/admin/owner/availability" class="active">&#x1F552; Availability</a></li>
+                <li><a href="/admin/owner/availability">&#x1F552; Availability</a></li>
+                <li><a href="/admin/owner/match"><li><a href="/admin/owner/tutors">#x1F4A1; Tutor Match</a></li>
                 <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Tutors</a></li>
                 <li><a href="/admin/owner/students">&#x1F393; Students</a></li>
+                <li><a href="/admin/owner/sheets">&#x1F4CB; Session Sheets</a></li>
+                <li><a href="/admin/owner/messages">&#x1F4AC; Messages</a></li>
+                <li><a href="/admin/owner/audit-log">&#x1F4DC; Audit Log</a></li>
                 <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
                 <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
                 <li><a href="/admin/owner/settings">&#x2699;&#xFE0F; Settings</a></li>
@@ -109,7 +113,7 @@
                 }
 
                 if (slotTutors.length > 0) {
-                    html += '<div style="padding:4px 6px;background:var(--blue-50);border-left:1px solid var(--gray-100);border-bottom:1px solid var(--gray-50);font-size:0.7rem;color:var(--blue-700);">' + slotTutors.join(', ') + '</div>';
+                    html += '<div style="padding:4px 6px;background:var(--blue-100);border-left:1px solid var(--gray-100);border-bottom:1px solid var(--gray-50);font-size:0.8rem;color:var(--blue-800);font-weight:600;">' + slotTutors.join(', ') + '</div>';
                 } else {
                     html += '<div style="padding:4px;border-left:1px solid var(--gray-100);border-bottom:1px solid var(--gray-50);"></div>';
                 }

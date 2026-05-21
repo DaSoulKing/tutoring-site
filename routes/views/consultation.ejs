@@ -7,7 +7,7 @@
             <div class="section-header">
                 <span class="section-badge">No Cost, No Obligation</span>
                 <h2>Book a Free Consultation</h2>
-                <p>Let us learn about your child's needs and show you how BrightMinds can help. It takes just 15 minutes.</p>
+                <p>Let us learn about your child's needs and show you how <%= siteName %> can help. It takes just 15 minutes.</p>
             </div>
 
             <div class="two-col-layout" style="display:grid;grid-template-columns:1fr 1fr;gap:48px;max-width:1000px;margin:0 auto;">
@@ -38,7 +38,13 @@
                             </div>
                             <div class="form-group">
                                 <label for="subjects">Subjects Needed <span class="required">*</span></label>
-                                <input type="text" id="subjects" name="subjects" class="form-control" required placeholder="Math, English...">
+                                <select id="subjects-select" class="form-control" multiple style="min-height:100px;">
+                                    <% ['Math','Algebra','Geometry','Calculus','Statistics','Science','Biology','Chemistry','Physics','English','Writing','Reading','Literature','History','Social Studies','Geography','French','Spanish','Mandarin','Computer Science','Coding','SAT Prep','ACT Prep','Test Strategy','Study Skills','Art','Music'].forEach(function(s) { %>
+                                    <option value="<%= s %>"><%= s %></option>
+                                    <% }); %>
+                                </select>
+                                <input type="hidden" name="subjects" id="subjects-hidden" value="">
+                                <p style="font-size:0.75rem;color:var(--gray-400);margin-top:4px;">Hold Ctrl/Cmd for multiple</p>
                             </div>
                         </div>
                         <div class="form-group">
@@ -64,21 +70,36 @@
                 <div>
                     <div class="card" style="background:var(--blue-50);border:2px solid var(--blue-200);padding:32px;margin-bottom:24px;">
                         <h3 style="font-size:1.2rem;margin-bottom:16px;">What to Expect</h3>
-                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;">&#x2705; A friendly 15-minute call with our team</p>
-                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;">&#x2705; Discussion of your child's academic needs</p>
-                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;">&#x2705; Personalized tutor recommendations</p>
-                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;">&#x2705; Overview of our programs and pricing</p>
-                        <p style="color:var(--gray-600);line-height:1.8;">&#x2705; No pressure, no commitment</p>
+                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;"> A free one-hour consultation with our founders</p>
+                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;"> Discussion of your child's academic needs</p>
+                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;"> Personalized tutor recommendations</p>
+                        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:12px;"> Overview of our programs and pricing</p>
+                        <p style="color:var(--gray-600);line-height:1.8;"> No pressure, no commitment</p>
                     </div>
                     <div class="card" style="text-align:center;padding:32px;">
                         <p style="font-size:3rem;margin-bottom:8px;" aria-hidden="true">&#x1F4DE;</p>
                         <h3 style="font-size:1.1rem;">Prefer to call directly?</h3>
-                        <p style="color:var(--gray-500);margin-top:8px;">(555) 123-MIND</p>
+                        <h3 style="font-size:1.1rem;">Prefer to call directly?</h3>
+                        <p style="color:var(--gray-500);margin-top:8px;"><%= process.env.BUSINESS_PHONE || 'Contact us for our phone number' %></p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 </main>
+
+<script>
+document.querySelector('form[data-validate]').addEventListener('submit', function() {
+    var sel = document.getElementById('subjects-select');
+    var hidden = document.getElementById('subjects-hidden');
+    if (sel && hidden) {
+        var selected = [];
+        for (var i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].selected) selected.push(sel.options[i].value);
+        }
+        hidden.value = selected.join(', ');
+    }
+});
+</script>
 
 <%- include('partials/footer') %>

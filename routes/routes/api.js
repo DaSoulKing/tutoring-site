@@ -92,7 +92,7 @@ router.post('/bookings/:id/cancel', isAuthenticated, bookingLimiter, async (req,
 router.post('/bookings/:id/confirm', isAuthenticated, bookingLimiter, async (req, res) => {
     try {
         await pool.query("UPDATE bookings SET status = 'confirmed' WHERE id = $1 AND tutor_id = $2", [req.params.id, req.session.user.id]);
-        // Support both AJAX and form submission
+        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'booking_confirmed', 'Booking #' + req.params.id]); } catch(e) {}
         if (req.headers.accept && req.headers.accept.includes('application/json')) {
             return res.json({ success: true });
         }
@@ -127,13 +127,101 @@ router.post('/messages', isAuthenticated, messageLimiter, async (req, res) => {
         `, [senderId, receiverId]);
         if (rel.rows.length === 0) return res.status(403).json({ success: false, message: 'Not authorized to message this user.' });
 
-        const safeBody = (body || '').trim().substring(0, 5000);
-        if (!safeBody) return res.status(400).json({ success: false, message: 'Message cannot be empty.' });
+        const safeBody = (body || '').trim().substring(0, 5000)
+            .replace(/[\u{1F600}-\u{1F64F}]/gu, '')  // emoticons
+            .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')  // misc symbols
+            .replace(/[\u{1F680}-\u{1F6FF}]/gu, '')  // transport
+            .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '')  // flags
+            .replace(/[\u{2600}-\u{26FF}]/gu, '')     // misc symbols
+            .replace(/[\u{2700}-\u{27BF}]/gu, '')     // dingbats
+            .replace(/[\u{FE00}-\u{FE0F}]/gu, '')     // variation selectors
+            .replace(/[\u{1F900}-\u{1F9FF}]/gu, '')   // supplemental
+            .replace(/[\u{1FA00}-\u{1FA6F}]/gu, '')   // chess symbols
+            .replace(/[\u{1FA70}-\u{1FAFF}]/gu, '')   // symbols extended
+            .replace(/[\u{200D}]/gu, '')               // zero width joiner
+            .replace(/\s{2,}/g, ' ')                   // collapse double spaces from removed emojis
+            .trim();
+        if (!safeBody) return res.status(400).json({ success: false, message: 'Message cannot be empty (emojis are not allowed).' });
 
         const result = await pool.query(`INSERT INTO messages (sender_id, receiver_id, body, message_type) VALUES ($1,$2,$3,$4) RETURNING *`,
             [senderId, receiverId, safeBody, message_type || 'general']);
         res.json({ success: true, message: result.rows[0] });
     } catch (err) { console.error(err); res.status(500).json({ success: false }); }
+});
+
+// Fetch conversation messages (for polling)
+router.get('/messages/conversation/:userId', isAuthenticated, async (req, res) => {
+    try {
+        const myId = req.session.user.id;
+        const otherId = parseInt(req.params.userId, 10);
+        if (isNaN(otherId)) return res.status(400).json([]);
+        const messages = await pool.query(
+            `SELECT * FROM messages WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1) ORDER BY created_at ASC`,
+            [myId, otherId]
+        );
+        // Mark as read
+        await pool.query('UPDATE messages SET is_read = true WHERE receiver_id = $1 AND sender_id = $2 AND is_read = false', [myId, otherId]);
+        res.json(messages.rows);
+    } catch (err) { console.error(err); res.json([]); }
+});
+
+// === HOMEWORK ===
+// Get tutor's recurring time slots with student counts
+router.get('/tutor-slots/:tutorId', isAuthenticated, async (req, res) => {
+    try {
+        const slots = await pool.query(`
+            SELECT EXTRACT(DOW FROM booking_date)::int as day, start_time, end_time, subject,
+                COUNT(DISTINCT student_id) as student_count,
+                STRING_AGG(DISTINCT (u.first_name || ' ' || u.last_name), ', ') as student_names
+            FROM bookings b JOIN users u ON b.student_id = u.id
+            WHERE b.tutor_id = $1 AND b.status IN ('pending','confirmed')
+                AND b.booking_date >= CURRENT_DATE AND b.subject != 'Assigned by Admin'
+            GROUP BY EXTRACT(DOW FROM booking_date), start_time, end_time, subject
+            ORDER BY day, start_time
+        `, [req.params.tutorId]);
+        res.json({ success: true, slots: slots.rows });
+    } catch (err) { res.json({ success: false, message: err.message }); }
+});
+
+// === HOMEWORK ===
+// Get homework for a student (student sees own, tutor sees their students')
+router.get('/homework', isAuthenticated, async (req, res) => {
+    try {
+        let homework;
+        if (req.session.user.role === 'tutor' || req.session.user.role === 'owner') {
+            homework = await pool.query(`SELECT h.*, u.first_name, u.last_name FROM homework h JOIN users u ON h.student_id = u.id WHERE h.tutor_id = $1 OR $2 = 'owner' ORDER BY h.due_date ASC, h.created_at DESC`, [req.session.user.id, req.session.user.role]);
+        } else {
+            homework = await pool.query('SELECT * FROM homework WHERE student_id = $1 ORDER BY due_date ASC, created_at DESC', [req.session.user.id]);
+        }
+        res.json({ success: true, homework: homework.rows });
+    } catch (err) { res.json({ success: false, message: err.message }); }
+});
+
+// Add homework (student adds for themselves)
+router.post('/homework', isAuthenticated, async (req, res) => {
+    try {
+        const { subject, description, due_date, tutor_id } = req.body;
+        if (!description || !description.trim()) return res.json({ success: false, message: 'Description required.' });
+        await pool.query('INSERT INTO homework (student_id, tutor_id, subject, description, due_date) VALUES ($1, $2, $3, $4, $5)',
+            [req.session.user.id, tutor_id || null, (subject || '').trim().substring(0, 200), description.trim().substring(0, 2000), due_date || null]);
+        res.json({ success: true });
+    } catch (err) { res.json({ success: false, message: err.message }); }
+});
+
+// Toggle homework completed
+router.post('/homework/:id/toggle', isAuthenticated, async (req, res) => {
+    try {
+        await pool.query('UPDATE homework SET completed = NOT completed WHERE id = $1 AND student_id = $2', [req.params.id, req.session.user.id]);
+        res.json({ success: true });
+    } catch (err) { res.json({ success: false, message: err.message }); }
+});
+
+// Delete homework
+router.post('/homework/:id/delete', isAuthenticated, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM homework WHERE id = $1 AND student_id = $2', [req.params.id, req.session.user.id]);
+        res.json({ success: true });
+    } catch (err) { res.json({ success: false, message: err.message }); }
 });
 
 module.exports = router;

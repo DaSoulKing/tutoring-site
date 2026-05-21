@@ -32,7 +32,7 @@
             <% if (notes && notes.length > 0) { %>
                 <% notes.forEach(note => { %>
                 <div class="note-card <%= note.is_pinned ? 'pinned' : '' %>">
-                    <% if (note.is_pinned) { %><span style="font-size:0.75rem;color:var(--blue-500);font-weight:700;">&#x1F4CC; PINNED</span><% } %>
+                    <% if (note.is_pinned) { %><span style="font-size:0.75rem;color:var(--blue-500);font-weight:700;">PINNED</span><% } %>
                     <p style="color:var(--gray-700);line-height:1.7;margin-top:4px;"><%= note.content %></p>
                     <div class="note-meta">
                         By <%= note.author_first %> <%= note.author_last %> &middot; <%= new Date(note.created_at).toLocaleDateString() %> at <%= new Date(note.created_at).toLocaleTimeString() %>

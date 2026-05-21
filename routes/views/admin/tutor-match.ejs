@@ -1,0 +1,95 @@
+<%- include('../partials/header') %>
+<%- include('../partials/nav') %>
+<main id="main-content">
+    <div class="dashboard-grid">
+        <aside class="dashboard-sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="/admin/owner">&#x1F3E0; Dashboard</a></li>
+                <li><a href="/admin/owner/calendar">&#x1F4C5; Calendar</a></li>
+                <li><a href="/admin/owner/availability">&#x1F552; Availability</a></li>
+                <li><a href="/admin/owner/match" class="active">&#x1F4A1; Tutor Match</a></li>
+                <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Tutors</a></li>
+                <li><a href="/admin/owner/students">&#x1F393; Students</a></li>
+                <li><a href="/admin/owner/sheets">&#x1F4CB; Session Sheets</a></li>
+                <li><a href="/admin/owner/messages">&#x1F4AC; Messages</a></li>
+                <li><a href="/admin/owner/audit-log">&#x1F4DC; Audit Log</a></li>
+                <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
+                <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
+                <li><a href="/admin/owner/settings">&#x2699;&#xFE0F; Settings</a></li>
+                <li><a href="/admin/owner/profile">&#x1F464; My Profile</a></li>
+            </ul>
+        </aside>
+        <div class="dashboard-main">
+            <h1 style="font-size:1.5rem;margin-bottom:8px;">Tutor Matching Tool</h1>
+            <p style="color:var(--gray-500);margin-bottom:24px;">Find the right tutor based on availability, subject, and current load.</p>
+
+            <div class="card" style="padding:24px;margin-bottom:24px;">
+                <form style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group" style="margin:0;min-width:120px;">
+                        <label>Day</label>
+                        <select name="day" class="form-control">
+                            <option value="">Any day</option>
+                            <option value="0" <%= query.day === '0' ? 'selected' : '' %>>Sunday</option>
+                            <option value="1" <%= query.day === '1' ? 'selected' : '' %>>Monday</option>
+                            <option value="2" <%= query.day === '2' ? 'selected' : '' %>>Tuesday</option>
+                            <option value="3" <%= query.day === '3' ? 'selected' : '' %>>Wednesday</option>
+                            <option value="4" <%= query.day === '4' ? 'selected' : '' %>>Thursday</option>
+                            <option value="5" <%= query.day === '5' ? 'selected' : '' %>>Friday</option>
+                            <option value="6" <%= query.day === '6' ? 'selected' : '' %>>Saturday</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0;min-width:120px;">
+                        <label>Start Time</label>
+                        <input type="time" name="start_time" class="form-control" value="<%= query.start_time || '' %>">
+                    </div>
+                    <div class="form-group" style="margin:0;min-width:150px;">
+                        <label>Subject</label>
+                        <input type="text" name="subject" class="form-control" placeholder="e.g. Math" value="<%= query.subject || '' %>">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Find Matches</button>
+                    <% if (query.day || query.start_time || query.subject) { %><a href="/admin/owner/match" class="btn btn-outline btn-sm">Clear</a><% } %>
+                </form>
+            </div>
+
+            <% if (matches && matches.length > 0) { %>
+            <h3 style="margin-bottom:16px;"><%= matches.length %> tutor<%= matches.length > 1 ? 's' : '' %> available</h3>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+                <% matches.forEach(function(m) { %>
+                <div class="card" style="padding:20px;">
+                    <h4><%= m.first_name %> <%= m.last_name %></h4>
+                    <p style="color:var(--gray-500);font-size:0.85rem;margin-bottom:8px;">
+                        <%= (m.subjects || []).join(', ') %>
+                        <% if (m.grade_levels) { %> &middot; Grades: <%= m.grade_levels %><% } %>
+                        <% if (m.hourly_rate) { %> &middot; $<%= m.hourly_rate %>/hr<% } %>
+                    </p>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                        <span style="padding:4px 10px;border-radius:12px;font-size:0.8rem;font-weight:700;<%= m.booked_count >= 4 ? 'background:#FEE2E2;color:var(--red-600);' : m.booked_count >= 3 ? 'background:var(--yellow-100);color:var(--yellow-700);' : 'background:#D1FAE5;color:var(--green-600);' %>"><%= m.booked_count %>/4 students</span>
+                        <% if (m.booked_count >= 4) { %><span style="font-size:0.75rem;color:var(--red-500);font-weight:600;">FULL</span><% } %>
+                    </div>
+                    <% if (m.booked_count < 4) { %>
+                    <form action="/admin/owner/recurring" method="POST" style="display:flex;gap:6px;flex-wrap:wrap;align-items:end;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <input type="hidden" name="tutor_id" value="<%= m.id %>">
+                        <input type="hidden" name="day_of_week" value="<%= query.day %>">
+                        <input type="hidden" name="start_time" value="<%= query.start_time %>">
+                        <input type="hidden" name="end_time" value="<%= query.start_time ? (parseInt(query.start_time.split(':')[0]) + 1 + ':' + query.start_time.split(':')[1]) : '' %>">
+                        <select name="student_id" class="form-control" style="width:auto;padding:4px 8px;font-size:0.8rem;" required>
+                            <option value="">Student...</option>
+                            <% students.forEach(function(s) { %><option value="<%= s.id %>"><%= s.first_name %> <%= s.last_name %></option><% }); %>
+                        </select>
+                        <input type="text" name="subject" class="form-control" style="width:80px;padding:4px 8px;font-size:0.8rem;" value="<%= query.subject || '' %>" placeholder="Subject">
+                        <input type="number" name="weeks" class="form-control" style="width:60px;padding:4px 8px;font-size:0.8rem;" value="8" min="1" max="52">
+                        <button type="submit" class="btn btn-sm btn-primary" style="font-size:0.75rem;">Book</button>
+                    </form>
+                    <% } %>
+                </div>
+                <% }); %>
+            </div>
+            <% } else if (query.day || query.start_time) { %>
+            <div class="card" style="padding:32px;text-align:center;">
+                <p style="color:var(--gray-400);">No tutors available for this time and subject. Try different criteria.</p>
+            </div>
+            <% } %>
+        </div>
+    </div>
+</main>
+<%- include('../partials/footer') %>
