@@ -7,10 +7,11 @@
                 <li><a href="/admin/owner">&#x1F3E0; Dashboard</a></li>
                 <li><a href="/admin/owner/calendar">&#x1F4C5; Calendar</a></li>
                 <li><a href="/admin/owner/availability">&#x1F552; Availability</a></li>
+                <li><a href="/admin/owner/match"><li><a href="/admin/owner/tutors">#x1F4A1; Tutor Match</a></li>
                 <li><a href="/admin/owner/tutors">&#x1F468;&#x200D;&#x1F3EB; Tutors</a></li>
                 <li><a href="/admin/owner/students">&#x1F393; Students</a></li>
                 <li><a href="/admin/owner/sheets">&#x1F4CB; Session Sheets</a></li>
-                <li><a href="/admin/owner/messages">&#x1F4AC; Messages</a></li>
+                <li><a href="/parent/messages">&#x1F4AC; Messages</a></li>
                 <li><a href="/admin/owner/audit-log">&#x1F4DC; Audit Log</a></li>
                 <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
                 <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
@@ -91,6 +92,53 @@
             </div>
 
             <!-- Group Session -->
+            <div class="card" style="padding:24px;margin-bottom:24px;">
+                <h3 style="font-size:1.1rem;margin-bottom:12px;">Add Student to Existing Time Slot</h3>
+                <p style="color:var(--gray-500);font-size:0.85rem;margin-bottom:12px;">Pick a tutor to see their recurring slots and add more students (up to 4 per slot).</p>
+                <div style="display:flex;gap:12px;align-items:end;margin-bottom:16px;">
+                    <div class="form-group" style="margin:0;min-width:180px;">
+                        <label>Select Tutor</label>
+                        <select id="slot-tutor-select" class="form-control" onchange="loadSlots()">
+                            <option value="">Choose tutor...</option>
+                            <% tutors.forEach(function(t) { %><option value="<%= t.id %>"><%= t.first_name %> <%= t.last_name %></option><% }); %>
+                        </select>
+                    </div>
+                </div>
+                <div id="slot-list" style="color:var(--gray-400);font-size:0.9rem;"></div>
+            </div>
+
+            <script>
+            function loadSlots() {
+                var tid = document.getElementById('slot-tutor-select').value;
+                var el = document.getElementById('slot-list');
+                if (!tid) { el.innerHTML = ''; return; }
+                fetch('/api/tutor-slots/' + tid).then(function(r){return r.json()}).then(function(data) {
+                    if (!data.success || !data.slots.length) { el.innerHTML = '<p>No recurring slots found for this tutor.</p>'; return; }
+                    var html = '<div style="display:grid;gap:8px;">';
+                    data.slots.forEach(function(s) {
+                        var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+                        var full = s.student_count >= 4;
+                        html += '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-50);border-radius:8px;">';
+                        html += '<div style="flex:1;"><strong>' + days[s.day] + '</strong> ' + s.start_time + '-' + s.end_time + ' &middot; ' + s.subject;
+                        html += ' <span style="font-size:0.8rem;color:' + (full ? 'var(--red-500)' : 'var(--green-600)') + ';font-weight:700;">' + s.student_count + '/4 students</span>';
+                        html += '<br><span style="font-size:0.8rem;color:var(--gray-400);">' + s.student_names + '</span></div>';
+                        if (!full) {
+                            html += '<form action="/admin/owner/add-to-slot" method="POST" style="display:flex;gap:4px;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">';
+                            html += '<input type="hidden" name="tutor_id" value="' + tid + '"><input type="hidden" name="day" value="' + s.day + '"><input type="hidden" name="start_time" value="' + s.start_time + '"><input type="hidden" name="end_time" value="' + s.end_time + '"><input type="hidden" name="subject" value="' + s.subject + '">';
+                            html += '<select name="student_id" class="form-control" style="width:auto;padding:4px;font-size:0.8rem;" required>';
+                            html += '<option value="">Add student...</option>';
+                            <% students.forEach(function(st) { %>html += '<option value="<%= st.id %>"><%= st.first_name %> <%= st.last_name %></option>';<% }); %>
+                            html += '</select><button type="submit" class="btn btn-sm btn-primary" style="font-size:0.75rem;">Add</button></form>';
+                        }
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                    el.innerHTML = html;
+                });
+            }
+            </script>
+
+            <!-- Create New Group Session -->
             <div class="card" style="padding:24px;margin-bottom:24px;">
                 <h3 style="font-size:1.1rem;margin-bottom:12px;">Create Group Session (up to 6 students)</h3>
                 <p style="color:var(--gray-500);font-size:0.85rem;margin-bottom:12px;">All selected students join the same video room with one tutor.</p>
@@ -195,7 +243,7 @@
 
                     <a href="/admin/owner/notes/<%= s.id %>" class="btn btn-outline btn-sm" style="font-size:0.75rem;">Notes</a>
 
-                    <form action="/admin/owner/users/<%= s.id %>/delete" method="POST" onsubmit="return confirm('WARNING: Permanently delete <%= s.first_name %> <%= s.last_name %> and all their data?');"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--red-500);color:white;font-size:0.75rem;">Delete</button></form>
+                    <details style="display:inline;"><summary class="btn btn-sm" style="background:var(--red-500);color:white;font-size:0.75rem;cursor:pointer;list-style:none;">Delete</summary><form action="/admin/owner/users/<%= s.id %>/delete" method="POST" style="margin-top:8px;display:flex;gap:4px;align-items:center;"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="password" name="admin_password" placeholder="Admin password" class="form-control" style="width:140px;padding:4px 8px;font-size:0.8rem;" required><button type="submit" class="btn btn-sm btn-danger" style="font-size:0.7rem;">Confirm Delete</button></form></details>
                 </div>
 
                 <!-- Set Plan (collapsed) -->

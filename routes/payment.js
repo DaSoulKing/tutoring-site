@@ -199,7 +199,46 @@ router.post('/webhook', async (req, res) => {
                 if (session.metadata.payment_type === 'monthly') {
                     await pool.query("UPDATE subscriptions SET next_billing_date = CURRENT_DATE + INTERVAL '1 month', paid_through = CURRENT_DATE + INTERVAL '1 month' WHERE parent_id = $1 AND status = 'active'", [uid]);
                 }
+                if (session.metadata.payment_type === 'subscription' && session.subscription) {
+                    await pool.query("UPDATE subscriptions SET stripe_subscription_id = $1 WHERE parent_id = $2 AND status = 'active'", [session.subscription, uid]);
+                }
                 console.log('Webhook: payment confirmed for user', uid, 'type:', session.metadata.payment_type);
+            }
+        }
+
+        // Handle recurring subscription payments
+        if (event.type === 'invoice.paid') {
+            const invoice = event.data.object;
+            if (invoice.customer) {
+                const user = await pool.query('SELECT id FROM users WHERE stripe_customer_id = $1', [invoice.customer]);
+                if (user.rows[0]) {
+                    await pool.query("UPDATE users SET payment_status = 'paid' WHERE id = $1", [user.rows[0].id]);
+                    await pool.query("UPDATE subscriptions SET next_billing_date = CURRENT_DATE + INTERVAL '1 month', paid_through = CURRENT_DATE + INTERVAL '1 month' WHERE parent_id = $1 AND status = 'active'", [user.rows[0].id]);
+                    console.log('Webhook: subscription payment for user', user.rows[0].id);
+                }
+            }
+        }
+        if (event.type === 'invoice.payment_failed') {
+            const invoice = event.data.object;
+            if (invoice.customer) {
+                const user = await pool.query('SELECT id FROM users WHERE stripe_customer_id = $1', [invoice.customer]);
+                if (user.rows[0]) {
+                    await pool.query("UPDATE users SET payment_status = 'unpaid' WHERE id = $1", [user.rows[0].id]);
+                    console.log('Webhook: payment failed for user', user.rows[0].id);
+                }
+            }
+        }
+
+        // Handle subscription cancellation (from Stripe dashboard or auto-cancel)
+        if (event.type === 'customer.subscription.deleted') {
+            const subscription = event.data.object;
+            if (subscription.customer) {
+                const user = await pool.query('SELECT id FROM users WHERE stripe_customer_id = $1', [subscription.customer]);
+                if (user.rows[0]) {
+                    await pool.query("UPDATE users SET payment_status = 'unpaid' WHERE id = $1", [user.rows[0].id]);
+                    await pool.query("UPDATE subscriptions SET stripe_subscription_id = NULL WHERE parent_id = $1 AND stripe_subscription_id = $2", [user.rows[0].id, subscription.id]);
+                    console.log('Webhook: subscription cancelled for user', user.rows[0].id);
+                }
             }
         }
 
@@ -207,6 +246,58 @@ router.post('/webhook', async (req, res) => {
     } catch (err) {
         console.error('Webhook error:', err);
         res.status(200).send('OK'); // Always return 200 to Stripe
+    }
+});
+
+// Create Stripe recurring subscription
+router.post('/pay/subscribe', isAuthenticated, async (req, res) => {
+    try {
+        const stripe = getStripe();
+        if (!stripe) { req.session.error = 'Online payments not configured.'; return res.redirect('/payment/pay'); }
+
+        const userId = req.session.user.id;
+        const sub = await pool.query("SELECT * FROM subscriptions WHERE parent_id = $1 AND status = 'active'", [userId]);
+        if (!sub.rows[0] || !sub.rows[0].rate_total) {
+            req.session.error = 'No active plan found.';
+            return res.redirect('/payment/pay');
+        }
+
+        const amount = Math.round(parseFloat(sub.rows[0].rate_total) * 100);
+        const siteUrl = (process.env.SITE_URL || 'http://localhost:3000').replace(/\/+$/, '');
+
+        // Create or reuse Stripe customer
+        const userRow = await pool.query('SELECT email, stripe_customer_id FROM users WHERE id = $1', [userId]);
+        let customerId = userRow.rows[0].stripe_customer_id;
+        if (!customerId) {
+            const customer = await stripe.customers.create({ email: userRow.rows[0].email, metadata: { user_id: String(userId) } });
+            customerId = customer.id;
+            await pool.query('UPDATE users SET stripe_customer_id = $1 WHERE id = $2', [customerId, userId]);
+        }
+
+        // Create subscription checkout
+        const session = await stripe.checkout.sessions.create({
+            customer: customerId,
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: { name: sub.rows[0].plan_name + ' - Monthly Subscription' },
+                    unit_amount: amount,
+                    recurring: { interval: 'month' },
+                },
+                quantity: 1,
+            }],
+            mode: 'subscription',
+            success_url: siteUrl + '/payment/success?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url: siteUrl + '/payment/pay',
+            metadata: { user_id: String(userId), payment_type: 'subscription' },
+        });
+
+        return res.redirect(session.url);
+    } catch (err) {
+        console.error('Stripe subscription error:', err.message);
+        req.session.error = 'Payment setup failed: ' + err.message;
+        res.redirect('/payment/pay');
     }
 });
 

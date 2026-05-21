@@ -138,6 +138,14 @@ router.post('/owner/users/:id/verify', isAuthenticated, isOwner, async (req, res
 // Delete user account (destructive)
 router.post('/owner/users/:id/delete', isAuthenticated, isOwner, async (req, res) => {
     try {
+        // Verify admin password first
+        const bcrypt = require('bcrypt');
+        const admin = await pool.query('SELECT password FROM users WHERE id = $1', [req.session.user.id]);
+        if (!req.body.admin_password || !admin.rows[0] || !(await bcrypt.compare(req.body.admin_password, admin.rows[0].password))) {
+            req.session.error = 'Incorrect admin password. Delete cancelled.';
+            return res.redirect(req.headers.referer || '/admin/owner');
+        }
+
         const userId = parseInt(req.params.id, 10);
         // Don't allow deleting the owner
         const target = await pool.query('SELECT role, email_verified, first_name, last_name, email FROM users WHERE id = $1', [userId]);
@@ -240,17 +248,18 @@ router.get('/owner/profile', isAuthenticated, isOwner, async (req, res) => {
 
 router.post('/owner/profile', isAuthenticated, isOwner, upload.single('profile_picture'), async (req, res) => {
     try {
-        const { first_name, last_name, phone } = req.body;
+        const { first_name, last_name, phone, email } = req.body;
         const cleanFirst = (first_name || '').trim().substring(0, 100);
         const cleanLast = (last_name || '').trim().substring(0, 100);
         const cleanPhone = (phone || '').trim().substring(0, 20);
+        const cleanEmail = (email || '').trim().substring(0, 255).toLowerCase();
 
         if (req.file) {
-            await pool.query('UPDATE users SET first_name = $1, last_name = $2, phone = $3, profile_picture = $4 WHERE id = $5',
-                [cleanFirst, cleanLast, cleanPhone, '/uploads/' + req.file.filename, req.session.user.id]);
+            await pool.query('UPDATE users SET first_name = $1, last_name = $2, phone = $3, profile_picture = $4, email = $5 WHERE id = $6',
+                [cleanFirst, cleanLast, cleanPhone, '/uploads/' + req.file.filename, cleanEmail, req.session.user.id]);
         } else {
-            await pool.query('UPDATE users SET first_name = $1, last_name = $2, phone = $3 WHERE id = $4',
-                [cleanFirst, cleanLast, cleanPhone, req.session.user.id]);
+            await pool.query('UPDATE users SET first_name = $1, last_name = $2, phone = $3, email = $4 WHERE id = $5',
+                [cleanFirst, cleanLast, cleanPhone, cleanEmail, req.session.user.id]);
         }
 
         // Update session so nav shows new name
@@ -290,6 +299,33 @@ router.post('/owner/settings', isAuthenticated, isOwner, async (req, res) => {
 });
 
 // All tutor availability overview (admin)
+// Tutor matching tool - find available tutors for a time/subject
+router.get('/owner/match', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const { day, start_time, subject } = req.query;
+        const tutors = await pool.query(`SELECT u.id, u.first_name, u.last_name, tp.subjects, tp.hourly_rate, tp.grade_levels FROM users u JOIN tutor_profiles tp ON u.id = tp.user_id WHERE u.role = 'tutor' AND u.is_active = true AND tp.approved = true ORDER BY u.first_name`);
+        const availability = await pool.query('SELECT * FROM tutor_availability ORDER BY tutor_id');
+        const students = await pool.query("SELECT id, first_name, last_name FROM users WHERE role IN ('parent','student') AND is_active = true ORDER BY first_name");
+
+        let matches = [];
+        if (day && start_time) {
+            const dayNum = parseInt(day);
+            for (const t of tutors.rows) {
+                const tutorAvail = availability.rows.filter(a => a.tutor_id === t.id && a.day_of_week === dayNum);
+                const hasSlot = tutorAvail.some(a => a.start_time <= start_time && a.end_time > start_time);
+                const subjectMatch = !subject || (t.subjects || []).some(s => s.toLowerCase().includes(subject.toLowerCase()));
+                if (hasSlot && subjectMatch) {
+                    // Count students already booked with this tutor at this time
+                    const booked = await pool.query("SELECT COUNT(*) FROM bookings WHERE tutor_id = $1 AND EXTRACT(DOW FROM booking_date) = $2 AND start_time = $3 AND status IN ('pending','confirmed')", [t.id, dayNum, start_time]);
+                    matches.push({ ...t, booked_count: parseInt(booked.rows[0].count) });
+                }
+            }
+        }
+
+        res.render('admin/tutor-match', { title: 'Tutor Matching', tutors: tutors.rows, matches, students: students.rows, query: req.query, meta: {} });
+    } catch (err) { console.error(err); res.redirect('/admin/owner'); }
+});
+
 router.get('/owner/availability', isAuthenticated, isOwner, async (req, res) => {
     try {
         const tutors = await pool.query(`
@@ -793,6 +829,39 @@ router.post('/owner/recurring', isAuthenticated, isOwner, async (req, res) => {
         req.session.success = generated + ' recurring sessions created!';
     } catch (err) { console.error(err); req.session.error = 'Failed: ' + err.message; }
     res.redirect(req.headers.referer || '/admin/owner/students');
+});
+
+// Add student to existing time slot (recurring → group conversion)
+router.post('/owner/add-to-slot', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const { tutor_id, student_id, day, start_time, end_time, subject } = req.body;
+        const crypto = require('crypto');
+        // Find next occurrence of this day of week
+        const today = new Date();
+        let nextDate = new Date(today);
+        const targetDay = parseInt(day);
+        while (nextDate.getDay() !== targetDay) { nextDate.setDate(nextDate.getDate() + 1); }
+
+        // Get the meeting_room_id from an existing booking in this slot
+        const existing = await pool.query("SELECT meeting_room_id FROM bookings WHERE tutor_id = $1 AND start_time = $2 AND EXTRACT(DOW FROM booking_date) = $3 AND status IN ('pending','confirmed') LIMIT 1", [tutor_id, start_time, targetDay]);
+        const roomId = existing.rows[0] ? existing.rows[0].meeting_room_id : ('bm-group-' + crypto.randomBytes(16).toString('hex'));
+
+        // Create 8 weeks of bookings for this student in the same slot
+        let created = 0;
+        for (let w = 0; w < 8; w++) {
+            const bookDate = new Date(nextDate);
+            bookDate.setDate(bookDate.getDate() + (w * 7));
+            const dateStr = bookDate.toISOString().substring(0, 10);
+            const conflict = await pool.query("SELECT id FROM bookings WHERE tutor_id = $1 AND student_id = $2 AND booking_date = $3 AND start_time = $4 AND status IN ('pending','confirmed')", [tutor_id, student_id, dateStr, start_time]);
+            if (conflict.rows.length === 0) {
+                await pool.query("INSERT INTO bookings (tutor_id, student_id, parent_id, booking_date, start_time, end_time, subject, meeting_room_id, status) VALUES ($1,$2,$2,$3,$4,$5,$6,$7,'confirmed')", [tutor_id, student_id, dateStr, start_time, end_time, subject || 'Group Session', roomId]);
+                created++;
+            }
+        }
+        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'student_added_to_slot', 'Student ' + student_id + ' added to tutor ' + tutor_id + ' slot, ' + created + ' sessions created']); } catch(e) {}
+        req.session.success = 'Added student to slot! ' + created + ' sessions created sharing the same video room.';
+    } catch (err) { console.error(err); req.session.error = 'Failed: ' + err.message; }
+    res.redirect('/admin/owner/students');
 });
 
 // Delete tutor invite

@@ -165,4 +165,63 @@ router.get('/messages/conversation/:userId', isAuthenticated, async (req, res) =
     } catch (err) { console.error(err); res.json([]); }
 });
 
+// === HOMEWORK ===
+// Get tutor's recurring time slots with student counts
+router.get('/tutor-slots/:tutorId', isAuthenticated, async (req, res) => {
+    try {
+        const slots = await pool.query(`
+            SELECT EXTRACT(DOW FROM booking_date)::int as day, start_time, end_time, subject,
+                COUNT(DISTINCT student_id) as student_count,
+                STRING_AGG(DISTINCT (u.first_name || ' ' || u.last_name), ', ') as student_names
+            FROM bookings b JOIN users u ON b.student_id = u.id
+            WHERE b.tutor_id = $1 AND b.status IN ('pending','confirmed')
+                AND b.booking_date >= CURRENT_DATE AND b.subject != 'Assigned by Admin'
+            GROUP BY EXTRACT(DOW FROM booking_date), start_time, end_time, subject
+            ORDER BY day, start_time
+        `, [req.params.tutorId]);
+        res.json({ success: true, slots: slots.rows });
+    } catch (err) { res.json({ success: false, message: err.message }); }
+});
+
+// === HOMEWORK ===
+// Get homework for a student (student sees own, tutor sees their students')
+router.get('/homework', isAuthenticated, async (req, res) => {
+    try {
+        let homework;
+        if (req.session.user.role === 'tutor' || req.session.user.role === 'owner') {
+            homework = await pool.query(`SELECT h.*, u.first_name, u.last_name FROM homework h JOIN users u ON h.student_id = u.id WHERE h.tutor_id = $1 OR $2 = 'owner' ORDER BY h.due_date ASC, h.created_at DESC`, [req.session.user.id, req.session.user.role]);
+        } else {
+            homework = await pool.query('SELECT * FROM homework WHERE student_id = $1 ORDER BY due_date ASC, created_at DESC', [req.session.user.id]);
+        }
+        res.json({ success: true, homework: homework.rows });
+    } catch (err) { res.json({ success: false, message: err.message }); }
+});
+
+// Add homework (student adds for themselves)
+router.post('/homework', isAuthenticated, async (req, res) => {
+    try {
+        const { subject, description, due_date, tutor_id } = req.body;
+        if (!description || !description.trim()) return res.json({ success: false, message: 'Description required.' });
+        await pool.query('INSERT INTO homework (student_id, tutor_id, subject, description, due_date) VALUES ($1, $2, $3, $4, $5)',
+            [req.session.user.id, tutor_id || null, (subject || '').trim().substring(0, 200), description.trim().substring(0, 2000), due_date || null]);
+        res.json({ success: true });
+    } catch (err) { res.json({ success: false, message: err.message }); }
+});
+
+// Toggle homework completed
+router.post('/homework/:id/toggle', isAuthenticated, async (req, res) => {
+    try {
+        await pool.query('UPDATE homework SET completed = NOT completed WHERE id = $1 AND student_id = $2', [req.params.id, req.session.user.id]);
+        res.json({ success: true });
+    } catch (err) { res.json({ success: false, message: err.message }); }
+});
+
+// Delete homework
+router.post('/homework/:id/delete', isAuthenticated, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM homework WHERE id = $1 AND student_id = $2', [req.params.id, req.session.user.id]);
+        res.json({ success: true });
+    } catch (err) { res.json({ success: false, message: err.message }); }
+});
+
 module.exports = router;

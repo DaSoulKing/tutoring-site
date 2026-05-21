@@ -2,5 +2,7 @@ node_modules/
 .env
 public/uploads/*
 !public/uploads/.gitkeep
+!public/uploads/icons/
+!public/uploads/icons/*
 *.log
 .DS_Store

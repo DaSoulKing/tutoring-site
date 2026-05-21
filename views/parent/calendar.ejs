@@ -253,4 +253,65 @@
 }
 </style>
 
+    <!-- Homework Tracker -->
+    <section style="padding:32px 24px;">
+        <div class="card" style="padding:24px;max-width:900px;margin:0 auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h2 style="font-size:1.25rem;">My Homework</h2>
+                <button onclick="document.getElementById('hw-form').style.display=document.getElementById('hw-form').style.display==='none'?'flex':'none'" class="btn btn-sm btn-primary">+ Add Homework</button>
+            </div>
+            <p style="color:var(--gray-500);font-size:0.85rem;margin-bottom:16px;">Track your assignments here. Your tutor can see them too.</p>
+
+            <div id="hw-form" style="display:none;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:20px;padding:16px;background:var(--gray-50);border-radius:8px;">
+                <div class="form-group" style="margin:0;min-width:120px;">
+                    <label style="font-size:0.8rem;">Subject</label>
+                    <input type="text" id="hw-subject" class="form-control" style="padding:6px 10px;font-size:0.85rem;" placeholder="e.g. Math">
+                </div>
+                <div class="form-group" style="margin:0;flex:1;min-width:200px;">
+                    <label style="font-size:0.8rem;">What's the assignment?</label>
+                    <input type="text" id="hw-desc" class="form-control" style="padding:6px 10px;font-size:0.85rem;" placeholder="e.g. Chapter 5 problems 1-20" required>
+                </div>
+                <div class="form-group" style="margin:0;min-width:130px;">
+                    <label style="font-size:0.8rem;">Due Date</label>
+                    <input type="date" id="hw-due" class="form-control" style="padding:6px 10px;font-size:0.85rem;">
+                </div>
+                <button onclick="addHomework()" class="btn btn-sm btn-primary">Save</button>
+            </div>
+
+            <div id="hw-list" style="color:var(--gray-400);font-size:0.9rem;">Loading...</div>
+        </div>
+    </section>
+
+<script>
+function loadHomework(){
+    fetch('/api/homework',{headers:{'Accept':'application/json'}})
+    .then(function(r){return r.json()}).then(function(data){
+        if(!data.success||!data.homework.length){document.getElementById('hw-list').innerHTML='<p style="text-align:center;color:var(--gray-400);">No homework yet. Add some!</p>';return;}
+        var html='';
+        data.homework.forEach(function(h){
+            var due=h.due_date?new Date(h.due_date).toLocaleDateString():'No due date';
+            var done=h.completed?'text-decoration:line-through;opacity:0.5;':'';
+            html+='<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gray-100);'+done+'">';
+            html+='<input type="checkbox" '+(h.completed?'checked':'')+' onchange="toggleHw('+h.id+')" style="width:18px;height:18px;cursor:pointer;">';
+            html+='<div style="flex:1;"><strong>'+(h.subject||'')+'</strong> '+h.description;
+            html+='<span style="font-size:0.75rem;color:var(--gray-400);margin-left:8px;">Due: '+due+'</span></div>';
+            html+='<button onclick="deleteHw('+h.id+')" style="background:none;border:none;color:var(--red-400);cursor:pointer;font-size:0.8rem;">Remove</button>';
+            html+='</div>';
+        });
+        document.getElementById('hw-list').innerHTML=html;
+    });
+}
+function addHomework(){
+    var desc=document.getElementById('hw-desc').value.trim();
+    if(!desc)return;
+    fetch('/api/homework',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        _csrf:'<%= csrfToken %>',subject:document.getElementById('hw-subject').value,
+        description:desc,due_date:document.getElementById('hw-due').value||null
+    })}).then(function(){document.getElementById('hw-desc').value='';loadHomework();});
+}
+function toggleHw(id){fetch('/api/homework/'+id+'/toggle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({_csrf:'<%= csrfToken %>'})}).then(function(){loadHomework()});}
+function deleteHw(id){fetch('/api/homework/'+id+'/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({_csrf:'<%= csrfToken %>'})}).then(function(){loadHomework()});}
+loadHomework();
+</script>
+
 <%- include('../partials/footer') %>

@@ -74,6 +74,16 @@
                     <p style="font-weight:700;color:var(--blue-600);font-size:1.1rem;margin:8px 0;"><%= process.env.ZELLE_EMAIL || process.env.OWNER_EMAIL || 'Contact us for payment details' %></p>
                     <p style="color:var(--gray-400);font-size:0.8rem;">Include your name and "Monthly Payment" in the Zelle memo. We will mark your account as paid once received.</p>
                 </div>
+
+                <% if (stripeEnabled && subscription.rate_total) { %>
+                <div style="margin-top:16px;padding:16px;background:var(--blue-50);border-radius:8px;border:1px solid var(--blue-200);">
+                    <h4 style="font-size:0.95rem;margin-bottom:8px;">Set Up Auto-Pay</h4>
+                    <p style="color:var(--gray-500);font-size:0.85rem;margin-bottom:12px;">Never miss a payment. We'll charge your card $<%= parseFloat(subscription.rate_total).toFixed(2) %> automatically each month.</p>
+                    <form action="/payment/pay/subscribe" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button type="submit" class="btn btn-outline btn-sm">Set Up Monthly Auto-Pay</button>
+                    </form>
+                </div>
+                <% } %>
                 <% } %>
             </div>
 

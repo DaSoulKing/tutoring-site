@@ -115,7 +115,7 @@ async function sendViaResend(to, subject, html) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                from: process.env.EMAIL_FROM || 'BrightMinds <onboarding@resend.dev>',
+                from: process.env.EMAIL_FROM || 'Klever Scholars <onboarding@resend.dev>',
                 to: [to],
                 subject,
                 html,

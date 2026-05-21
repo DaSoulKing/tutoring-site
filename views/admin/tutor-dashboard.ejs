@@ -138,4 +138,31 @@ document.getElementById('save-avail-btn').addEventListener('click', function() {
 });
 </script>
 
+<!-- Student Homework -->
+<div style="padding:0 32px 32px;">
+    <h2 style="font-size:1.25rem;margin:24px 0 16px;">Student Homework</h2>
+    <div class="card" style="padding:20px;" id="tutor-hw">
+        <p style="color:var(--gray-400);">Loading homework...</p>
+    </div>
+</div>
+<script>
+fetch('/api/homework',{headers:{'Accept':'application/json'}})
+.then(function(r){return r.json()}).then(function(data){
+    var el=document.getElementById('tutor-hw');
+    if(!data.success||!data.homework.length){el.innerHTML='<p style="color:var(--gray-400);text-align:center;">No homework from your students yet.</p>';return;}
+    var html='';
+    data.homework.forEach(function(h){
+        var due=h.due_date?new Date(h.due_date).toLocaleDateString():'No due date';
+        var done=h.completed?'style="text-decoration:line-through;opacity:0.5;"':'';
+        html+='<div '+done+' style="padding:10px 0;border-bottom:1px solid var(--gray-100);display:flex;gap:12px;align-items:center;">';
+        html+='<div style="flex:1;"><strong>'+(h.first_name||'')+' '+(h.last_name||'')+'</strong> &middot; '+(h.subject||'General');
+        html+='<br><span style="color:var(--gray-600);">'+h.description+'</span>';
+        html+='<span style="font-size:0.75rem;color:var(--gray-400);margin-left:8px;">Due: '+due+'</span></div>';
+        html+='<span class="badge-status '+(h.completed?'badge-confirmed':'badge-pending')+'">'+(h.completed?'Done':'Pending')+'</span>';
+        html+='</div>';
+    });
+    el.innerHTML=html;
+});
+</script>
+
 <%- include('../partials/footer') %>

@@ -47,13 +47,14 @@
                         <p style="color:var(--blue-500);font-weight:600;">Co-Founder</p>
                     </div>
                     <% }); %>
-                <% } else { %>
-                    <div class="card" style="text-align:center;padding:40px;max-width:320px;">
-                        <div style="width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--blue-400),var(--blue-600));margin:0 auto 20px;display:flex;align-items:center;justify-content:center;color:white;font-family:var(--font-display);font-size:2.5rem;font-weight:700;">BM</div>
-                        <h3><%= siteName %> Team</h3>
-                        <p style="color:var(--blue-500);font-weight:600;">Founders</p>
-                        <p style="color:var(--gray-500);margin-top:12px;">Passionate educators building a brighter future for every student.</p>
-                    </div>
+                <% } %>
+                <% if (!owners || owners.length < 2) { %>
+                <div class="card" style="text-align:center;padding:40px;max-width:320px;">
+                    <div style="width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--yellow-300),var(--yellow-500));margin:0 auto 20px;display:flex;align-items:center;justify-content:center;color:var(--gray-900);font-family:var(--font-display);font-size:2.5rem;font-weight:700;">K</div>
+                    <h3>Kaniz</h3>
+                    <p style="color:var(--blue-500);font-weight:600;">Co-Founder</p>
+                    <p style="color:var(--gray-500);margin-top:12px;font-size:0.9rem;">Photo coming soon</p>
+                </div>
                 <% } %>
             </div>
         </div>
