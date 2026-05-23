@@ -110,16 +110,36 @@ router.get('/messages/:userId', isAuthenticated, async (req, res) => {
             WHERE (m.sender_id = $1 AND m.receiver_id = $2) OR (m.sender_id = $2 AND m.receiver_id = $1)
             ORDER BY m.created_at ASC
         `, [req.session.user.id, req.params.userId]);
-        const conversations = await pool.query(`
-            SELECT DISTINCT ON (other_id) * FROM (
-                SELECT m.*, CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END as other_id,
-                    u.first_name, u.last_name, u.role, u.profile_picture
-                FROM messages m JOIN users u ON u.id = CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END
-                WHERE m.sender_id = $1 OR m.receiver_id = $1 ORDER BY other_id, m.created_at DESC
-            ) sub ORDER BY other_id, created_at DESC
-        `, [req.session.user.id]);
+        const userId = req.session.user.id;
+        const role = req.session.user.role;
+        let contactQuery;
+        if (role === 'owner') {
+            contactQuery = await pool.query(`
+                SELECT id as other_id, first_name, last_name, role, profile_picture, 'Click to message' as last_msg, created_at as last_time
+                FROM users WHERE id != $1 AND is_active = true ORDER BY first_name
+            `, [userId]);
+        } else {
+            contactQuery = await pool.query(`
+                SELECT DISTINCT ON (other_id) other_id, first_name, last_name, role, profile_picture, last_msg, last_time FROM (
+                    SELECT CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END as other_id,
+                        u.first_name, u.last_name, u.role, u.profile_picture, m.body as last_msg, m.created_at as last_time
+                    FROM messages m JOIN users u ON u.id = CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END
+                    WHERE m.sender_id = $1 OR m.receiver_id = $1
+                    UNION ALL
+                    SELECT u.id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Click to message' as last_msg, u.created_at as last_time
+                    FROM users u WHERE u.role = 'tutor' AND u.is_active = true AND u.id != $1
+                    UNION ALL
+                    SELECT u.id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Founder' as last_msg, u.created_at as last_time
+                    FROM users u WHERE u.role = 'owner' AND u.id != $1
+                    UNION ALL
+                    SELECT DISTINCT b.student_id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Your student' as last_msg, b.created_at as last_time
+                    FROM bookings b JOIN users u ON b.student_id = u.id
+                    WHERE b.tutor_id = $1 AND b.student_id != $1
+                ) sub ORDER BY other_id, last_time DESC
+            `, [userId]);
+        }
         res.render('parent/messages', {
-            title: `Chat - BrainBridge`, conversations: conversations.rows,
+            title: 'Chat', conversations: contactQuery.rows,
             activeConversation: otherUser.rows[0] || null, messages: messages.rows, meta: {}
         });
     } catch (err) { console.error(err); res.redirect('/parent/messages'); }
@@ -220,16 +240,23 @@ router.get('/book/:tutorId', isAuthenticated, async (req, res) => {
 
         // Get existing bookings for next 14 days to show what's taken
         const booked = await pool.query(`
-            SELECT booking_date, start_time, end_time FROM bookings
+            SELECT booking_date, start_time, end_time, COUNT(*) as student_count FROM bookings
             WHERE tutor_id = $1 AND booking_date >= CURRENT_DATE AND booking_date <= CURRENT_DATE + 14
             AND status IN ('pending', 'confirmed')
+            GROUP BY booking_date, start_time, end_time
         `, [tutorId]);
+        // Also get this student's own bookings to prevent double-booking
+        const myBookings = await pool.query(`
+            SELECT booking_date, start_time FROM bookings
+            WHERE student_id = $1 AND booking_date >= CURRENT_DATE AND status IN ('pending', 'confirmed')
+        `, [req.session.user.id]);
 
         res.render('parent/book-session', {
             title: 'Book Session - ' + tutor.rows[0].first_name + ' ' + tutor.rows[0].last_name,
             tutor: tutor.rows[0],
             availability: availability.rows,
             booked: booked.rows,
+            myBookings: myBookings.rows,
             meta: {}
         });
     } catch (err) { console.error(err); res.redirect('/tutors'); }
@@ -246,10 +273,10 @@ router.post('/book/:tutorId', isAuthenticated, async (req, res) => {
             return res.redirect('/parent/book/' + tutorId);
         }
 
-        // Block bookings in the past
+        // Block bookings less than 30 minutes from now
         const bookingDateTime = new Date(booking_date + 'T' + start_time);
-        if (bookingDateTime < new Date()) {
-            req.session.error = 'Cannot book a session in the past. Please select a future date and time.';
+        if (bookingDateTime.getTime() < Date.now() + 30 * 60 * 1000) {
+            req.session.error = 'Sessions must be booked at least 30 minutes in advance.';
             return res.redirect('/parent/book/' + tutorId);
         }
 
@@ -290,15 +317,15 @@ router.post('/book/:tutorId', isAuthenticated, async (req, res) => {
             return res.redirect('/parent/book/' + tutorId);
         }
 
-        // Check for conflicts
+        // Check if THIS STUDENT already has a booking at this time (prevent double-booking yourself)
         const conflict = await pool.query(`
-            SELECT id FROM bookings WHERE tutor_id = $1 AND booking_date = $2
+            SELECT id FROM bookings WHERE student_id = $1 AND booking_date = $2
             AND status IN ('pending','confirmed')
             AND (start_time, end_time) OVERLAPS ($3::time, $4::time)
-        `, [tutorId, booking_date, start_time, end_time]);
+        `, [req.session.user.id, booking_date, start_time, end_time]);
 
         if (conflict.rows.length > 0) {
-            req.session.error = 'That time slot is already booked. Please pick another.';
+            req.session.error = 'You already have a booking at this time.';
             return res.redirect('/parent/book/' + tutorId);
         }
 
