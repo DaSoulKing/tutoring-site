@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
         `);
 
         res.render('tutors', {
-            title: 'Our Tutors - BrainBridge',
+            title: 'Our Tutors - Klever Scholars',
             tutors: tutorsResult.rows,
             subjects: subjectsResult.rows.map(r => r.subject),
             activeSubject: subject || '',

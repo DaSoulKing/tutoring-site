@@ -111,7 +111,7 @@ router.post('/owner/tutor-invite', isAuthenticated, isOwner, async (req, res) =>
         const inviteUrl = `${baseUrl}/tutor-signup/${token}`;
 
         if (email) {
-            const siteName = process.env.SITE_NAME || 'BrainBridge';
+            const siteName = process.env.SITE_NAME || 'Klever Scholars';
             await sendEmail(email, 'You are invited to join ' + siteName + '!',
                 '<h2>Welcome to ' + siteName + '!</h2><p>You have been invited to join as a tutor.</p><p><a href="' + inviteUrl + '">Click here to create your account</a></p><p>This link expires in 7 days.</p>'
             );

@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
         `);
 
         res.render('blog', {
-            title: 'Blog - BrainBridge',
+            title: 'Blog - Klever Scholars',
             posts: posts.rows,
             meta: { description: 'Read our latest articles on education, learning tips, and tutoring insights.' }
         });
@@ -39,7 +39,7 @@ router.get('/:slug', async (req, res) => {
         }
 
         res.render('blog-post', {
-            title: `${post.rows[0].title} - BrainBridge Blog`,
+            title: `${post.rows[0].title} - Klever Scholars Blog`,
             post: post.rows[0],
             meta: { description: post.rows[0].excerpt || '' }
         });
