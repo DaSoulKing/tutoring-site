@@ -310,12 +310,17 @@ router.get('/owner/match', isAuthenticated, isOwner, async (req, res) => {
         let matches = [];
         if (day && start_time) {
             const dayNum = parseInt(day);
+            const endTime = req.query.end_time || null;
             for (const t of tutors.rows) {
                 const tutorAvail = availability.rows.filter(a => a.tutor_id === t.id && a.day_of_week === dayNum);
-                const hasSlot = tutorAvail.some(a => a.start_time <= start_time && a.end_time > start_time);
+                const hasSlot = tutorAvail.some(a => {
+                    if (a.start_time > start_time) return false;
+                    if (endTime && a.end_time < endTime) return false;
+                    if (!endTime && a.end_time <= start_time) return false;
+                    return true;
+                });
                 const subjectMatch = !subject || (t.subjects || []).some(s => s.toLowerCase().includes(subject.toLowerCase()));
                 if (hasSlot && subjectMatch) {
-                    // Count students already booked with this tutor at this time
                     const booked = await pool.query("SELECT COUNT(*) FROM bookings WHERE tutor_id = $1 AND EXTRACT(DOW FROM booking_date) = $2 AND start_time = $3 AND status IN ('pending','confirmed')", [t.id, dayNum, start_time]);
                     matches.push({ ...t, booked_count: parseInt(booked.rows[0].count) });
                 }
