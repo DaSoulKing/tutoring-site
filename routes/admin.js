@@ -140,8 +140,8 @@ router.post('/owner/users/:id/delete', isAuthenticated, isOwner, async (req, res
     try {
         // Verify admin password first
         const bcrypt = require('bcryptjs');
-        const admin = await pool.query('SELECT password FROM users WHERE id = $1', [req.session.user.id]);
-        if (!req.body.admin_password || !admin.rows[0] || !(await bcrypt.compare(req.body.admin_password, admin.rows[0].password))) {
+        const admin = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.session.user.id]);
+        if (!req.body.admin_password || !admin.rows[0] || !(await bcrypt.compare(req.body.admin_password, admin.rows[0].password_hash))) {
             req.session.error = 'Incorrect admin password. Delete cancelled.';
             return res.redirect(req.headers.referer || '/admin/owner');
         }
