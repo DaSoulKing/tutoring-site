@@ -7,7 +7,7 @@ router.get('/', async (req, res) => {
         const { subject, search } = req.query;
         let query = `
             SELECT u.id, u.first_name, u.last_name, u.profile_picture,
-                   tp.bio, tp.tagline, tp.subjects, tp.experience_years,
+                   tp.bio, tp.tagline, tp.subjects,
                    tp.education, tp.hourly_rate
             FROM users u
             JOIN tutor_profiles tp ON u.id = tp.user_id
@@ -57,7 +57,7 @@ router.get('/:id/details', async (req, res) => {
     try {
         const tutor = await pool.query(`
             SELECT u.id, u.first_name, u.last_name, u.profile_picture,
-                   tp.bio, tp.tagline, tp.subjects, tp.experience_years,
+                   tp.bio, tp.tagline, tp.subjects,
                    tp.education, tp.hourly_rate
             FROM users u
             JOIN tutor_profiles tp ON u.id = tp.user_id

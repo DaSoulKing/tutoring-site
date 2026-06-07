@@ -362,7 +362,7 @@ router.get('/owner/availability', isAuthenticated, isOwner, async (req, res) => 
 // Manage tutors
 router.get('/owner/tutors', isAuthenticated, isOwner, async (req, res) => {
     try {
-        const tutors = await pool.query(`SELECT u.*, tp.subjects, tp.approved, tp.bio, tp.experience_years, tp.tagline, tp.hourly_rate, tp.subject_grades FROM users u JOIN tutor_profiles tp ON u.id = tp.user_id WHERE u.role = 'tutor' ORDER BY u.first_name`);
+        const tutors = await pool.query(`SELECT u.*, tp.subjects, tp.approved, tp.bio, tp.tagline, tp.hourly_rate, tp.subject_grades FROM users u JOIN tutor_profiles tp ON u.id = tp.user_id WHERE u.role = 'tutor' ORDER BY u.first_name`);
         const invites = await pool.query(`SELECT * FROM tutor_invites WHERE used = false AND expires_at > NOW() ORDER BY created_at DESC`);
         res.render('admin/manage-tutors', { title: 'Manage Tutors', tutors: tutors.rows, invites: invites.rows, meta: {} });
     } catch (err) { console.error(err); res.redirect('/admin/owner'); }
@@ -539,7 +539,7 @@ router.get('/tutor', isAuthenticated, isTutor, async (req, res) => {
 // Tutor profile
 router.post('/tutor/profile', isAuthenticated, isTutor, upload.single('profile_picture'), async (req, res) => {
     try {
-        const { bio, tagline, subjects, education, experience_years, subject_grades } = req.body;
+        const { bio, tagline, subjects, education, subject_grades } = req.body;
         // Handle subjects from hidden input (comma separated) or multi-select (array)
         let subjectsArray;
         if (Array.isArray(subjects)) { subjectsArray = subjects; }
@@ -551,8 +551,8 @@ router.post('/tutor/profile', isAuthenticated, isTutor, upload.single('profile_p
         try { gradesJson = subject_grades || '{}'; JSON.parse(gradesJson); } catch(e) { gradesJson = '{}'; }
 
         if (req.file) await pool.query('UPDATE users SET profile_picture = $1 WHERE id = $2', ['/uploads/' + req.file.filename, req.session.user.id]);
-        await pool.query(`UPDATE tutor_profiles SET bio=$1, tagline=$2, subjects=$3, education=$4, experience_years=$5, subject_grades=$6 WHERE user_id=$7`,
-            [bio, tagline, subjectsArray, education, parseInt(experience_years) || 0, gradesJson, req.session.user.id]);
+        await pool.query(`UPDATE tutor_profiles SET bio=$1, tagline=$2, subjects=$3, education=$4, subject_grades=$5 WHERE user_id=$6`,
+            [bio, tagline, subjectsArray, education, gradesJson, req.session.user.id]);
         req.session.success = 'Profile updated!';
     } catch (err) { console.error(err); req.session.error = 'Failed.'; }
     res.redirect('/admin/tutor');

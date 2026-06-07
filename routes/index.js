@@ -103,11 +103,11 @@ router.get('/employment', (req, res) => {
 });
 router.post('/employment', upload.single('resume'), verifyRecaptcha, async (req, res) => {
     try {
-        const { applicant_type, first_name, last_name, email, phone, subjects, experience, education, availability, why_join, cover_letter } = req.body;
+        const { applicant_type, first_name, last_name, email, phone, subjects, education, availability, why_join, cover_letter } = req.body;
         const resumePath = req.file ? '/uploads/' + req.file.filename : null;
         const subjectsArray = subjects ? subjects.split(',').map(s => s.trim()) : [];
-        await pool.query(`INSERT INTO applications (applicant_type, first_name, last_name, email, phone, resume_path, cover_letter, subjects, experience, education, availability, why_join) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
-            [applicant_type, first_name, last_name, email, phone, resumePath, cover_letter, subjectsArray, experience, education, availability, why_join]);
+        await pool.query(`INSERT INTO applications (applicant_type, first_name, last_name, email, phone, resume_path, cover_letter, subjects, education, availability, why_join) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+            [applicant_type, first_name, last_name, email, phone, resumePath, cover_letter, subjectsArray, education, availability, why_join]);
         req.session.success = 'Your application has been submitted!';
         res.redirect('/employment');
     } catch (err) { console.error(err); req.session.error = 'Something went wrong.'; res.redirect('/employment'); }
