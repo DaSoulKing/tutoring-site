@@ -314,9 +314,13 @@ router.get('/owner/match', isAuthenticated, isOwner, async (req, res) => {
             for (const t of tutors.rows) {
                 const tutorAvail = availability.rows.filter(a => a.tutor_id === t.id && a.day_of_week === dayNum);
                 const hasSlot = tutorAvail.some(a => {
-                    if (a.start_time > start_time) return false;
-                    if (endTime && a.end_time < endTime) return false;
-                    if (!endTime && a.end_time <= start_time) return false;
+                    const aStart = String(a.start_time).substring(0,5);
+                    const aEnd = String(a.end_time).substring(0,5);
+                    const qStart = start_time.substring(0,5);
+                    const qEnd = endTime ? endTime.substring(0,5) : null;
+                    if (aStart > qStart) return false;
+                    if (qEnd && aEnd < qEnd) return false;
+                    if (!qEnd && aEnd <= qStart) return false;
                     return true;
                 });
                 const subjectMatch = !subject || (t.subjects || []).some(s => s.toLowerCase().includes(subject.toLowerCase()));
