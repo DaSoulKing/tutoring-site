@@ -87,9 +87,7 @@
                             <span class="subject-tag"><%= s %></span>
                             <% }); %>
                         </div>
-                        <% if (tutor.experience_years) { %>
-                        <p style="color:var(--gray-400);font-size:0.8rem;margin-top:12px;font-weight:600;"><%= tutor.experience_years %> years of experience</p>
-                        <% } %>
+                        <p style="color:var(--gray-400);font-size:0.8rem;margin-top:12px;font-weight:600;"><%= (tutor.subjects || []).slice(0, 3).join(', ') %></p>
                     </div>
                     <% }); %>
                 <% } else { %>
