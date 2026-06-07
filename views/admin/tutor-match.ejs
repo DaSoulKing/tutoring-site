@@ -61,6 +61,8 @@
                         <%= (m.subjects || []).join(', ') %>
                         <% if (m.grade_levels) { %> &middot; Grades: <%= m.grade_levels %><% } %>
                         <% if (m.hourly_rate) { %> &middot; $<%= m.hourly_rate %>/hr<% } %>
+                        <% var sg = {}; try { sg = typeof m.subject_grades === 'string' ? JSON.parse(m.subject_grades) : (m.subject_grades || {}); } catch(e) {} %>
+                        <% if (Object.keys(sg).length > 0) { %><br><span style="font-size:0.8rem;color:var(--gray-400);"><% Object.entries(sg).forEach(function([subj, grades]) { %><%= subj %>: <%= grades %> &nbsp;<% }); %></span><% } %>
                     </p>
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
                         <span style="padding:4px 10px;border-radius:12px;font-size:0.8rem;font-weight:700;<%= m.booked_count >= 4 ? 'background:#FEE2E2;color:var(--red-600);' : m.booked_count >= 3 ? 'background:var(--yellow-100);color:var(--yellow-700);' : 'background:#D1FAE5;color:var(--green-600);' %>"><%= m.booked_count %>/4 students</span>

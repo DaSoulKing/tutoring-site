@@ -107,6 +107,19 @@
                             <p style="font-size:0.8rem;color:var(--gray-400);margin-top:4px;">Hold Ctrl/Cmd to select multiple</p>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label>Grade Levels by Subject <span style="font-size:0.75rem;color:var(--gray-400);">(only visible to you and admins)</span></label>
+                        <div id="grade-levels-container" style="display:grid;gap:8px;margin-top:4px;">
+                            <% var subjectGrades = {}; try { subjectGrades = typeof profile.subject_grades === 'string' ? JSON.parse(profile.subject_grades) : (profile.subject_grades || {}); } catch(e) {} %>
+                            <% (profile.subjects || []).forEach(function(subj) { %>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span style="min-width:120px;font-size:0.85rem;font-weight:600;"><%= subj %></span>
+                                <input type="text" name="grade_<%= subj.replace(/[^a-zA-Z0-9]/g, '_') %>" class="form-control" style="padding:4px 8px;font-size:0.85rem;" value="<%= subjectGrades[subj] || '' %>" placeholder="e.g. K-8, 9-12, All grades">
+                            </div>
+                            <% }); %>
+                        </div>
+                        <input type="hidden" name="subject_grades" id="subject-grades-hidden" value='<%= JSON.stringify(subjectGrades) %>'>
+                    </div>
                     <div class="form-row">
                         <div class="form-group"><label for="education">Education</label><input type="text" id="education" name="education" class="form-control" value="<%= profile.education || '' %>"></div>
                         <div class="form-group"><label for="experience_years">Years of Experience</label><input type="number" id="experience_years" name="experience_years" class="form-control" value="<%= profile.experience_years || 0 %>"></div>
@@ -130,6 +143,19 @@ document.getElementById('tutor-profile-form').addEventListener('submit', functio
         if (sel.options[i].selected) selected.push(sel.options[i].value);
     }
     hidden.value = selected.join(', ');
+    // Collect grade levels per subject
+    var grades = {};
+    var inputs = document.querySelectorAll('[name^="grade_"]');
+    for (var i = 0; i < inputs.length; i++) {
+        var subj = inputs[i].name.replace('grade_', '').replace(/_/g, ' ').replace(/ +/g, ' ');
+        // Match back to actual subject name from selected
+        for (var j = 0; j < selected.length; j++) {
+            if (selected[j].replace(/[^a-zA-Z0-9]/g, '_') === inputs[i].name.replace('grade_', '')) {
+                if (inputs[i].value.trim()) grades[selected[j]] = inputs[i].value.trim();
+            }
+        }
+    }
+    document.getElementById('subject-grades-hidden').value = JSON.stringify(grades);
 });
 
 // Wire save availability button

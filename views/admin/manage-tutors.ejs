@@ -64,7 +64,7 @@
                             <tr>
                                 <td><strong><%= t.first_name %> <%= t.last_name %></strong><% if (t.tagline) { %><br><span style="color:var(--gray-400);font-size:0.8rem;"><%= t.tagline %></span><% } %></td>
                                 <td><%= t.email %></td>
-                                <td><% (t.subjects || []).forEach(s => { %><span class="subject-tag"><%= s %></span> <% }); %></td>
+                                <td><% (t.subjects || []).forEach(s => { var sg = {}; try { sg = typeof t.subject_grades === 'string' ? JSON.parse(t.subject_grades) : (t.subject_grades || {}); } catch(e) {} %><span class="subject-tag"><%= s %><% if (sg[s]) { %> <span style="font-size:0.7rem;opacity:0.7;">(<%= sg[s] %>)</span><% } %></span> <% }); %></td>
                                 <td><span class="badge-status <%= t.approved ? 'badge-active' : 'badge-pending' %>"><%= t.approved ? 'Approved' : 'Pending' %></span></td>
                                 <td style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
                                     <% if (!t.approved) { %><form action="/admin/owner/tutors/<%= t.id %>/approve" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;font-size:0.8rem;">Approve</button></form><% } %>
