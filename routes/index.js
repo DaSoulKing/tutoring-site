@@ -53,7 +53,7 @@ router.get('/about', async (req, res) => {
     try {
         const owners = await pool.query(`SELECT u.first_name, u.last_name, u.profile_picture FROM users u WHERE u.role = 'owner' AND u.is_active = true`);
         const tutors = await pool.query(`
-            SELECT u.id, u.first_name, u.last_name, u.profile_picture, tp.bio, tp.tagline, tp.subjects, tp.experience_years
+            SELECT u.id, u.first_name, u.last_name, u.profile_picture, tp.bio, tp.tagline, tp.subjects
             FROM users u JOIN tutor_profiles tp ON u.id = tp.user_id
             WHERE u.is_active = true AND tp.approved = true ORDER BY tp.is_featured DESC, u.first_name
         `);
