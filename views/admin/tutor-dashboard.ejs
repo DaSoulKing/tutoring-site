@@ -25,7 +25,7 @@
                 <% sessions.forEach(function(s) { %>
                 <div class="card" style="margin-bottom:12px;padding:20px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-                        <div><h4><%= s.student_first %> <%= s.student_last %></h4><p style="color:var(--gray-500);font-size:0.85rem;"><%= s.subject || 'General' %> &middot; <%= new Date(s.booking_date).toLocaleDateString() %> &middot; <%= s.start_time ? s.start_time.substring(0,5) : '' %> - <%= s.end_time ? s.end_time.substring(0,5) : '' %></p></div>
+                        <div><h4><%= s.student_first %> <%= s.student_last %></h4><p style="color:var(--gray-500);font-size:0.85rem;"><%= s.subject || 'General' %> &middot; <%= new Date(s.booking_date).toLocaleDateString() %> &middot; <%= formatTime(s.start_time) %> - <%= formatTime(s.end_time) %></p></div>
                         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                             <span class="badge-status badge-<%= s.status %>"><%= s.status %></span>
                             <% if (s.attendance) { %><span class="badge-status badge-<%= s.attendance === 'present' ? 'confirmed' : 'cancelled' %>"><%= s.attendance %></span><% } %>

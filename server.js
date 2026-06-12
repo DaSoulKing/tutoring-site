@@ -120,6 +120,17 @@ app.use(async (req, res, next) => {
     }
     res.locals.currentPath = req.path;
     res.locals.siteName = process.env.SITE_NAME || 'BrightMinds Tutoring';
+    res.locals.formatTime = function(t) {
+        if (!t) return '';
+        var s = String(t).substring(0,5);
+        var parts = s.split(':');
+        var h = parseInt(parts[0], 10);
+        var m = parts[1] || '00';
+        var ampm = h >= 12 ? 'PM' : 'AM';
+        var h12 = h % 12;
+        if (h12 === 0) h12 = 12;
+        return h12 + ':' + m + ' ' + ampm;
+    };
     res.locals.siteUrl = (process.env.SITE_URL || `http://localhost:${PORT}`).replace(/\/+$/, '');
     res.locals.recaptchaSiteKey = process.env.RECAPTCHA_SITE_KEY || '';
     res.locals.charityName = process.env.CHARITY_NAME || 'Kids Education Fund';

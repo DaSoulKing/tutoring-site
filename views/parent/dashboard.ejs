@@ -79,7 +79,7 @@
                         </div>
                         <div style="text-align:right;">
                             <p style="font-weight:700;color:var(--gray-700);"><%= new Date(b.booking_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) %></p>
-                            <p style="color:var(--gray-500);font-size:0.85rem;"><%= b.start_time ? b.start_time.substring(0,5) : '' %> - <%= b.end_time ? b.end_time.substring(0,5) : '' %></p>
+                            <p style="color:var(--gray-500);font-size:0.85rem;"><%= formatTime(b.start_time) %> - <%= formatTime(b.end_time) %></p>
                         </div>
                         <div style="display:flex;gap:8px;">
                             <span class="badge-status badge-<%= b.status %>"><%= b.status %></span>
