@@ -61,7 +61,7 @@
             (function() {
                 var availability = <%- JSON.stringify(availability) %>;
                 var booked = <%- JSON.stringify(booked.map(function(b) { return { date: b.booking_date, start: b.start_time, end: b.end_time, count: parseInt(b.student_count) }; })) %>;
-                var myBookings = <%- JSON.stringify((typeof myBookings !== 'undefined' ? myBookings : []).map(function(b) { return { date: b.booking_date, start: b.start_time }; })) %>;
+                var myBookings = <%- JSON.stringify((typeof myBookings !== 'undefined' ? myBookings : []).map(function(b) { return { date: b.booking_date, start: b.start_time, end: b.end_time }; })) %>;
                 var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
                 var container = document.getElementById('booking-slots');
                 var modal = document.getElementById('subject-modal');
@@ -79,15 +79,22 @@
 
                 function getSlotStatus(dateStr, start, end) {
                     for (var i = 0; i < myBookings.length; i++) {
-                        if (myBookings[i].date.substring(0,10) === dateStr && myBookings[i].start.substring(0,5) === start) return 'yours';
+                        var bd = myBookings[i].date.substring(0,10);
+                        var bs = myBookings[i].start.substring(0,5);
+                        var be = myBookings[i].end.substring(0,5);
+                        if (bd === dateStr && start < be && end > bs) return 'yours';
                     }
+                    var totalCount = 0;
                     for (var i = 0; i < booked.length; i++) {
                         var bd = booked[i].date.substring(0, 10);
-                        if (bd === dateStr && booked[i].start.substring(0,5) === start && booked[i].end.substring(0,5) === end) {
-                            if (booked[i].count >= 4) return 'full';
-                            return booked[i].count;
+                        var bs = booked[i].start.substring(0,5);
+                        var be = booked[i].end.substring(0,5);
+                        if (bd === dateStr && start < be && end > bs) {
+                            totalCount += booked[i].count;
                         }
                     }
+                    if (totalCount >= 4) return 'full';
+                    if (totalCount > 0) return totalCount;
                     return 'open';
                 }
 

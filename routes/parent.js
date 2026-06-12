@@ -285,7 +285,7 @@ router.get('/book/:tutorId', isAuthenticated, async (req, res) => {
         `, [tutorId]);
         // Also get this student's own bookings to prevent double-booking
         const myBookings = await pool.query(`
-            SELECT booking_date, start_time FROM bookings
+            SELECT booking_date, start_time, end_time FROM bookings
             WHERE student_id = $1 AND booking_date >= CURRENT_DATE AND status IN ('pending', 'confirmed')
         `, [req.session.user.id]);
 
@@ -347,8 +347,8 @@ router.post('/book/:tutorId', isAuthenticated, async (req, res) => {
 
         // Check group session limit - max 4 students per tutor per time block
         const concurrentBookings = await pool.query(
-            "SELECT COUNT(*) FROM bookings WHERE tutor_id = $1 AND booking_date = $2 AND start_time = $3 AND status IN ('pending','confirmed')",
-            [tutorId, booking_date, start_time]
+            "SELECT COUNT(*) FROM bookings WHERE tutor_id = $1 AND booking_date = $2 AND status IN ('pending','confirmed') AND (start_time, end_time) OVERLAPS ($3::time, $4::time)",
+            [tutorId, booking_date, start_time, end_time]
         );
         if (parseInt(concurrentBookings.rows[0].count) >= 4) {
             req.session.error = 'This tutor already has 4 students booked for this time slot. Please choose a different time.';
