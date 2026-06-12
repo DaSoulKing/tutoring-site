@@ -21,7 +21,7 @@
                         <a href="/parent/messages/<%= c.other_id %>" class="conversation-item <%= activeConversation && activeConversation.id == c.other_id ? 'active' : '' %>">
                             <div class="conversation-avatar"><%= c.first_name ? c.first_name.charAt(0) : '' %><%= c.last_name ? c.last_name.charAt(0) : '' %></div>
                             <div class="conversation-info">
-                                <h4><%= c.first_name %> <%= c.last_name %></h4>
+                                <h4><%= c.first_name %> <%= c.last_name %><% if (typeof unreadMap !== 'undefined' && unreadMap[c.other_id]) { %> <span style="background:var(--red-500);color:white;font-size:0.65rem;padding:2px 6px;border-radius:10px;font-weight:700;"><%= unreadMap[c.other_id] %> new</span><% } %></h4>
                                 <p><%= c.role %></p>
                             </div>
                         </a>

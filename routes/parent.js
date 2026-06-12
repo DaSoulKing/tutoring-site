@@ -71,33 +71,51 @@ router.get('/messages', isAuthenticated, async (req, res) => {
         const role = req.session.user.role;
         let contactQuery;
         if (role === 'owner') {
-            // Owner sees everyone
             contactQuery = await pool.query(`
                 SELECT id as other_id, first_name, last_name, role, profile_picture, 'Click to message' as last_msg, created_at as last_time
                 FROM users WHERE id != $1 AND is_active = true ORDER BY first_name
             `, [userId]);
-        } else {
-            // Students/tutors see: people they've messaged, their assigned tutors/students, ALL tutors, ALL owners
+        } else if (role === 'tutor') {
+            // Tutors see: their students + founders + people they've messaged (excluding other tutors)
             contactQuery = await pool.query(`
                 SELECT DISTINCT ON (other_id) other_id, first_name, last_name, role, profile_picture, last_msg, last_time FROM (
                     SELECT CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END as other_id,
                         u.first_name, u.last_name, u.role, u.profile_picture, m.body as last_msg, m.created_at as last_time
                     FROM messages m JOIN users u ON u.id = CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END
-                    WHERE m.sender_id = $1 OR m.receiver_id = $1
-                    UNION ALL
-                    SELECT u.id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Click to message' as last_msg, u.created_at as last_time
-                    FROM users u WHERE u.role = 'tutor' AND u.is_active = true AND u.id != $1
-                    UNION ALL
-                    SELECT u.id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Founder' as last_msg, u.created_at as last_time
-                    FROM users u WHERE u.role = 'owner' AND u.id != $1
+                    WHERE (m.sender_id = $1 OR m.receiver_id = $1) AND u.role != 'tutor'
                     UNION ALL
                     SELECT DISTINCT b.student_id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Your student' as last_msg, b.created_at as last_time
                     FROM bookings b JOIN users u ON b.student_id = u.id
                     WHERE b.tutor_id = $1 AND b.student_id != $1
+                    UNION ALL
+                    SELECT u.id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Founder' as last_msg, u.created_at as last_time
+                    FROM users u WHERE u.role = 'owner' AND u.id != $1
+                ) sub ORDER BY other_id, last_time DESC
+            `, [userId]);
+        } else {
+            // Students see: only tutors they've been booked with + founders. No other students.
+            contactQuery = await pool.query(`
+                SELECT DISTINCT ON (other_id) other_id, first_name, last_name, role, profile_picture, last_msg, last_time FROM (
+                    SELECT CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END as other_id,
+                        u.first_name, u.last_name, u.role, u.profile_picture, m.body as last_msg, m.created_at as last_time
+                    FROM messages m JOIN users u ON u.id = CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END
+                    WHERE (m.sender_id = $1 OR m.receiver_id = $1) AND u.role IN ('tutor', 'owner')
+                    UNION ALL
+                    SELECT DISTINCT b.tutor_id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Your tutor' as last_msg, b.created_at as last_time
+                    FROM bookings b JOIN users u ON b.tutor_id = u.id
+                    WHERE (b.student_id = $1 OR b.parent_id = $1) AND b.tutor_id != $1
+                    UNION ALL
+                    SELECT u.id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Founder' as last_msg, u.created_at as last_time
+                    FROM users u WHERE u.role = 'owner' AND u.id != $1
                 ) sub ORDER BY other_id, last_time DESC
             `, [userId]);
         }
-        res.render('parent/messages', { title: 'Messages', conversations: contactQuery.rows, activeConversation: null, messages: [], meta: {} });
+        // Get unread message senders
+        const unreadSenders = await pool.query('SELECT sender_id, COUNT(*) as cnt FROM messages WHERE receiver_id = $1 AND is_read = false GROUP BY sender_id', [userId]);
+        const unreadMap = {};
+        unreadSenders.rows.forEach(r => { unreadMap[r.sender_id] = parseInt(r.cnt); });
+
+        res.render('parent/messages', { title: 'Messages', conversations: contactQuery.rows, activeConversation: null, messages: [], meta: {}, unreadMap });
     } catch (err) { console.error(err); res.redirect('/parent/dashboard'); }
 });
 
@@ -118,29 +136,45 @@ router.get('/messages/:userId', isAuthenticated, async (req, res) => {
                 SELECT id as other_id, first_name, last_name, role, profile_picture, 'Click to message' as last_msg, created_at as last_time
                 FROM users WHERE id != $1 AND is_active = true ORDER BY first_name
             `, [userId]);
+        } else if (role === 'tutor') {
+            contactQuery = await pool.query(`
+                SELECT DISTINCT ON (other_id) other_id, first_name, last_name, role, profile_picture, last_msg, last_time FROM (
+                    SELECT CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END as other_id,
+                        u.first_name, u.last_name, u.role, u.profile_picture, m.body as last_msg, m.created_at as last_time
+                    FROM messages m JOIN users u ON u.id = CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END
+                    WHERE (m.sender_id = $1 OR m.receiver_id = $1) AND u.role != 'tutor'
+                    UNION ALL
+                    SELECT DISTINCT b.student_id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Your student' as last_msg, b.created_at as last_time
+                    FROM bookings b JOIN users u ON b.student_id = u.id
+                    WHERE b.tutor_id = $1 AND b.student_id != $1
+                    UNION ALL
+                    SELECT u.id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Founder' as last_msg, u.created_at as last_time
+                    FROM users u WHERE u.role = 'owner' AND u.id != $1
+                ) sub ORDER BY other_id, last_time DESC
+            `, [userId]);
         } else {
             contactQuery = await pool.query(`
                 SELECT DISTINCT ON (other_id) other_id, first_name, last_name, role, profile_picture, last_msg, last_time FROM (
                     SELECT CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END as other_id,
                         u.first_name, u.last_name, u.role, u.profile_picture, m.body as last_msg, m.created_at as last_time
                     FROM messages m JOIN users u ON u.id = CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END
-                    WHERE m.sender_id = $1 OR m.receiver_id = $1
+                    WHERE (m.sender_id = $1 OR m.receiver_id = $1) AND u.role IN ('tutor', 'owner')
                     UNION ALL
-                    SELECT u.id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Click to message' as last_msg, u.created_at as last_time
-                    FROM users u WHERE u.role = 'tutor' AND u.is_active = true AND u.id != $1
+                    SELECT DISTINCT b.tutor_id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Your tutor' as last_msg, b.created_at as last_time
+                    FROM bookings b JOIN users u ON b.tutor_id = u.id
+                    WHERE (b.student_id = $1 OR b.parent_id = $1) AND b.tutor_id != $1
                     UNION ALL
                     SELECT u.id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Founder' as last_msg, u.created_at as last_time
                     FROM users u WHERE u.role = 'owner' AND u.id != $1
-                    UNION ALL
-                    SELECT DISTINCT b.student_id as other_id, u.first_name, u.last_name, u.role, u.profile_picture, 'Your student' as last_msg, b.created_at as last_time
-                    FROM bookings b JOIN users u ON b.student_id = u.id
-                    WHERE b.tutor_id = $1 AND b.student_id != $1
                 ) sub ORDER BY other_id, last_time DESC
             `, [userId]);
         }
+        const unreadSenders2 = await pool.query('SELECT sender_id, COUNT(*) as cnt FROM messages WHERE receiver_id = $1 AND is_read = false GROUP BY sender_id', [userId]);
+        const unreadMap = {};
+        unreadSenders2.rows.forEach(r => { unreadMap[r.sender_id] = parseInt(r.cnt); });
         res.render('parent/messages', {
             title: 'Chat', conversations: contactQuery.rows,
-            activeConversation: otherUser.rows[0] || null, messages: messages.rows, meta: {}
+            activeConversation: otherUser.rows[0] || null, messages: messages.rows, meta: {}, unreadMap
         });
     } catch (err) { console.error(err); res.redirect('/parent/messages'); }
 });
@@ -151,17 +185,21 @@ router.post('/messages/:userId', isAuthenticated, async (req, res) => {
         const receiverId = parseInt(req.params.userId);
         if (isNaN(receiverId) || receiverId === senderId) { return res.redirect('/parent/messages'); }
 
-        // Authorization: check that a relationship exists (booking, existing conversation, or receiver is owner)
-        const relationship = await pool.query(`
-            SELECT 1 FROM bookings WHERE (tutor_id = $1 AND (student_id = $2 OR parent_id = $2))
-                OR (tutor_id = $2 AND (student_id = $1 OR parent_id = $1))
-            UNION SELECT 1 FROM messages WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1)
-            UNION SELECT 1 FROM users WHERE id = $2 AND role = 'owner'
-            LIMIT 1
-        `, [senderId, receiverId]);
-        if (relationship.rows.length === 0) {
-            req.session.error = 'You cannot message this user.';
-            return res.redirect('/parent/messages');
+        // Authorization: owners can message anyone, tutors can message their students + owners, students can message their tutors + owners
+        const senderRole = req.session.user.role;
+        if (senderRole !== 'owner') {
+            const relationship = await pool.query(`
+                SELECT 1 FROM bookings WHERE (tutor_id = $1 AND (student_id = $2 OR parent_id = $2))
+                    OR (tutor_id = $2 AND (student_id = $1 OR parent_id = $1))
+                UNION SELECT 1 FROM messages WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1)
+                UNION SELECT 1 FROM users WHERE id = $2 AND role = 'owner'
+                UNION SELECT 1 FROM users WHERE id = $1 AND role = 'tutor' AND EXISTS (SELECT 1 FROM bookings WHERE tutor_id = $1 AND (student_id = $2 OR parent_id = $2))
+                LIMIT 1
+            `, [senderId, receiverId]);
+            if (relationship.rows.length === 0) {
+                req.session.error = 'You cannot message this user.';
+                return res.redirect('/parent/messages');
+            }
         }
 
         const body = (req.body.body || '').trim().substring(0, 5000);

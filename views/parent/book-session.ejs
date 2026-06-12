@@ -39,6 +39,14 @@
                 <div class="card" style="max-width:400px;padding:32px;">
                     <h3 style="margin-bottom:16px;">What subject?</h3>
                     <p style="color:var(--gray-500);margin-bottom:16px;" id="modal-slot-info"></p>
+                    <div style="margin-bottom:16px;">
+                        <label style="font-size:0.85rem;font-weight:600;margin-bottom:8px;display:block;">Session Length</label>
+                        <div style="display:flex;gap:8px;">
+                            <button type="button" class="duration-pick btn btn-sm btn-primary" data-hours="1" style="flex:1;">1 Hour</button>
+                            <button type="button" class="duration-pick btn btn-sm btn-outline" data-hours="2" style="flex:1;">2 Hours</button>
+                        </div>
+                    </div>
+                    <label style="font-size:0.85rem;font-weight:600;margin-bottom:8px;display:block;">Subject</label>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
                         <% (tutor.subjects || []).forEach(function(s) { %>
                         <button type="button" class="subject-pick filter-btn" data-subject="<%= s %>"><%= s %></button>
@@ -156,13 +164,32 @@
                     modal.style.display = 'flex';
                 });
 
-                // Handle subject pick
+                var pendingDuration = 1;
+
+                // Handle duration toggle
                 modal.addEventListener('click', function(e) {
+                    var dur = e.target.closest('.duration-pick');
+                    if (dur) {
+                        pendingDuration = parseInt(dur.getAttribute('data-hours'));
+                        modal.querySelectorAll('.duration-pick').forEach(function(b) { b.className = 'duration-pick btn btn-sm btn-outline'; });
+                        dur.className = 'duration-pick btn btn-sm btn-primary';
+                        // Update displayed time
+                        if (pendingSlot) {
+                            var parts = pendingSlot.start.split(':');
+                            var endH = parseInt(parts[0]) + pendingDuration;
+                            var newEnd = String(endH).padStart(2, '0') + ':' + parts[1];
+                            document.getElementById('modal-slot-info').textContent = pendingSlot.label.split(' - ')[0] + ' - ' + formatTime12(newEnd);
+                        }
+                        return;
+                    }
                     var pick = e.target.closest('.subject-pick');
                     if (pick && pendingSlot) {
+                        var parts2 = pendingSlot.start.split(':');
+                        var endH2 = parseInt(parts2[0]) + pendingDuration;
+                        var finalEnd = String(endH2).padStart(2, '0') + ':' + parts2[1];
                         document.getElementById('form-date').value = pendingSlot.date;
                         document.getElementById('form-start').value = pendingSlot.start;
-                        document.getElementById('form-end').value = pendingSlot.end;
+                        document.getElementById('form-end').value = finalEnd;
                         document.getElementById('form-subject').value = pick.getAttribute('data-subject');
                         document.getElementById('booking-form').submit();
                         return;
@@ -170,6 +197,7 @@
                     if (e.target.id === 'modal-close') {
                         modal.style.display = 'none';
                         pendingSlot = null;
+                        pendingDuration = 1;
                     }
                 });
             })();
