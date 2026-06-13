@@ -48,7 +48,7 @@ router.post('/pay/monthly', isAuthenticated, async (req, res) => {
         }
 
         const amount = Math.round(parseFloat(sub.rows[0].rate_total) * 100);
-        const serviceFee = Math.round(amount * 0.029) + 30;
+        const serviceFee = Math.ceil((amount + 30) / 0.971) - amount;
         const total = amount + serviceFee;
         console.log('Amount cents:', amount, 'Fee:', serviceFee, 'Total:', total);
 
@@ -102,7 +102,7 @@ router.post('/pay/extra-session', isAuthenticated, async (req, res) => {
         const perSession = parseFloat(sub.rows[0].rate_total) / sub.rows[0].sessions_per_month;
         const extraRate = sub.rows[0].extra_session_rate ? parseFloat(sub.rows[0].extra_session_rate) : (perSession + 5);
         const amount = Math.round(extraRate * 100); // cents
-        const serviceFee = Math.round(amount * 0.029) + 30; // 2.9% + 30¢
+        const serviceFee = Math.ceil((amount + 30) / 0.971) - amount; // 2.9% + 30¢
         const total = amount + serviceFee;
 
         const session = await stripe.checkout.sessions.create({

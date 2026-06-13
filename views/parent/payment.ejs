@@ -41,7 +41,7 @@
                         <% if (stripeEnabled && subscription.rate_total) { %>
                         <%
                             var monthlyBase2 = parseFloat(subscription.rate_total) * 100;
-                            var monthlyFee2 = Math.round(monthlyBase2 * 0.029) + 30;
+                            var monthlyFee2 = Math.ceil((monthlyBase2 + 30) / 0.971) - monthlyBase2;
                             var monthlyTotal2 = ((monthlyBase2 + monthlyFee2) / 100).toFixed(2);
                         %>
                         <form action="/payment/pay/monthly" method="POST" style="margin-bottom:12px;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -57,7 +57,7 @@
                 <% if (stripeEnabled && subscription.rate_total) { %>
                 <%
                     var monthlyBase = parseFloat(subscription.rate_total) * 100;
-                    var monthlyFee = Math.round(monthlyBase * 0.029) + 30;
+                    var monthlyFee = Math.ceil((monthlyBase + 30) / 0.971) - monthlyBase;
                     var monthlyTotal = ((monthlyBase + monthlyFee) / 100).toFixed(2);
                 %>
                 <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
@@ -95,7 +95,7 @@
                     var perSession = parseFloat(subscription.rate_total) / subscription.sessions_per_month;
                     var extraRate = subscription.extra_session_rate ? parseFloat(subscription.extra_session_rate) : (perSession + 5);
                     var extraBase = extraRate * 100;
-                    var extraFee = Math.round(extraBase * 0.029) + 30;
+                    var extraFee = Math.ceil((extraBase + 30) / 0.971) - extraBase;
                     var extraTotal = ((extraBase + extraFee) / 100).toFixed(2);
                     var credits = parseInt(subscription.extra_session_credits) || 0;
                 %>
@@ -114,7 +114,7 @@
 
                 <%
                     var extraBase = extraRate * 100;
-                    var extraFee = Math.round(extraBase * 0.029) + 30;
+                    var extraFee = Math.ceil((extraBase + 30) / 0.971) - extraBase;
                     var extraTotal = ((extraBase + extraFee) / 100).toFixed(2);
                 %>
 
