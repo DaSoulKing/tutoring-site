@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const pool = require('../db/pool');
-const { isAuthenticated, isOwner, isTutor } = require('../middleware/auth');
+const { isAuthenticated, isOwner, isOwnerOnly, isTutor } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
