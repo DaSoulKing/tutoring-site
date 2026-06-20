@@ -15,7 +15,7 @@
                 <li><a href="/admin/owner/audit-log">&#x1F4DC; Audit Log</a></li>
                 <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
                 <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
-                <li><a href="/admin/owner/settings">&#x2699;&#xFE0F; Settings</a></li>
+                <% if (user && user.role === "owner") { %><li><a href="/admin/owner/settings">&#x2699;&#xFE0F; Settings</a></li><% } %>
                 <li><a href="/admin/owner/profile">&#x1F464; My Profile</a></li>
             </ul>
         </aside>
@@ -108,6 +108,7 @@
             </div>
 
             <script>
+            function fmt12(t) { var p=String(t).substring(0,5).split(':');var h=parseInt(p[0]);var m=p[1];var ap=h>=12?'PM':'AM';h=h%12;if(h===0)h=12;return h+':'+m+' '+ap; }
             function loadSlots() {
                 var tid = document.getElementById('slot-tutor-select').value;
                 var el = document.getElementById('slot-list');
@@ -119,7 +120,7 @@
                         var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
                         var full = s.student_count >= 4;
                         html += '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-50);border-radius:8px;">';
-                        html += '<div style="flex:1;"><strong>' + days[s.day] + '</strong> ' + s.start_time + '-' + s.end_time + ' &middot; ' + s.subject;
+                        html += '<div style="flex:1;"><strong>' + days[s.day] + '</strong> ' + fmt12(s.start_time) + ' - ' + fmt12(s.end_time) + ' &middot; ' + s.subject;
                         html += ' <span style="font-size:0.8rem;color:' + (full ? 'var(--red-500)' : 'var(--green-600)') + ';font-weight:700;">' + s.student_count + '/4 students</span>';
                         html += '<br><span style="font-size:0.8rem;color:var(--gray-400);">' + s.student_names + '</span></div>';
                         if (!full) {

@@ -175,7 +175,7 @@ router.get('/tutor-slots/:tutorId', isAuthenticated, async (req, res) => {
                 STRING_AGG(DISTINCT (u.first_name || ' ' || u.last_name), ', ') as student_names
             FROM bookings b JOIN users u ON b.student_id = u.id
             WHERE b.tutor_id = $1 AND b.status IN ('pending','confirmed')
-                AND b.booking_date >= CURRENT_DATE AND b.subject != 'Assigned by Admin'
+                AND b.booking_date >= CURRENT_DATE
             GROUP BY EXTRACT(DOW FROM booking_date), start_time, end_time, subject
             ORDER BY day, start_time
         `, [req.params.tutorId]);

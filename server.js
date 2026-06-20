@@ -107,7 +107,7 @@ app.use(csrfProtect);
 app.use(async (req, res, next) => {
     res.locals.user = req.session.user || null;
     // Pass payment status for nav alert - only flag if they have an active plan
-    if (req.session.user && req.session.user.id && req.session.user.role !== 'owner' && req.session.user.role !== 'tutor') {
+    if (req.session.user && req.session.user.id && req.session.user.role !== 'owner' && req.session.user.role !== 'tutor' && req.session.user.role !== 'manager') {
         try {
             const ps = await pool.query('SELECT payment_status FROM users WHERE id = $1', [req.session.user.id]);
             const hasSub = await pool.query("SELECT id FROM subscriptions WHERE parent_id = $1 AND status = 'active' LIMIT 1", [req.session.user.id]);

@@ -265,6 +265,7 @@ router.get('/logout', (req, res) => {
 function getDashboardUrl(role) {
     switch (role) {
         case 'owner': return '/admin/owner';
+        case 'manager': return '/admin/owner';
         case 'tutor': return '/admin/tutor';
         default: return '/parent/dashboard';
     }

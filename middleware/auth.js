@@ -28,13 +28,13 @@ function validateIntParam(...paramNames) {
 }
 
 function isOwner(req, res, next) {
-    if (req.session.user && req.session.user.role === 'owner') return next();
+    if (req.session.user && (req.session.user.role === 'owner' || req.session.user.role === 'manager')) return next();
     req.session.error = 'Access denied.';
     res.redirect('/');
 }
 
 function isTutor(req, res, next) {
-    if (req.session.user && (req.session.user.role === 'tutor' || req.session.user.role === 'owner')) return next();
+    if (req.session.user && (req.session.user.role === 'tutor' || req.session.user.role === 'owner' || req.session.user.role === 'manager')) return next();
     req.session.error = 'Access denied.';
     res.redirect('/');
 }
@@ -51,4 +51,10 @@ function isOwnerOrTutor(req, res, next) {
     res.redirect('/');
 }
 
-module.exports = { isAuthenticated, isOwner, isTutor, isParent, isOwnerOrTutor, validateIntParam };
+function isOwnerOnly(req, res, next) {
+    if (req.session.user && req.session.user.role === 'owner') return next();
+    req.session.error = 'Owner-only access.';
+    res.redirect('/admin/owner');
+}
+
+module.exports = { isAuthenticated, isOwner, isOwnerOnly, isTutor, isParent, isOwnerOrTutor, validateIntParam };

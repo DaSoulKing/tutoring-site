@@ -273,7 +273,7 @@ router.post('/owner/profile', isAuthenticated, isOwner, upload.single('profile_p
 });
 
 // Site settings (edit homepage stats)
-router.get('/owner/settings', isAuthenticated, isOwner, async (req, res) => {
+router.get('/owner/settings', isAuthenticated, isOwnerOnly, async (req, res) => {
     try {
         let settings = {};
         try {
@@ -284,7 +284,7 @@ router.get('/owner/settings', isAuthenticated, isOwner, async (req, res) => {
     } catch (err) { console.error(err); res.redirect('/admin/owner'); }
 });
 
-router.post('/owner/settings', isAuthenticated, isOwner, async (req, res) => {
+router.post('/owner/settings', isAuthenticated, isOwnerOnly, async (req, res) => {
     try {
         const fields = ['stat_satisfaction', 'stat_satisfaction_label', 'stat_students', 'stat_students_label', 'stat_tutors', 'stat_tutors_label', 'stat_improvement', 'stat_improvement_label'];
         for (const key of fields) {
@@ -585,6 +585,19 @@ router.post('/tutor/availability', isAuthenticated, isTutor, async (req, res) =>
 });
 
 // Session sheet
+// Tutor creates a session with their student
+router.post('/tutor/create-session', isAuthenticated, isTutor, async (req, res) => {
+    try {
+        const { student_id, booking_date, start_time, end_time, subject } = req.body;
+        const crypto = require('crypto');
+        const roomId = 'bm-' + crypto.randomBytes(16).toString('hex');
+        await pool.query("INSERT INTO bookings (tutor_id, student_id, parent_id, booking_date, start_time, end_time, subject, meeting_room_id, status) VALUES ($1,$2,$2,$3,$4,$5,$6,$7,'confirmed')",
+            [req.session.user.id, student_id, booking_date, start_time, end_time, subject || 'General', roomId]);
+        req.session.success = 'Session created!';
+    } catch (err) { console.error(err); req.session.error = 'Failed: ' + err.message; }
+    res.redirect('/admin/tutor');
+});
+
 router.get('/tutor/session-sheet/:bookingId', isAuthenticated, isTutor, async (req, res) => {
     try {
         let booking;
@@ -822,11 +835,13 @@ router.post('/owner/recurring', isAuthenticated, isOwner, async (req, res) => {
 
         // Generate N weeks of bookings
         const today = new Date();
+        today.setHours(0, 0, 0, 0); // Strip time for clean date comparison
         let generated = 0;
         for (let w = 0; w < numWeeks; w++) {
             const date = new Date(today);
-            date.setDate(today.getDate() + ((parseInt(day_of_week) - today.getDay() + 7) % 7) + (w * 7));
-            if (date <= today && w === 0) date.setDate(date.getDate() + 7);
+            let daysUntil = (parseInt(day_of_week) - today.getDay() + 7) % 7;
+            if (daysUntil === 0 && w === 0) daysUntil = 0; // Include today if it's the target day
+            date.setDate(today.getDate() + daysUntil + (w * 7));
             const dateStr = date.toISOString().substring(0, 10);
             const roomId = 'bm-' + crypto.randomBytes(16).toString('hex');
 
