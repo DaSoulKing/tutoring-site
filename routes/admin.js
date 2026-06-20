@@ -862,8 +862,9 @@ router.post('/owner/recurring', isAuthenticated, isOwner, async (req, res) => {
 // Add student to existing time slot (recurring → group conversion)
 router.post('/owner/add-to-slot', isAuthenticated, isOwner, async (req, res) => {
     try {
-        const { tutor_id, student_id, day, start_time, end_time, subject } = req.body;
+        const { tutor_id, student_id, day, start_time, end_time, subject, weeks } = req.body;
         const crypto = require('crypto');
+        const numWeeks = Math.min(Math.max(parseInt(weeks) || 4, 1), 52);
         // Find next occurrence of this day of week
         const today = new Date();
         let nextDate = new Date(today);
@@ -874,9 +875,9 @@ router.post('/owner/add-to-slot', isAuthenticated, isOwner, async (req, res) => 
         const existing = await pool.query("SELECT meeting_room_id FROM bookings WHERE tutor_id = $1 AND start_time = $2 AND EXTRACT(DOW FROM booking_date) = $3 AND status IN ('pending','confirmed') LIMIT 1", [tutor_id, start_time, targetDay]);
         const roomId = existing.rows[0] ? existing.rows[0].meeting_room_id : ('bm-group-' + crypto.randomBytes(16).toString('hex'));
 
-        // Create 8 weeks of bookings for this student in the same slot
+        // Create sessions for this student in the same slot
         let created = 0;
-        for (let w = 0; w < 8; w++) {
+        for (let w = 0; w < numWeeks; w++) {
             const bookDate = new Date(nextDate);
             bookDate.setDate(bookDate.getDate() + (w * 7));
             const dateStr = bookDate.toISOString().substring(0, 10);

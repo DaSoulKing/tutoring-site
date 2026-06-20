@@ -91,7 +91,10 @@
                     </div>
                     <div class="form-group" style="margin:0;min-width:100px;">
                         <label style="font-size:0.8rem;">Subject</label>
-                        <input type="text" name="subject" class="form-control" style="padding:6px 8px;font-size:0.85rem;" placeholder="Math" required>
+                        <select name="subject" class="form-control" style="padding:6px 8px;font-size:0.85rem;" required>
+                            <option value="">Subject...</option>
+                            <% (profile.subjects || []).forEach(function(s) { %><option value="<%= s %>"><%= s %></option><% }); %>
+                        </select>
                     </div>
                     <button type="submit" class="btn btn-primary btn-sm">Create Session</button>
                 </form>

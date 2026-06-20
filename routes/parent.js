@@ -115,7 +115,9 @@ router.get('/messages', isAuthenticated, async (req, res) => {
         const unreadMap = {};
         unreadSenders.rows.forEach(r => { unreadMap[r.sender_id] = parseInt(r.cnt); });
 
-        res.render('parent/messages', { title: 'Messages', conversations: contactQuery.rows, activeConversation: null, messages: [], meta: {}, unreadMap });
+        // Sort: unread first
+        const sortedConvos = contactQuery.rows.sort((a, b) => ((unreadMap[b.other_id] || 0) - (unreadMap[a.other_id] || 0)));
+        res.render('parent/messages', { title: 'Messages', conversations: sortedConvos, activeConversation: null, messages: [], meta: {}, unreadMap });
     } catch (err) { console.error(err); res.redirect('/parent/dashboard'); }
 });
 
@@ -172,8 +174,10 @@ router.get('/messages/:userId', isAuthenticated, async (req, res) => {
         const unreadSenders2 = await pool.query('SELECT sender_id, COUNT(*) as cnt FROM messages WHERE receiver_id = $1 AND is_read = false GROUP BY sender_id', [userId]);
         const unreadMap = {};
         unreadSenders2.rows.forEach(r => { unreadMap[r.sender_id] = parseInt(r.cnt); });
+        // Sort: unread first
+        const sortedConvos2 = contactQuery.rows.sort((a, b) => ((unreadMap[b.other_id] || 0) - (unreadMap[a.other_id] || 0)));
         res.render('parent/messages', {
-            title: 'Chat', conversations: contactQuery.rows,
+            title: 'Chat', conversations: sortedConvos2,
             activeConversation: otherUser.rows[0] || null, messages: messages.rows, meta: {}, unreadMap
         });
     } catch (err) { console.error(err); res.redirect('/parent/messages'); }

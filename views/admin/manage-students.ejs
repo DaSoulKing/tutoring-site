@@ -16,6 +16,7 @@
                 <li><a href="/admin/owner/blog">&#x1F4DD; Blog</a></li>
                 <li><a href="/admin/owner/referrals">&#x1F381; Referrals</a></li>
                 <% if (user && user.role === "owner") { %><li><a href="/admin/owner/settings">&#x2699;&#xFE0F; Settings</a></li><% } %>
+                <% if (user && user.role === "manager") { %><li><a href="/admin/tutor">&#x1F4DA; My Tutor Dashboard</a></li><% } %>
                 <li><a href="/admin/owner/profile">&#x1F464; My Profile</a></li>
             </ul>
         </aside>
@@ -129,7 +130,7 @@
                             html += '<select name="student_id" class="form-control" style="width:auto;padding:4px;font-size:0.8rem;" required>';
                             html += '<option value="">Add student...</option>';
                             <% students.forEach(function(st) { %>html += '<option value="<%= st.id %>"><%= st.first_name %> <%= st.last_name %></option>';<% }); %>
-                            html += '</select><button type="submit" class="btn btn-sm btn-primary" style="font-size:0.75rem;">Add</button></form>';
+                            html += '</select><input type="number" name="weeks" value="4" min="1" max="52" class="form-control" style="width:50px;padding:4px;font-size:0.8rem;" title="Weeks"><button type="submit" class="btn btn-sm btn-primary" style="font-size:0.75rem;">Add</button></form>';
                         }
                         html += '</div>';
                     });
