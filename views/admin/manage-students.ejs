@@ -130,7 +130,7 @@
                             html += '<select name="student_id" class="form-control" style="width:auto;padding:4px;font-size:0.8rem;" required>';
                             html += '<option value="">Add student...</option>';
                             <% students.forEach(function(st) { %>html += '<option value="<%= st.id %>"><%= st.first_name %> <%= st.last_name %></option>';<% }); %>
-                            html += '</select><input type="number" name="weeks" value="4" min="1" max="52" class="form-control" style="width:50px;padding:4px;font-size:0.8rem;" title="Weeks"><button type="submit" class="btn btn-sm btn-primary" style="font-size:0.75rem;">Add</button></form>';
+                            html += '</select><button type="submit" class="btn btn-sm btn-primary" style="font-size:0.75rem;">Add</button></form>';
                         }
                         html += '</div>';
                     });
@@ -199,7 +199,7 @@
                     </div>
                     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                         <span class="badge-status <%= s.email_verified ? 'badge-confirmed' : 'badge-pending' %>"><%= s.email_verified ? 'Approved' : 'Pending' %></span>
-                        <span class="badge-status <%= s.payment_status === 'paid' ? 'badge-confirmed' : 'badge-cancelled' %>"><%= s.payment_status || 'unpaid' %></span>
+                        <% if (!user || user.role !== 'manager') { %><span class="badge-status <%= s.payment_status === 'paid' ? 'badge-confirmed' : 'badge-cancelled' %>"><%= s.payment_status || 'unpaid' %></span><% } %>
                     </div>
                 </div>
 
@@ -212,6 +212,7 @@
                         <% if (isOverLimit) { %><span style="color:var(--red-500);font-weight:700;"> OVER (+<%= extrasOwed %>)</span><% } %>
                     </div>
                     <% if (sub) { %>
+                    <% if (!user || user.role !== 'manager') { %>
                     <div style="padding:8px 16px;background:var(--blue-50);border-radius:8px;font-size:0.85rem;">
                         <strong>Plan:</strong> <%= sub.plan_name %> ($<%= sub.rate_total || '0' %>/mo)
                         &middot; Extra: $<%= extraRate.toFixed(2) %>/session
@@ -226,6 +227,11 @@
                         Extra credits: <%= credits %>
                     </div>
                     <% } %>
+                    <% } else { %>
+                    <div style="padding:8px 16px;background:var(--blue-50);border-radius:8px;font-size:0.85rem;">
+                        <strong>Plan:</strong> <%= sub.plan_name %>
+                    </div>
+                    <% } %>
                     <% } %>
                 </div>
 
@@ -235,6 +241,7 @@
                     <form action="/admin/owner/users/<%= s.id %>/verify" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-sm" style="background:var(--green-500);color:white;font-size:0.75rem;">Approve</button></form>
                     <% } %>
 
+                    <% if (!user || user.role !== 'manager') { %>
                     <form action="/admin/owner/users/<%= s.id %>/payment" method="POST" style="display:flex;gap:4px;"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <select name="payment_status" style="padding:4px 8px;font-size:0.75rem;border-radius:6px;border:1px solid var(--gray-200);">
                             <option value="paid" <%= s.payment_status === 'paid' ? 'selected' : '' %>>Paid</option>
@@ -242,6 +249,7 @@
                         </select>
                         <button type="submit" class="btn btn-sm btn-outline" style="font-size:0.7rem;">Set</button>
                     </form>
+                    <% } %>
 
                     <a href="/admin/owner/notes/<%= s.id %>" class="btn btn-outline btn-sm" style="font-size:0.75rem;">Notes</a>
 
@@ -249,6 +257,7 @@
                 </div>
 
                 <!-- Set Plan (collapsed) -->
+                <% if (!user || user.role !== 'manager') { %>
                 <details style="margin-top:12px;">
                     <summary style="cursor:pointer;font-size:0.85rem;color:var(--blue-600);font-weight:600;">Set/Edit Plan</summary>
                     <form action="/admin/owner/users/<%= s.id %>/plan" method="POST" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:8px;" class="plan-form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -275,6 +284,7 @@
                         <button type="submit" class="btn btn-primary btn-sm" style="font-size:0.8rem;">Save Plan</button>
                     </form>
                 </details>
+                <% } %>
             </div>
             <% }); %>
             <% } else { %>

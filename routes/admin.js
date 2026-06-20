@@ -784,7 +784,7 @@ router.post('/tutor/bookings/:id/attendance', isAuthenticated, isTutor, async (r
 });
 
 // Set student payment status
-router.post('/owner/users/:id/payment', isAuthenticated, isOwner, async (req, res) => {
+router.post('/owner/users/:id/payment', isAuthenticated, isOwnerOnly, async (req, res) => {
     try {
         const status = req.body.payment_status === 'paid' ? 'paid' : 'unpaid';
         await pool.query('UPDATE users SET payment_status = $1 WHERE id = $2', [status, req.params.id]);
@@ -806,7 +806,7 @@ router.post('/owner/tutors/:id/rate', isAuthenticated, isOwner, async (req, res)
 });
 
 // Set student subscription plan (sessions per month + total rate)
-router.post('/owner/users/:id/plan', isAuthenticated, isOwner, async (req, res) => {
+router.post('/owner/users/:id/plan', isAuthenticated, isOwnerOnly, async (req, res) => {
     try {
         const sessions = parseInt(req.body.sessions_per_month) || 4;
         const rate = parseFloat(req.body.rate_total) || 0;
@@ -862,33 +862,30 @@ router.post('/owner/recurring', isAuthenticated, isOwner, async (req, res) => {
 // Add student to existing time slot (recurring → group conversion)
 router.post('/owner/add-to-slot', isAuthenticated, isOwner, async (req, res) => {
     try {
-        const { tutor_id, student_id, day, start_time, end_time, subject, weeks } = req.body;
-        const crypto = require('crypto');
-        const numWeeks = Math.min(Math.max(parseInt(weeks) || 4, 1), 52);
-        // Find next occurrence of this day of week
-        const today = new Date();
-        let nextDate = new Date(today);
-        const targetDay = parseInt(day);
-        while (nextDate.getDay() !== targetDay) { nextDate.setDate(nextDate.getDate() + 1); }
-
-        // Get the meeting_room_id from an existing booking in this slot
-        const existing = await pool.query("SELECT meeting_room_id FROM bookings WHERE tutor_id = $1 AND start_time = $2 AND EXTRACT(DOW FROM booking_date) = $3 AND status IN ('pending','confirmed') LIMIT 1", [tutor_id, start_time, targetDay]);
-        const roomId = existing.rows[0] ? existing.rows[0].meeting_room_id : ('bm-group-' + crypto.randomBytes(16).toString('hex'));
-
-        // Create sessions for this student in the same slot
+        const { tutor_id, student_id, day, start_time, end_time, subject } = req.body;
+        // Find ALL existing bookings for this tutor at this day/time
+        const existing = await pool.query(
+            "SELECT booking_date, meeting_room_id FROM bookings WHERE tutor_id = $1 AND EXTRACT(DOW FROM booking_date) = $2 AND start_time = $3 AND booking_date >= CURRENT_DATE AND status IN ('pending','confirmed') ORDER BY booking_date",
+            [tutor_id, parseInt(day), start_time]
+        );
+        if (existing.rows.length === 0) {
+            req.session.error = 'No existing sessions found for this slot.';
+            return res.redirect('/admin/owner/students');
+        }
+        // Add student to each of those existing dates with the same meeting room
         let created = 0;
-        for (let w = 0; w < numWeeks; w++) {
-            const bookDate = new Date(nextDate);
-            bookDate.setDate(bookDate.getDate() + (w * 7));
-            const dateStr = bookDate.toISOString().substring(0, 10);
+        for (const row of existing.rows) {
+            const dateStr = row.booking_date.toISOString().substring(0, 10);
+            const roomId = row.meeting_room_id;
+            // Check student isn't already in this session
             const conflict = await pool.query("SELECT id FROM bookings WHERE tutor_id = $1 AND student_id = $2 AND booking_date = $3 AND start_time = $4 AND status IN ('pending','confirmed')", [tutor_id, student_id, dateStr, start_time]);
             if (conflict.rows.length === 0) {
                 await pool.query("INSERT INTO bookings (tutor_id, student_id, parent_id, booking_date, start_time, end_time, subject, meeting_room_id, status) VALUES ($1,$2,$2,$3,$4,$5,$6,$7,'confirmed')", [tutor_id, student_id, dateStr, start_time, end_time, subject || 'Group Session', roomId]);
                 created++;
             }
         }
-        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'student_added_to_slot', 'Student ' + student_id + ' added to tutor ' + tutor_id + ' slot, ' + created + ' sessions created']); } catch(e) {}
-        req.session.success = 'Added student to slot! ' + created + ' sessions created sharing the same video room.';
+        try { await pool.query('INSERT INTO audit_log (user_id, action, details) VALUES ($1, $2, $3)', [req.session.user.id, 'student_added_to_slot', 'Student ' + student_id + ' added to ' + created + ' existing sessions with tutor ' + tutor_id]); } catch(e) {}
+        req.session.success = 'Added student to ' + created + ' existing sessions, sharing the same video room.';
     } catch (err) { console.error(err); req.session.error = 'Failed: ' + err.message; }
     res.redirect('/admin/owner/students');
 });

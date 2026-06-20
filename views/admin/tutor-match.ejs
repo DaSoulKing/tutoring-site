@@ -65,7 +65,7 @@
                     <p style="color:var(--gray-500);font-size:0.85rem;margin-bottom:8px;">
                         <%= (m.subjects || []).join(', ') %>
                         <% if (m.grade_levels) { %> &middot; Grades: <%= m.grade_levels %><% } %>
-                        <% if (m.hourly_rate) { %> &middot; $<%= m.hourly_rate %>/hr<% } %>
+                        <% if (m.hourly_rate && user && user.role !== "manager") { %> &middot; $<%= m.hourly_rate %>/hr<% } %>
                         <% var sg = {}; try { sg = typeof m.subject_grades === 'string' ? JSON.parse(m.subject_grades) : (m.subject_grades || {}); } catch(e) {} %>
                         <% if (Object.keys(sg).length > 0) { %><br><span style="font-size:0.8rem;color:var(--gray-400);"><% Object.entries(sg).forEach(function([subj, grades]) { %><%= subj %>: <%= grades %> &nbsp;<% }); %></span><% } %>
                     </p>

@@ -129,7 +129,7 @@
             <% } %>
 
             <!-- Payment Reminders -->
-            <% if (payments && payments.length > 0) { %>
+            <% if (user && user.role !== "manager" && payments && payments.length > 0) { %>
             <h2 style="font-size:1.25rem;margin:24px 0 16px;">Payment Reminders</h2>
             <div class="table-wrapper"><table><thead><tr><th>Client</th><th>Email</th><th>Phone</th><th>Plan</th><th>Billing Date</th><th>Amount</th></tr></thead><tbody>
                 <% payments.forEach(p => { %>
