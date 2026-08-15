@@ -13,8 +13,8 @@
                 Messages are monitored by administrators for safety and quality assurance.
             </div>
 
-            <div class="messages-layout">
-                <div class="conversations-list">
+            <div class="messages-layout" id="messages-layout">
+                <div class="conversations-list" id="conversations-list">
                     <div style="padding:16px;font-weight:700;color:var(--gray-700);border-bottom:1px solid var(--gray-200);">Conversations</div>
                     <% if (conversations && conversations.length > 0) { %>
                         <% conversations.forEach(c => { %>
@@ -35,7 +35,8 @@
 
                 <div class="message-area">
                     <% if (activeConversation) { %>
-                        <div class="message-area-header">
+                        <div class="message-area-header" style="display:flex;align-items:center;gap:12px;">
+                            <a href="/parent/messages" class="mobile-back-btn" style="display:none;font-size:1.3rem;color:var(--blue-600);text-decoration:none;">&larr;</a>
                             <h3 style="font-size:1rem;"><%= activeConversation.first_name %> <%= activeConversation.last_name %> (<%= activeConversation.role %>)</h3>
                         </div>
                         <div class="message-list" id="message-list">
@@ -65,6 +66,12 @@
 
 <script>
 (function() {
+    // Mobile: if a conversation is open, show only the chat pane
+    <% if (activeConversation) { %>
+    var layout = document.getElementById('messages-layout');
+    if (layout && window.innerWidth <= 768) layout.classList.add('viewing-chat');
+    <% } %>
+
     // Strip emojis from message input
     var msgInput = document.querySelector('input[name="body"]');
     if (msgInput) {

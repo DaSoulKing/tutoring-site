@@ -21,7 +21,7 @@
             </ul>
         </aside>
         <div class="dashboard-main">
-            <div class="dashboard-welcome"><h1>Owner Dashboard</h1><p>Welcome back, <%= user.firstName %>.</p></div>
+            <div class="dashboard-welcome"><h1>Owner Dashboard</h1><p>Welcome back, <%= user.firstName %>. Here's what needs your attention.</p></div>
 
             <div class="stat-cards">
                 <div class="stat-card"><h3><%= stats.tutors %></h3><p>Active Tutors</p></div>
@@ -71,7 +71,7 @@
 
             <!-- Pending Tutor Approvals -->
             <% if (pendingTutors && pendingTutors.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin-bottom:16px;">&#x23F3; Tutors Pending Approval</h2>
+            <h2 class="dash-section-title">&#x23F3; Tutors Pending Approval</h2>
             <% pendingTutors.forEach(t => { %>
             <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--yellow-500);">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -114,7 +114,7 @@
 
             <!-- Check-in Alerts -->
             <% if (checkins && checkins.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:24px 0 16px;">&#x1F514; 3-Month Check-ins Due</h2>
+            <h2 class="dash-section-title">&#x1F514; 3-Month Check-ins Due</h2>
             <% checkins.forEach(c => { %>
             <div class="card" style="margin-bottom:12px;padding:20px;border-left:4px solid var(--orange-500);">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -130,7 +130,7 @@
 
             <!-- Payment Reminders -->
             <% if (user && user.role !== "manager" && payments && payments.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:24px 0 16px;">Payment Reminders</h2>
+            <h2 class="dash-section-title">Payment Reminders</h2>
             <div class="table-wrapper"><table><thead><tr><th>Client</th><th>Email</th><th>Phone</th><th>Plan</th><th>Billing Date</th><th>Amount</th></tr></thead><tbody>
                 <% payments.forEach(p => { %>
                 <tr><td><strong><%= p.first_name %> <%= p.last_name %></strong></td><td><%= p.email %></td><td><%= p.phone || 'N/A' %></td><td><%= p.plan_name %></td><td><%= new Date(p.next_billing_date).toLocaleDateString() %></td><td>$<%= parseFloat(p.price).toFixed(2) %></td></tr>

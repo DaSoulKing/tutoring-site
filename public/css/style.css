@@ -333,3 +333,117 @@ details.card summary{list-style:none}details.card summary::-webkit-details-marke
 :focus-visible{outline:3px solid var(--blue-400);outline-offset:2px}
 @media print{.nav,.footer,.btn,.sidebar-menu{display:none}body{background:white;color:black}.report-card{box-shadow:none;border:2px solid #000}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms !important;transition-duration:0.01ms !important}.carousel-track{animation:none;overflow-x:auto}}
+
+/* ============================================================
+   KID-FRIENDLY DASHBOARD REDESIGN (v27)
+   Bigger targets, clearer hierarchy, mobile-first
+   ============================================================ */
+
+/* --- Sidebar: bigger, friendlier --- */
+.dashboard-sidebar{background:linear-gradient(180deg,var(--blue-800),var(--blue-900))}
+.sidebar-menu a{font-size:1.02rem;padding:15px 24px;gap:14px;border-radius:0 12px 12px 0;margin-right:12px}
+.sidebar-menu a:hover,.sidebar-menu a.active{background:rgba(255,255,255,0.12)}
+.sidebar-menu a.active{font-weight:800}
+
+/* --- Welcome banner: warm and friendly --- */
+.dashboard-welcome{background:linear-gradient(135deg,var(--blue-500),var(--blue-700));color:white;padding:28px 32px;border-radius:var(--radius-lg);box-shadow:var(--shadow-md);margin-bottom:28px}
+.dashboard-welcome h1{color:white;font-size:1.9rem;margin-bottom:4px}
+.dashboard-welcome p{color:rgba(255,255,255,0.85);font-size:1.05rem}
+
+/* --- Big action tiles (student home) --- */
+.kid-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:28px}
+.kid-action{background:var(--white);border:3px solid var(--blue-100);border-radius:var(--radius-lg);padding:24px 16px;text-align:center;text-decoration:none;transition:all var(--transition);display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:var(--shadow)}
+.kid-action:hover{transform:translateY(-5px);border-color:var(--blue-400);box-shadow:var(--shadow-md)}
+.kid-action .kid-icon{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;background:var(--blue-100)}
+.kid-action .kid-icon.yellow{background:var(--yellow-100)}
+.kid-action .kid-icon.green{background:#D1FAE5}
+.kid-action .kid-icon.orange{background:#FFEDD5}
+.kid-action h3{font-size:1.05rem;color:var(--blue-800);margin:0}
+.kid-action p{font-size:0.8rem;color:var(--gray-500);margin:0}
+.kid-action.highlight{border-color:var(--yellow-400);background:linear-gradient(135deg,var(--yellow-50),var(--white))}
+
+/* --- Session cards: clearer, bigger join button --- */
+.session-card-big{background:var(--white);border-radius:var(--radius-lg);padding:20px 24px;box-shadow:var(--shadow);border-left:5px solid var(--blue-400);margin-bottom:14px;transition:all var(--transition)}
+.session-card-big:hover{box-shadow:var(--shadow-md)}
+.session-card-big.confirmed{border-left-color:var(--green-500)}
+.session-card-big.pending{border-left-color:var(--yellow-500)}
+.session-card-big .join-btn{font-size:1.05rem;padding:14px 32px}
+
+/* --- Section titles inside dashboard --- */
+.dash-section-title{font-size:1.35rem;margin:28px 0 16px;display:flex;align-items:center;gap:10px;color:var(--blue-800)}
+.dash-section-title .emoji{font-size:1.5rem}
+
+/* --- Empty states: encouraging --- */
+.empty-state{background:var(--white);border-radius:var(--radius-lg);padding:40px 24px;text-align:center;box-shadow:var(--shadow);border:2px dashed var(--blue-200)}
+.empty-state .empty-emoji{font-size:3rem;margin-bottom:12px;display:block}
+.empty-state p{color:var(--gray-500);font-size:1rem}
+
+/* --- Homework items: checkboxes bigger, friendlier --- */
+.hw-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--white);border-radius:var(--radius);margin-bottom:8px;box-shadow:var(--shadow);border:2px solid var(--gray-100);transition:all var(--transition)}
+.hw-item:hover{border-color:var(--blue-200)}
+.hw-item input[type=checkbox]{width:24px;height:24px;cursor:pointer;accent-color:var(--green-500);flex-shrink:0}
+.hw-item.done{opacity:0.55}
+.hw-item.done .hw-text{text-decoration:line-through}
+
+/* ============================================================
+   MOBILE-FIRST DASHBOARD FIXES
+   ============================================================ */
+@media(max-width:1024px){
+    /* Sidebar becomes a horizontal scroll bar with bigger targets */
+    .dashboard-sidebar{background:var(--blue-900);position:sticky;top:0;z-index:50}
+    .sidebar-menu a{font-size:0.95rem;padding:14px 18px;margin-right:0;border-radius:0}
+    .dashboard-main{padding:20px 16px}
+    .dashboard-welcome{padding:20px;border-radius:var(--radius)}
+    .dashboard-welcome h1{font-size:1.5rem}
+}
+@media(max-width:768px){
+    .dashboard-welcome h1{font-size:1.4rem}
+    .kid-actions{grid-template-columns:repeat(2,1fr);gap:12px}
+    .kid-action{padding:20px 12px}
+    .kid-action .kid-icon{width:56px;height:56px;font-size:1.75rem}
+    .dash-section-title{font-size:1.2rem}
+
+    /* Session cards stack cleanly */
+    .session-card-big{padding:16px}
+    .session-card-big .join-btn{width:100%;margin-top:8px}
+
+    /* Any inline flex row of buttons wraps and goes full width */
+    .dashboard-main form{max-width:100%}
+
+    /* Messages: full screen conversation on mobile */
+    .messages-layout{grid-template-columns:1fr;min-height:auto}
+    .conversations-list{max-height:none;border-right:none;border-bottom:1px solid var(--gray-200)}
+    .conversation-item{padding:16px}
+    .conversation-avatar{width:48px;height:48px}
+    .message-area{min-height:400px}
+    .message-bubble{max-width:85%}
+    .message-input-area input{font-size:16px} /* prevents iOS zoom */
+
+    /* All form inputs 16px to stop iOS zoom-on-focus */
+    .form-control,input,select,textarea{font-size:16px}
+
+    /* Tables scroll horizontally, already wrapped */
+    td,th{padding:12px 10px;font-size:0.85rem}
+}
+@media(max-width:480px){
+    .kid-actions{grid-template-columns:1fr 1fr;gap:10px}
+    .kid-action h3{font-size:0.95rem}
+    .kid-action p{display:none}
+    .dashboard-welcome h1{font-size:1.25rem}
+    .dashboard-welcome p{font-size:0.9rem}
+}
+
+/* Touch-friendly: all buttons min 44px tall on touch devices */
+@media(hover:none){
+    .btn,.btn-sm{min-height:44px}
+    .sidebar-menu a{min-height:48px}
+    input[type=checkbox]{min-width:22px;min-height:22px}
+}
+
+/* Messages mobile: show one pane at a time */
+@media(max-width:768px){
+    /* When viewing a conversation, hide the list and show only the chat */
+    .messages-layout.viewing-chat .conversations-list{display:none}
+    .mobile-back-btn{display:inline-block !important}
+    .messages-layout{min-height:70vh}
+}

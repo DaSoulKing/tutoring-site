@@ -4,16 +4,16 @@
     <div class="dashboard-grid">
         <aside class="dashboard-sidebar">
                         <ul class="sidebar-menu">
-                <li><a href="/parent/dashboard" class="active">&#x1F3E0; Dashboard</a></li>
-                <li><a href="/parent/calendar">&#x1F4C5; Calendar &amp; Book</a></li>
+                <li><a href="/parent/dashboard" class="active">&#x1F3E0; Home</a></li>
+                <li><a href="/parent/calendar">&#x1F4C5; Book a Class</a></li>
                 <li><a href="/parent/messages">&#x1F4AC; Messages <% if (unreadCount > 0) { %><span class="badge message-badge"><%= unreadCount %></span><% } %></a></li>
-                <li><a href="/parent/contact">&#x1F4E7; Contact/Inquiries</a></li>
                 <li><a href="/tutors">&#x1F50D; Find Tutors</a></li>
-                                <li><a href="/payment/pay">&#x1F4B0; Make Payment</a></li>
+                <li><a href="/parent/contact">&#x1F4E7; Get Help</a></li>
+                <li><a href="/payment/pay">&#x1F4B0; Payment</a></li>
             </ul>
         </aside>
         <div class="dashboard-main">
-            <div class="dashboard-welcome"><h1>Welcome, <%= user.firstName %>!</h1><p>Here is your learning dashboard.</p></div>
+            <div class="dashboard-welcome"><h1>Hi <%= user.firstName %>! &#x1F44B;</h1><p>Ready to learn something new today?</p></div>
 
             <% if (user.verified === false) { %>
             <div class="alert alert-warning" style="margin-bottom:24px;">
@@ -26,6 +26,30 @@
                 <strong>Payment due.</strong> Your monthly payment is outstanding. <a href="/payment/pay" style="font-weight:700;">Make a payment</a> to continue booking sessions.
             </div>
             <% } %>
+
+            <!-- BIG ACTION TILES - the main thing kids need -->
+            <div class="kid-actions">
+                <a href="/parent/calendar" class="kid-action highlight">
+                    <div class="kid-icon yellow" aria-hidden="true">&#x1F4C5;</div>
+                    <h3>Book a Class</h3>
+                    <p>Pick a time with your tutor</p>
+                </a>
+                <a href="/tutors" class="kid-action">
+                    <div class="kid-icon" aria-hidden="true">&#x1F50D;</div>
+                    <h3>Find Tutors</h3>
+                    <p>Browse our teachers</p>
+                </a>
+                <a href="/parent/messages" class="kid-action">
+                    <div class="kid-icon green" aria-hidden="true">&#x1F4AC;</div>
+                    <h3>Messages<% if (unreadCount > 0) { %> (<%= unreadCount %>)<% } %></h3>
+                    <p>Talk to your tutor</p>
+                </a>
+                <a href="/parent/calendar" class="kid-action">
+                    <div class="kid-icon orange" aria-hidden="true">&#x1F4DA;</div>
+                    <h3>My Homework</h3>
+                    <p>See what's due</p>
+                </a>
+            </div>
 
             <!-- Subscription -->
             <% if (subscription) { %>
@@ -45,7 +69,7 @@
 
             <!-- Assigned Tutors -->
             <% if (assignedTutors && assignedTutors.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin-bottom:16px;">Your Tutors</h2>
+            <h2 class="dash-section-title"><span class="emoji" aria-hidden="true">&#x1F468;&#x200D;&#x1F3EB;</span> Your Tutors</h2>
             <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
                 <% assignedTutors.forEach(t => { %>
                 <div class="card" style="padding:16px;display:flex;align-items:center;gap:12px;">
@@ -65,39 +89,37 @@
             <% } %>
 
             <!-- Upcoming Sessions -->
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                <h2 style="font-size:1.25rem;">Upcoming Sessions</h2>
-                <a href="/tutors" class="btn btn-primary btn-sm">Book New Session</a>
-            </div>
+            <h2 class="dash-section-title"><span class="emoji" aria-hidden="true">&#x1F4C6;</span> Your Next Classes</h2>
             <% if (bookings && bookings.length > 0) { %>
                 <% bookings.forEach(b => { %>
-                <div class="card" style="margin-bottom:12px;padding:20px;">
+                <div class="session-card-big <%= b.status %>">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-                        <div style="display:flex;align-items:center;gap:12px;">
-                            <div style="width:48px;height:48px;border-radius:50%;background:var(--blue-100);display:flex;align-items:center;justify-content:center;font-size:1.2rem;" aria-hidden="true"></div>
-                            <div><h4 style="font-size:1rem;"><%= b.tutor_first %> <%= b.tutor_last %></h4><p style="color:var(--gray-500);font-size:0.85rem;"><%= b.subject || 'General Session' %></p></div>
+                        <div style="display:flex;align-items:center;gap:14px;">
+                            <div style="width:52px;height:52px;border-radius:50%;background:var(--blue-100);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;color:var(--blue-600);font-size:1.1rem;flex-shrink:0;"><%= b.tutor_first ? b.tutor_first.charAt(0) : '' %><%= b.tutor_last ? b.tutor_last.charAt(0) : '' %></div>
+                            <div>
+                                <h4 style="font-size:1.1rem;"><%= b.tutor_first %> <%= b.tutor_last %></h4>
+                                <p style="color:var(--gray-500);font-size:0.9rem;"><%= b.subject || 'General Session' %></p>
+                                <p style="color:var(--blue-600);font-weight:700;font-size:0.9rem;margin-top:2px;"><%= new Date(b.booking_date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) %> at <%= formatTime(b.start_time) %></p>
+                            </div>
                         </div>
-                        <div style="text-align:right;">
-                            <p style="font-weight:700;color:var(--gray-700);"><%= new Date(b.booking_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) %></p>
-                            <p style="color:var(--gray-500);font-size:0.85rem;"><%= formatTime(b.start_time) %> - <%= formatTime(b.end_time) %></p>
-                        </div>
-                        <div style="display:flex;gap:8px;">
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                             <span class="badge-status badge-<%= b.status %>"><%= b.status %></span>
-                            <% if (b.status === 'confirmed') { %><a href="/parent/session/<%= b.id %>" class="btn btn-primary btn-sm">Join</a><% } %>
-                            <button onclick="cancelBooking(<%= b.id %>)" class="btn btn-sm" style="background:var(--gray-100);color:var(--gray-600);font-size:0.8rem;">Cancel</button>
+                            <% if (b.status === 'confirmed') { %><a href="/parent/session/<%= b.id %>" class="btn btn-primary join-btn">&#x1F4F9; Join Class</a><% } %>
+                            <button onclick="cancelBooking(<%= b.id %>)" class="btn btn-sm btn-outline" style="font-size:0.8rem;">Cancel</button>
                         </div>
                     </div>
                 </div>
                 <% }); %>
             <% } else { %>
-                <div class="card" style="padding:32px;text-align:center;">
-                    <p style="color:var(--gray-400);">No upcoming sessions. <a href="/consultation">Book a consultation</a> to get started!</p>
+                <div class="empty-state">
+                    <span class="empty-emoji" aria-hidden="true">&#x1F31F;</span>
+                    <p>No classes booked yet. <a href="/parent/calendar" style="font-weight:700;">Book your first one!</a></p>
                 </div>
             <% } %>
 
             <!-- Report Cards -->
             <% if (reportCards && reportCards.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:32px 0 16px;">Monthly Report Cards</h2>
+            <h2 class="dash-section-title"><span class="emoji" aria-hidden="true">&#x1F4CA;</span> Report Cards</h2>
             <% reportCards.forEach(rc => { %>
             <div class="card" style="margin-bottom:12px;padding:20px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">

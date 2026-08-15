@@ -1,4 +1,3 @@
-Test
 # BrightMinds Tutoring Platform
 
 A full-stack tutoring platform built with Express, EJS, PostgreSQL, and vanilla CSS/JS. Designed for deployment on Railway.

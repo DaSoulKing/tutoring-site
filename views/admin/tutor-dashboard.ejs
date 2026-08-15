@@ -7,20 +7,20 @@
     <div class="dashboard-grid">
         <aside class="dashboard-sidebar">
                         <ul class="sidebar-menu">
-                <li><a href="/admin/tutor" class="active">&#x1F3E0; Dashboard</a></li>
+                <li><a href="/admin/tutor" class="active">&#x1F3E0; Home</a></li>
                 <li><a href="/admin/tutor/calendar">&#x1F4C5; My Calendar</a></li>
                 <li><a href="/parent/messages">&#x1F4AC; Messages <% if (unreadCount > 0) { %><span class="badge message-badge"><%= unreadCount %></span><% } %></a></li>
             </ul>
         </aside>
         <div class="dashboard-main">
-            <div class="dashboard-welcome"><h1>Tutor Dashboard</h1><p>Welcome, <%= user.firstName %>!</p></div>
+            <div class="dashboard-welcome"><h1>Hi <%= user.firstName %>! &#x1F44B;</h1><p>Here are your classes and students.</p></div>
 
             <% if (!profile.approved) { %>
             <div class="alert alert-warning">Your account is pending approval. You can set up your profile and availability while you wait.</div>
             <% } %>
 
             <!-- UPCOMING SESSIONS (priority - shown first) -->
-            <h2 style="font-size:1.25rem;margin-bottom:16px;">Upcoming Sessions</h2>
+            <h2 class="dash-section-title"><span class="emoji" aria-hidden="true">&#x1F4C6;</span> Upcoming Sessions</h2>
             <% if (sessions && sessions.length > 0) { %>
                 <% sessions.forEach(function(s) { %>
                 <div class="card" style="margin-bottom:12px;padding:20px;">
@@ -63,7 +63,7 @@
 
             <!-- MY STUDENTS -->
             <% if (students && students.length > 0) { %>
-            <h2 style="font-size:1.25rem;margin:24px 0 16px;">My Students</h2>
+            <h2 class="dash-section-title"><span class="emoji" aria-hidden="true">&#x1F393;</span> My Students</h2>
 
             <!-- Schedule a Session -->
             <div class="card" style="padding:20px;margin-bottom:16px;">
@@ -201,7 +201,7 @@ document.getElementById('save-avail-btn').addEventListener('click', function() {
 
 <!-- Student Homework -->
 <div style="padding:0 32px 32px;">
-    <h2 style="font-size:1.25rem;margin:24px 0 16px;">Student Homework</h2>
+    <h2 class="dash-section-title"><span class="emoji" aria-hidden="true">&#x1F4DA;</span> Student Homework</h2>
     <div class="card" style="padding:20px;" id="tutor-hw">
         <p style="color:var(--gray-400);">Loading homework...</p>
     </div>
