@@ -2,8 +2,15 @@
 <%- include('partials/nav') %>
 
 <main id="main-content">
+    <% var _isStudent = user && (user.role === 'student' || user.role === 'parent'); %>
+    <% if (_isStudent) { %>
+    <div class="dashboard-grid">
+        <%- include('partials/student-sidebar') %>
+        <div class="dashboard-main">
+    <% } else { %>
     <section class="section">
         <div class="container">
+    <% } %>
             <div class="section-header">
                 <span class="section-badge">Find Your Tutor</span>
                 <h2>Our Expert Tutors</h2>
@@ -68,8 +75,13 @@
                     </div>
                 <% } %>
             </div>
+    <% if (_isStudent) { %>
+        </div>
+    </div>
+    <% } else { %>
         </div>
     </section>
+    <% } %>
 </main>
 
 <%- include('partials/footer') %>

@@ -2,8 +2,10 @@
 <%- include('../partials/nav') %>
 
 <main id="main-content">
-    <section class="section" style="padding-top:32px;">
-        <div class="container" style="max-width:900px;">
+    <div class="dashboard-grid">
+        <%- include('../partials/student-sidebar') %>
+        <div class="dashboard-main">
+            <div style="max-width:900px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
                 <div>
                     <h1 style="font-size:1.5rem;">Book a Session</h1>
@@ -211,8 +213,9 @@
             </script>
 
             <% } %>
+            </div>
         </div>
-    </section>
+    </div>
 </main>
 
 <style>

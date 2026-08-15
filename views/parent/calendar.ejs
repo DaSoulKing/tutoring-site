@@ -2,13 +2,13 @@
 <%- include('../partials/nav') %>
 
 <main id="main-content">
-    <section class="section" style="padding-top:32px;">
-        <div class="container">
+    <div class="dashboard-grid">
+        <%- include('../partials/student-sidebar') %>
+        <div class="dashboard-main">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
                 <h1 style="font-size:1.5rem;">My Calendar</h1>
                 <div style="display:flex;gap:8px;">
                     <a href="/tutors" class="btn btn-primary btn-sm">Browse Tutors</a>
-                    <a href="/parent/dashboard" class="btn btn-outline btn-sm">&larr; Dashboard</a>
                 </div>
             </div>
 
@@ -57,11 +57,39 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Homework Tracker -->
+            <div class="card" style="padding:24px;margin-top:24px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <h2 class="dash-section-title" style="margin:0;"><span class="emoji" aria-hidden="true">&#x1F4DA;</span> My Homework</h2>
+                    <button onclick="document.getElementById('hw-form').style.display=document.getElementById('hw-form').style.display==='none'?'flex':'none'" class="btn btn-sm btn-primary">+ Add Homework</button>
+                </div>
+                <p style="color:var(--gray-500);font-size:0.85rem;margin-bottom:16px;">Track your assignments here. Your tutor can see them too.</p>
+
+                <div id="hw-form" style="display:none;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:20px;padding:16px;background:var(--gray-50);border-radius:8px;">
+                    <div class="form-group" style="margin:0;min-width:120px;">
+                        <label style="font-size:0.8rem;">Subject</label>
+                        <input type="text" id="hw-subject" class="form-control" style="padding:6px 10px;font-size:0.85rem;" placeholder="e.g. Math">
+                    </div>
+                    <div class="form-group" style="margin:0;flex:1;min-width:200px;">
+                        <label style="font-size:0.8rem;">What's the assignment?</label>
+                        <input type="text" id="hw-desc" class="form-control" style="padding:6px 10px;font-size:0.85rem;" placeholder="e.g. Chapter 5 problems 1-20" required>
+                    </div>
+                    <div class="form-group" style="margin:0;min-width:130px;">
+                        <label style="font-size:0.8rem;">Due Date</label>
+                        <input type="date" id="hw-due" class="form-control" style="padding:6px 10px;font-size:0.85rem;">
+                    </div>
+                    <button onclick="addHomework()" class="btn btn-sm btn-primary">Save</button>
+                </div>
+
+                <div id="hw-list" style="color:var(--gray-400);font-size:0.9rem;">Loading...</div>
+            </div>
         </div>
-    </section>
+    </div>
 </main>
 
 <script>
+function loadHomework(){
 (function() {
     var assignedTutors = <%- JSON.stringify((assignedTutors || []).map(function(t) { return { id: t.id, name: t.first_name + ' ' + t.last_name, pic: t.profile_picture }; })) %>;
     var csrfToken = '<%= csrfToken %>';
@@ -252,35 +280,6 @@
     #day-panel{width:100% !important;min-width:0 !important;order:2}
 }
 </style>
-
-    <!-- Homework Tracker -->
-    <section style="padding:32px 24px;">
-        <div class="card" style="padding:24px;max-width:900px;margin:0 auto;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                <h2 style="font-size:1.25rem;">My Homework</h2>
-                <button onclick="document.getElementById('hw-form').style.display=document.getElementById('hw-form').style.display==='none'?'flex':'none'" class="btn btn-sm btn-primary">+ Add Homework</button>
-            </div>
-            <p style="color:var(--gray-500);font-size:0.85rem;margin-bottom:16px;">Track your assignments here. Your tutor can see them too.</p>
-
-            <div id="hw-form" style="display:none;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:20px;padding:16px;background:var(--gray-50);border-radius:8px;">
-                <div class="form-group" style="margin:0;min-width:120px;">
-                    <label style="font-size:0.8rem;">Subject</label>
-                    <input type="text" id="hw-subject" class="form-control" style="padding:6px 10px;font-size:0.85rem;" placeholder="e.g. Math">
-                </div>
-                <div class="form-group" style="margin:0;flex:1;min-width:200px;">
-                    <label style="font-size:0.8rem;">What's the assignment?</label>
-                    <input type="text" id="hw-desc" class="form-control" style="padding:6px 10px;font-size:0.85rem;" placeholder="e.g. Chapter 5 problems 1-20" required>
-                </div>
-                <div class="form-group" style="margin:0;min-width:130px;">
-                    <label style="font-size:0.8rem;">Due Date</label>
-                    <input type="date" id="hw-due" class="form-control" style="padding:6px 10px;font-size:0.85rem;">
-                </div>
-                <button onclick="addHomework()" class="btn btn-sm btn-primary">Save</button>
-            </div>
-
-            <div id="hw-list" style="color:var(--gray-400);font-size:0.9rem;">Loading...</div>
-        </div>
-    </section>
 
 <script>
 function loadHomework(){

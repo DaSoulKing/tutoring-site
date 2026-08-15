@@ -1,0 +1,10 @@
+<aside class="dashboard-sidebar">
+    <ul class="sidebar-menu">
+        <li><a href="/parent/dashboard" class="<%= currentPath === '/parent/dashboard' ? 'active' : '' %>">&#x1F3E0; Home</a></li>
+        <li><a href="/parent/calendar" class="<%= currentPath === '/parent/calendar' ? 'active' : '' %>">&#x1F4C5; Book a Class</a></li>
+        <li><a href="/parent/messages" class="<%= currentPath && currentPath.indexOf('/parent/messages') === 0 ? 'active' : '' %>">&#x1F4AC; Messages</a></li>
+        <li><a href="/tutors" class="<%= currentPath && currentPath.indexOf('/tutors') === 0 ? 'active' : '' %>">&#x1F50D; Find Tutors</a></li>
+        <li><a href="/parent/contact" class="<%= currentPath === '/parent/contact' ? 'active' : '' %>">&#x1F4E7; Get Help</a></li>
+        <li><a href="/payment/pay" class="<%= currentPath && currentPath.indexOf('/payment') === 0 ? 'active' : '' %>">&#x1F4B0; Payment</a></li>
+    </ul>
+</aside>

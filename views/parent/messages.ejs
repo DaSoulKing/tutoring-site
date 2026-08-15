@@ -2,11 +2,20 @@
 <%- include('../partials/nav') %>
 
 <main id="main-content">
+    <% var _isStudent = user && (user.role === 'student' || user.role === 'parent'); %>
+    <% if (_isStudent) { %>
+    <div class="dashboard-grid">
+        <%- include('../partials/student-sidebar') %>
+        <div class="dashboard-main">
+    <% } else { %>
     <section class="section" style="padding-top:32px;">
         <div class="container">
+    <% } %>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
                 <h1 style="font-size:1.5rem;">Messages</h1>
+                <% if (!_isStudent) { %>
                 <a href="<%= user.role === 'tutor' ? '/admin/tutor' : user.role === 'owner' ? '/admin/owner' : '/parent/dashboard' %>" class="btn btn-outline btn-sm">&larr; Back to Dashboard</a>
+                <% } %>
             </div>
 
             <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:0.8rem;color:var(--gray-500);">
@@ -60,8 +69,13 @@
                     <% } %>
                 </div>
             </div>
+    <% if (_isStudent) { %>
+        </div>
+    </div>
+    <% } else { %>
         </div>
     </section>
+    <% } %>
 </main>
 
 <script>
